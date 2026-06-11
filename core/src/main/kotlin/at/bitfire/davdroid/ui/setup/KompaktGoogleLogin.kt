@@ -34,8 +34,8 @@ object KompaktGoogleLogin : LoginType {
         initialLoginInfo: LoginInfo,
         onLogin: (LoginInfo) -> Unit
     ) {
-        val model: GoogleLoginViewModel = hiltViewModel(
-            creationCallback = { factory: GoogleLoginViewModel.Factory ->
+        val model: KompaktGoogleLoginViewModel = hiltViewModel(
+            creationCallback = { factory: KompaktGoogleLoginViewModel.Factory ->
                 factory.create(loginInfo = initialLoginInfo)
             }
         )
