@@ -109,6 +109,7 @@ dependencies {
     implementation(libs.androidx.work.base)
 
     // Jetpack Compose
+    implementation(libs.mudita.mmd)
     implementation(libs.compose.accompanist.permissions)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.material3)

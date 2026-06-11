@@ -16,7 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -24,7 +23,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
+import com.mudita.mmd.components.buttons.ButtonMMD
+import com.mudita.mmd.components.text.TextMMD
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -38,7 +38,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.ui.account.AccountProgress
-import at.bitfire.davdroid.ui.composable.AppTheme
+import at.bitfire.davdroid.ui.composable.KompaktTheme
 import at.bitfire.davdroid.ui.composable.ProgressBar
 
 @Composable
@@ -56,7 +56,7 @@ fun KompaktAccountsScreen(
     val accounts by model.accountInfos.collectAsStateWithLifecycle(emptyList())
     val snackbarHostState = remember { SnackbarHostState() }
 
-    AppTheme {
+    KompaktTheme {
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) }
         ) { padding ->
@@ -74,8 +74,8 @@ fun KompaktAccountsScreen(
                             .fillMaxSize()
                             .padding(32.dp)
                     ) {
-                        Button(onClick = onAddAccount) {
-                            Text(stringResource(R.string.calendar_accountsync_dialog_button_linkaccount))
+                        ButtonMMD(onClick = onAddAccount) {
+                            TextMMD(stringResource(R.string.calendar_accountsync_dialog_button_linkaccount))
                         }
                     }
                 } else {
@@ -141,7 +141,7 @@ private fun KompaktAccountCard(
                         .align(Alignment.CenterHorizontally)
                         .size(48.dp)
                 )
-                Text(
+                TextMMD(
                     text = account.name,
                     style = MaterialTheme.typography.titleLarge,
                     textAlign = TextAlign.Center,
