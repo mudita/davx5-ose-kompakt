@@ -154,7 +154,6 @@
     <string name="navigation_drawer_privacy_policy">Privacy policy</string>
     <string name="account_list_welcome">Welcome to DAVx⁵!</string>
     <string name="account_list_empty">Connect to your server and keep your calendars and contacts synchronized.</string>
-    <string name="calendar_accountsync_dialog_button_linkaccount">Link account</string>
     <string name="accounts_sync_all">Sync all accounts</string>
     <string name="keep_android_open"><![CDATA[Android’s openness is under threat. Learn how you can help at <a href="%s">keepandroidopen.org</a>.]]></string>
 
@@ -594,6 +593,12 @@
     <string name="widget_labeled_sync_label">Labeled Sync Button</string>
     <string name="widget_icon_sync_label">Icon Sync Button</string>
     <string name="widget_sync_description">Tap to run synchronization manually.</string>
+
+    <!-- Kompakt -->
+    <string name="calendar_accountsync_dialog_button_linkaccount">Link account</string>
+    <string name="common_label_linkedaccount">Linked Account</string>
+    <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Link a Google account</string>
+    <string name="calendar_accountsync_body_connectwithyourmaingoogle">Connect with your main Google calendar and share events</string>
 
     <!-- cert4android -->
 

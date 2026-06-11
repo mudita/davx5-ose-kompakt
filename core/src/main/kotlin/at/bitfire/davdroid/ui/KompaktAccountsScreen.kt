@@ -5,14 +5,19 @@
 package at.bitfire.davdroid.ui
 
 import android.accounts.Account
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -20,11 +25,11 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import com.mudita.mmd.components.buttons.ButtonMMD
-import com.mudita.mmd.components.text.TextMMD
+import androidx.compose.ui.res.painterResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -40,7 +45,11 @@ import at.bitfire.davdroid.R
 import at.bitfire.davdroid.ui.account.AccountProgress
 import at.bitfire.davdroid.ui.composable.KompaktTheme
 import at.bitfire.davdroid.ui.composable.ProgressBar
+import com.mudita.mmd.components.top_app_bar.TopAppBarMMD
+import com.mudita.mmd.components.buttons.ButtonMMD
+import com.mudita.mmd.components.text.TextMMD
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KompaktAccountsScreen(
     initialSyncAccounts: Boolean,
@@ -58,27 +67,98 @@ fun KompaktAccountsScreen(
 
     KompaktTheme {
         Scaffold(
+            topBar = {
+                if (accounts.isEmpty()) {
+                    TopAppBarMMD(
+                        title = {
+                            TextMMD(
+                                text = stringResource(R.string.common_label_linkedaccount),
+                                style = KompaktTypography900.titleMedium
+                            )
+                        }
+                    )
+                }
+            },
             snackbarHost = { SnackbarHost(snackbarHostState) }
         ) { padding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                if (accounts.isEmpty()) {
+            if (accounts.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                ) {
+                    Spacer(modifier = Modifier.weight(1f))
+
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(32.dp)
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
                     ) {
-                        ButtonMMD(onClick = onAddAccount) {
-                            TextMMD(stringResource(R.string.calendar_accountsync_dialog_button_linkaccount))
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .border(
+                                    width = 2.dp,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    shape = RoundedCornerShape(13.dp)
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_google_g),
+                                contentDescription = null,
+                                modifier = Modifier.size(37.dp)
+                            )
+                        }
+
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            TextMMD(
+                                text = stringResource(R.string.calendar_accountsync_dialog_h1_linkagoogleaccount),
+                                style = KompaktTypography900.titleMedium,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            TextMMD(
+                                text = stringResource(R.string.calendar_accountsync_body_connectwithyourmaingoogle),
+                                style = KompaktTypography500.bodyMedium,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
                     }
-                } else {
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        ButtonMMD(
+                            onClick = onAddAccount,
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            TextMMD(
+                                text = stringResource(R.string.calendar_accountsync_dialog_button_linkaccount),
+                                style = KompaktTypography900.titleMedium
+                            )
+                        }
+                    }
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .verticalScroll(rememberScrollState())
+                ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
