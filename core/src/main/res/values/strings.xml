@@ -154,6 +154,7 @@
     <string name="navigation_drawer_privacy_policy">Privacy policy</string>
     <string name="account_list_welcome">Welcome to DAVx⁵!</string>
     <string name="account_list_empty">Connect to your server and keep your calendars and contacts synchronized.</string>
+    <string name="calendar_accountsync_dialog_button_linkaccount">Link account</string>
     <string name="accounts_sync_all">Sync all accounts</string>
     <string name="keep_android_open"><![CDATA[Android’s openness is under threat. Learn how you can help at <a href="%s">keepandroidopen.org</a>.]]></string>
 

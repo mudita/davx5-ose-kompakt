@@ -8,6 +8,26 @@
 
     <application android:name=".App">
 
+        <!-- Remove the launcher intent filter from the core AccountsActivity -->
+        <activity
+            android:name="at.bitfire.davdroid.ui.AccountsActivity"
+            tools:node="merge">
+            <intent-filter tools:node="remove">
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <!-- Kompakt launcher replaces the core AccountsActivity as the entry point -->
+        <activity
+            android:name="at.bitfire.davdroid.ui.KompaktAccountsActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
         <!-- Required for Hilt/WorkManager integration. See
         - https://developer.android.com/develop/background-work/background-tasks/persistent/configuration/custom-configuration#remove-default
         - https://developer.android.com/training/dependency-injection/hilt-jetpack#workmanager
