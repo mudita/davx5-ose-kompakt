@@ -8,7 +8,6 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import at.bitfire.davdroid.ui.account.AccountActivity
 import at.bitfire.davdroid.ui.setup.LoginActivity
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -31,11 +30,7 @@ class KompaktAccountsActivity : AppCompatActivity() {
                 onAddAccount = {
                     startActivity(Intent(this, LoginActivity::class.java))
                 },
-                onShowAccount = { account ->
-                    val intent = Intent(this, AccountActivity::class.java)
-                    intent.putExtra(AccountActivity.EXTRA_ACCOUNT, account)
-                    startActivity(intent)
-                }
+                onBack = ::finish
             )
         }
     }

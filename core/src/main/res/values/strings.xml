@@ -599,6 +599,19 @@
     <string name="common_label_linkedaccount">Linked Account</string>
     <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Link a Google account</string>
     <string name="calendar_accountsync_body_connectwithyourmaingoogle">Connect with your main Google calendar and share events</string>
+    <string name="common_label_calendar">Calendar</string>
+    <string name="calendar_accountsync_toggle_button_autosyncronization">Auto synchronization</string>
+    <string name="calendar_accountsync_notification_yourcalendarsyncseach">Your calendar syncs each time you open the calendar app and every 24hrs</string>
+    <string name="common_label_or">Or</string>
+    <string name="calendar_accountsync_button_synchronizenow">Synchronize now</string>
+    <string name="calendar_accountsync_label_lastsynchronization">Last synchronization</string>
+
+    <string name="kompakt_linkedaccount_never_synced">—</string>
+    <string name="kompakt_linkedaccount_unlink">Unlink account</string>
+    <string name="kompakt_linkedaccount_unlink_dialog_title">Unlink account?</string>
+    <string name="kompakt_linkedaccount_unlink_dialog_message">This will remove anything imported from your Google account</string>
+    <string name="kompakt_linkedaccount_unlink_dialog_confirm">Unlink</string>
+    <string name="kompakt_linkedaccount_unlink_dialog_cancel">Cancel</string>
 
     <!-- cert4android -->
 
