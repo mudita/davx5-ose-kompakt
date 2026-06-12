@@ -10,6 +10,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import at.bitfire.davdroid.db.Collection
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
 import at.bitfire.davdroid.repository.AccountRepository
@@ -19,6 +20,7 @@ import at.bitfire.davdroid.repository.DavSyncStatsRepository
 import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
 import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.sync.SyncDataType
+import at.bitfire.davdroid.sync.worker.OneTimeSyncWorker
 import at.bitfire.davdroid.sync.worker.SyncWorkerManager
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -127,6 +129,62 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     private fun formatLastSync(epochMillis: Long): String =
         dateTimeFormat.format(Instant.ofEpochMilli(epochMillis))
+
+
+    // manual sync lifecycle (loading indicator / success snackbar / error dialog)
+
+    enum class SyncResult { Success, Failure }
+
+    /** WorkInfos of the calendar (EVENTS) one-time sync worker for this account. */
+    private val eventsSyncWorkInfos =
+        WorkManager.getInstance(context).getWorkInfosForUniqueWorkFlow(
+            OneTimeSyncWorker.workerName(account, SyncDataType.EVENTS)
+        )
+
+    private fun List<WorkInfo>.isSyncActive() = any { workInfo ->
+        workInfo.state == WorkInfo.State.RUNNING ||
+            workInfo.state == WorkInfo.State.ENQUEUED ||
+            workInfo.state == WorkInfo.State.BLOCKED
+    }
+
+    /** `true` while a calendar sync is enqueued/running (drives the "Loading data…" indicator). */
+    val syncing: StateFlow<Boolean> = eventsSyncWorkInfos
+        .map { it.isSyncActive() }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    private val _syncResult = MutableStateFlow<SyncResult?>(null)
+    /** Result of the latest *user-initiated* sync, or `null` once consumed by the UI. */
+    val syncResult: StateFlow<SyncResult?> = _syncResult.asStateFlow()
+
+    /** Only watch for a result after the user explicitly triggered a sync (not background syncs). */
+    private var armed = false
+
+    fun consumeSyncResult() {
+        _syncResult.value = null
+    }
+
+    init {
+        // Translate the EVENTS worker lifecycle into a one-shot Success/Failure result, but only for
+        // syncs the user started via syncNow() (armed). The flow also contains the previous finished
+        // sync's WorkInfo, so without arming we'd surface a stale result on screen open.
+        viewModelScope.launch {
+            var sawActive = false
+            eventsSyncWorkInfos.collect { infos ->
+                if (!armed)
+                    return@collect
+                if (infos.isSyncActive()) {
+                    sawActive = true
+                } else if (sawActive) {
+                    _syncResult.value =
+                        if (infos.any { it.state == WorkInfo.State.FAILED }) SyncResult.Failure
+                        else SyncResult.Success
+                    armed = false
+                    sawActive = false
+                }
+            }
+        }
+    }
 
 
     // initialization defaults
@@ -246,6 +304,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }
 
     fun syncNow() {
+        armed = true                // watch the resulting sync for success/failure feedback
         viewModelScope.launch(ioDispatcher) {
             syncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)
         }
