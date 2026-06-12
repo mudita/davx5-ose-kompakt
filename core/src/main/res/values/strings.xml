@@ -621,6 +621,8 @@
     <string name="calendar_accountsync_error_dialog_h1_accountsyncfailed">Account sync failed</string>
     <string name="calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour">We couldn\'t synchronize with your Google account, please try again</string>
     <string name="common_dialog_button_tryagain">Try again</string>
+    <string name="common_label_nointernetconnection">No internet connection</string>
+    <string name="common_error_body_opensettingstocheck">Open settings to check data and Wi-Fi are switched on</string>
     <!-- missing frontitude keys -->
     <string name="kompakt_linkedaccount_never_synced">Not synced yet</string>
     <string name="kompakt_linkedaccount_unlink">Unlink account</string>

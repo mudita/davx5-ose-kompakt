@@ -43,6 +43,7 @@ import at.bitfire.davdroid.ui.composable.KompaktBottomBar
 import at.bitfire.davdroid.ui.composable.KompaktDottedDivider
 import at.bitfire.davdroid.ui.composable.KompaktFramedIcon
 import at.bitfire.davdroid.ui.composable.KompaktListCell
+import at.bitfire.davdroid.ui.composable.KompaktMessageSheet
 import at.bitfire.davdroid.ui.composable.KompaktModalSheet
 import at.bitfire.davdroid.ui.composable.KompaktTheme
 import com.mudita.mmd.components.buttons.OutlinedButtonMMD
@@ -71,6 +72,7 @@ fun KompaktLinkedAccountScreen(
     val lastSync by model.lastSyncFormatted.collectAsStateWithLifecycle()
     val syncing by model.syncing.collectAsStateWithLifecycle()
     val syncResult by model.syncResult.collectAsStateWithLifecycle()
+    val showNoInternet by model.showNoInternet.collectAsStateWithLifecycle()
 
     KompaktLinkedAccountContent(
         email = model.email,
@@ -78,12 +80,14 @@ fun KompaktLinkedAccountScreen(
         lastSync = lastSync,
         syncing = syncing,
         syncResult = syncResult,
+        showNoInternet = showNoInternet,
         showAccountLinkedDialog = showAccountLinkedDialog,
         onBack = onBack,
         onToggleAutoSync = model::setAutoSync,
         onSyncNow = model::syncNow,
         onUnlink = model::unlink,
         onConsumeSyncResult = model::consumeSyncResult,
+        onDismissNoInternet = model::consumeNoInternet,
         onAccountLinkedDialogDismiss = onAccountLinkedDialogDismiss
     )
 }
@@ -96,12 +100,14 @@ fun KompaktLinkedAccountContent(
     lastSync: String?,
     syncing: Boolean,
     syncResult: SyncResult?,
+    showNoInternet: Boolean,
     showAccountLinkedDialog: Boolean,
     onBack: () -> Unit,
     onToggleAutoSync: (Boolean) -> Unit,
     onSyncNow: () -> Unit,
     onUnlink: () -> Unit,
     onConsumeSyncResult: () -> Unit,
+    onDismissNoInternet: () -> Unit,
     onAccountLinkedDialogDismiss: () -> Unit
 ) {
     var showUnlinkDialog by remember { mutableStateOf(false) }
@@ -291,6 +297,15 @@ fun KompaktLinkedAccountContent(
             onDismiss = onConsumeSyncResult
         )
     }
+
+    if (showNoInternet) {
+        KompaktMessageSheet(
+            onDismissRequest = onDismissNoInternet,
+            title = stringResource(R.string.common_label_nointernetconnection),
+            text = stringResource(R.string.common_error_body_opensettingstocheck),
+            icon = painterResource(R.drawable.ic_kompakt_alert)
+        )
+    }
 }
 
 /** Google icon + account email header. */
@@ -373,12 +388,14 @@ private fun KompaktLinkedAccountContent_Idle_Preview() {
         lastSync = PREVIEW_LAST_SYNC,
         syncing = false,
         syncResult = null,
+        showNoInternet = false,
         showAccountLinkedDialog = false,
         onBack = {},
         onToggleAutoSync = {},
         onSyncNow = {},
         onUnlink = {},
         onConsumeSyncResult = {},
+        onDismissNoInternet = {},
         onAccountLinkedDialogDismiss = {}
     )
 }
@@ -392,12 +409,14 @@ private fun KompaktLinkedAccountContent_Syncing_Preview() {
         lastSync = PREVIEW_LAST_SYNC,
         syncing = true,
         syncResult = null,
+        showNoInternet = false,
         showAccountLinkedDialog = false,
         onBack = {},
         onToggleAutoSync = {},
         onSyncNow = {},
         onUnlink = {},
         onConsumeSyncResult = {},
+        onDismissNoInternet = {},
         onAccountLinkedDialogDismiss = {}
     )
 }
@@ -411,12 +430,14 @@ private fun KompaktLinkedAccountContent_Success_Preview() {
         lastSync = PREVIEW_LAST_SYNC,
         syncing = false,
         syncResult = SyncResult.Success,
+        showNoInternet = false,
         showAccountLinkedDialog = false,
         onBack = {},
         onToggleAutoSync = {},
         onSyncNow = {},
         onUnlink = {},
         onConsumeSyncResult = {},
+        onDismissNoInternet = {},
         onAccountLinkedDialogDismiss = {}
     )
 }

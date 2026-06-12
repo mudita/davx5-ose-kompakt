@@ -19,6 +19,7 @@ import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.repository.DavSyncStatsRepository
 import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
 import at.bitfire.davdroid.settings.AccountSettings
+import at.bitfire.davdroid.sync.SyncConditions
 import at.bitfire.davdroid.sync.SyncDataType
 import at.bitfire.davdroid.sync.worker.OneTimeSyncWorker
 import at.bitfire.davdroid.sync.worker.SyncWorkerManager
@@ -70,6 +71,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     private val collectionRepository: DavCollectionRepository,
     private val serviceRepository: DavServiceRepository,
     private val syncStatsRepository: DavSyncStatsRepository,
+    private val syncConditionsFactory: SyncConditions.Factory,
     private val syncWorkerManager: SyncWorkerManager,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     private val logger: Logger
@@ -162,6 +164,14 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     fun consumeSyncResult() {
         _syncResult.value = null
+    }
+
+    private val _showNoInternet = MutableStateFlow(false)
+    /** `true` when the user tapped "Synchronize now" without internet; drives the "No internet" message. */
+    val showNoInternet: StateFlow<Boolean> = _showNoInternet.asStateFlow()
+
+    fun consumeNoInternet() {
+        _showNoInternet.value = false
     }
 
     init {
@@ -304,8 +314,15 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }
 
     fun syncNow() {
-        armed = true                // watch the resulting sync for success/failure feedback
         viewModelScope.launch(ioDispatcher) {
+            // manual syncs skip the worker's network checks, so guard here: no internet → show message,
+            // don't start a sync that would only fail
+            val accountSettings = accountSettingsFactory.create(account)
+            if (!syncConditionsFactory.create(accountSettings).internetAvailable()) {
+                _showNoInternet.value = true
+                return@launch
+            }
+            armed = true            // watch the resulting sync for success/failure feedback
             syncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)
         }
     }
