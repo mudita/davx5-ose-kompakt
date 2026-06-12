@@ -28,6 +28,13 @@
             </intent-filter>
         </activity>
 
+        <!-- Kompakt login flow: returns a result instead of opening the upstream AccountActivity -->
+        <activity
+            android:name="at.bitfire.davdroid.ui.setup.KompaktLoginActivity"
+            android:parentActivityName="at.bitfire.davdroid.ui.KompaktAccountsActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false" />
+
         <!-- Required for Hilt/WorkManager integration. See
         - https://developer.android.com/develop/background-work/background-tasks/persistent/configuration/custom-configuration#remove-default
         - https://developer.android.com/training/dependency-injection/hilt-jetpack#workmanager

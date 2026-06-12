@@ -46,7 +46,6 @@ import at.bitfire.davdroid.R
 import at.bitfire.davdroid.ui.composable.KompaktDialog
 import at.bitfire.davdroid.ui.composable.KompaktDialogAction
 import at.bitfire.davdroid.ui.composable.KompaktTheme
-import com.mudita.mmd.components.buttons.ButtonMMD
 import com.mudita.mmd.components.buttons.OutlinedButtonMMD
 import com.mudita.mmd.components.switcher.SwitchMMD
 import com.mudita.mmd.components.text.TextMMD
@@ -57,6 +56,8 @@ import com.mudita.mmd.components.top_app_bar.TopAppBarMMD
 fun KompaktLinkedAccountScreen(
     account: Account,
     onBack: () -> Unit,
+    showAccountLinkedDialog: Boolean = false,
+    onAccountLinkedDialogDismiss: () -> Unit = {},
     model: KompaktLinkedAccountModel = hiltViewModel(
         creationCallback = { factory: KompaktLinkedAccountModel.Factory ->
             factory.create(account)
@@ -247,19 +248,39 @@ fun KompaktLinkedAccountScreen(
     if (showUnlinkDialog) {
         KompaktDialog(
             onDismissRequest = { showUnlinkDialog = false },
-            title = stringResource(R.string.kompakt_linkedaccount_unlink_dialog_title),
-            text = stringResource(R.string.kompakt_linkedaccount_unlink_dialog_message),
+            title = stringResource(R.string.calendar_accountsync_dialog_h1_unlinkaccount),
+            text = stringResource(R.string.calendar_accountsync_dialog_body_thiswillremoveanythingimportedfrom),
             icon = painterResource(R.drawable.ic_kompakt_alert),
             confirm = KompaktDialogAction(
-                label = stringResource(R.string.kompakt_linkedaccount_unlink_dialog_confirm),
+                label = stringResource(R.string.calendar_accountsync_dialog_button_unlink),
                 onClick = {
                     showUnlinkDialog = false
                     model.unlink()
                 }
             ),
             dismiss = KompaktDialogAction(
-                label = stringResource(R.string.kompakt_linkedaccount_unlink_dialog_cancel),
+                label = stringResource(R.string.common_dialog_button_cancel),
                 onClick = { showUnlinkDialog = false }
+            )
+        )
+    }
+
+    if (showAccountLinkedDialog) {
+        KompaktDialog(
+            onDismissRequest = onAccountLinkedDialogDismiss,
+            title = stringResource(R.string.calendar_accountsync_dialog_h1_accountlinked),
+            text = stringResource(R.string.calendar_accountsync_dialog_body_csyncnowtoimportyour, model.email),
+            icon = painterResource(R.drawable.ic_kompakt_success),
+            confirm = KompaktDialogAction(
+                label = stringResource(R.string.calendar_accountsync_dialog_button_syncnow),
+                onClick = {
+                    onAccountLinkedDialogDismiss()
+                    model.syncNow()
+                }
+            ),
+            dismiss = KompaktDialogAction(
+                label = stringResource(R.string.common_dialog_button_later),
+                onClick = onAccountLinkedDialogDismiss
             )
         )
     }

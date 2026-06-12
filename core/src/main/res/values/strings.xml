@@ -605,14 +605,17 @@
     <string name="common_label_or">Or</string>
     <string name="calendar_accountsync_button_synchronizenow">Synchronize now</string>
     <string name="calendar_accountsync_label_lastsynchronization">Last synchronization</string>
+    <string name="calendar_accountsync_dialog_h1_unlinkaccount">Unlink account?</string>
+    <string name="calendar_accountsync_dialog_body_thiswillremoveanythingimportedfrom">This will remove anything imported from your Google account</string>
+    <string name="calendar_accountsync_dialog_button_unlink">Unlink</string>
+    <string name="common_dialog_button_cancel">Cancel</string>
+    <string name="calendar_accountsync_dialog_h1_accountlinked">Account linked</string>
+    <string name="calendar_accountsync_dialog_body_csyncnowtoimportyour">Sync now to import your events to %s</string>
+    <string name="calendar_accountsync_dialog_button_syncnow">Sync now</string>
+    <string name="common_dialog_button_later">Later</string>
 
-    <string name="kompakt_linkedaccount_never_synced">—</string>
+    <string name="kompakt_linkedaccount_never_synced">Not synced yet</string>
     <string name="kompakt_linkedaccount_unlink">Unlink account</string>
-    <string name="kompakt_linkedaccount_unlink_dialog_title">Unlink account?</string>
-    <string name="kompakt_linkedaccount_unlink_dialog_message">This will remove anything imported from your Google account</string>
-    <string name="kompakt_linkedaccount_unlink_dialog_confirm">Unlink</string>
-    <string name="kompakt_linkedaccount_unlink_dialog_cancel">Cancel</string>
 
     <!-- cert4android -->
-
 </resources>

@@ -4,6 +4,10 @@
 
 package at.bitfire.davdroid.ui
 
+import android.app.Activity
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,8 +25,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -31,6 +39,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.ui.composable.KompaktTheme
+import at.bitfire.davdroid.ui.setup.KompaktLoginActivity
 import com.mudita.mmd.components.buttons.ButtonMMD
 import com.mudita.mmd.components.text.TextMMD
 import com.mudita.mmd.components.top_app_bar.TopAppBarMMD
@@ -45,7 +54,6 @@ import com.mudita.mmd.components.top_app_bar.TopAppBarMMD
 fun KompaktAccountsScreen(
     initialSyncAccounts: Boolean,
     accountsDrawerHandler: AccountsDrawerHandler,
-    onAddAccount: () -> Unit,
     onBack: () -> Unit,
     model: AccountsViewModel = hiltViewModel(
         creationCallback = { factory: AccountsViewModel.Factory ->
@@ -53,13 +61,34 @@ fun KompaktAccountsScreen(
         }
     )
 ) {
+    val context = LocalContext.current
     val accounts by model.accountInfos.collectAsStateWithLifecycle(emptyList())
     val account = accounts.firstOrNull()?.name
+
+    // Set when the Kompakt login flow returns successfully, so the "Account linked" modal is shown
+    // once on top of the linked-account detail screen. Survives the recomposition that happens while
+    // the accounts flow catches up with the newly created account.
+    var justLinked by rememberSaveable { mutableStateOf(false) }
+
+    val loginLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK)
+            justLinked = true
+    }
+    val onAddAccount = {
+        loginLauncher.launch(Intent(context, KompaktLoginActivity::class.java))
+    }
 
     if (account == null)
         KompaktLinkAccountScreen(onAddAccount = onAddAccount)
     else
-        KompaktLinkedAccountScreen(account = account, onBack = onBack)
+        KompaktLinkedAccountScreen(
+            account = account,
+            onBack = onBack,
+            showAccountLinkedDialog = justLinked,
+            onAccountLinkedDialogDismiss = { justLinked = false }
+        )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

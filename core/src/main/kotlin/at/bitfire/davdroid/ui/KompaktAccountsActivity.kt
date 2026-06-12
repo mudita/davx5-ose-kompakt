@@ -8,7 +8,6 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import at.bitfire.davdroid.ui.setup.LoginActivity
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -27,9 +26,6 @@ class KompaktAccountsActivity : AppCompatActivity() {
             KompaktAccountsScreen(
                 initialSyncAccounts = syncAccounts,
                 accountsDrawerHandler = accountsDrawerHandler,
-                onAddAccount = {
-                    startActivity(Intent(this, LoginActivity::class.java))
-                },
                 onBack = ::finish
             )
         }
