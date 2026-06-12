@@ -25,6 +25,7 @@ import at.bitfire.davdroid.ui.KompaktTypography500
 import at.bitfire.davdroid.ui.KompaktTypography900
 import com.mudita.mmd.ThemeMMD
 import com.mudita.mmd.components.bottom_sheet.ModalBottomSheetMMD
+import com.mudita.mmd.components.bottom_sheet.rememberModalBottomSheetMMDState
 import com.mudita.mmd.components.buttons.ButtonMMD
 import com.mudita.mmd.components.buttons.OutlinedButtonMMD
 import com.mudita.mmd.components.text.TextMMD
@@ -60,6 +61,7 @@ fun KompaktModalSheet(
     ThemeMMD {
         ModalBottomSheetMMD(
             onDismissRequest = onDismissRequest,
+            sheetState = rememberModalBottomSheetMMDState(skipPartiallyExpanded = true),
             containerColor = MaterialTheme.colorScheme.background
         ) {
             Column(

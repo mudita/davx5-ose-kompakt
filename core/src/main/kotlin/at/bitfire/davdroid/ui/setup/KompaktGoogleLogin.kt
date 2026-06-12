@@ -7,16 +7,29 @@ package at.bitfire.davdroid.ui.setup
 import android.content.ActivityNotFoundException
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import at.bitfire.davdroid.R
+import at.bitfire.davdroid.ui.KompaktTypography900
+import at.bitfire.davdroid.ui.composable.KompaktFramedIcon
+import com.mudita.mmd.components.buttons.ButtonMMD
+import com.mudita.mmd.components.progress_indicator.CircularProgressIndicatorMMD
+import com.mudita.mmd.components.text.TextMMD
 import java.util.logging.Level
 import java.util.logging.Logger
 
@@ -49,11 +62,6 @@ object KompaktGoogleLogin : LoginType {
             }
         }
 
-        LaunchedEffect(uiState.error) {
-            if (uiState.error != null)
-                snackbarHostState.showSnackbar(uiState.error)
-        }
-
         val authRequestContract = rememberLauncherForActivityResult(model.authorizationContract()) { authResponse ->
             if (authResponse != null)
                 model.authenticate(authResponse)
@@ -61,7 +69,7 @@ object KompaktGoogleLogin : LoginType {
                 model.authCodeFailed()
         }
 
-        LaunchedEffect(Unit) {
+        val launchSignIn = {
             try {
                 authRequestContract.launch(model.signIn())
             } catch (e: ActivityNotFoundException) {
@@ -70,11 +78,52 @@ object KompaktGoogleLogin : LoginType {
             }
         }
 
+        LaunchedEffect(Unit) {
+            launchSignIn()
+        }
+
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
         ) {
-            CircularProgressIndicator()
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                KompaktFramedIcon(painter = painterResource(R.drawable.ic_google_g))
+
+                if (uiState.error != null) {
+                    // authorization failed (e.g. user cancelled, no browser, token exchange error):
+                    // show a message and let the user retry the whole sign-in
+                    TextMMD(
+                        text = stringResource(R.string.kompakt_login_failed),
+                        style = KompaktTypography900.labelMedium,
+                        textAlign = TextAlign.Center
+                    )
+                    ButtonMMD(
+                        onClick = {
+                            model.clearError()
+                            launchSignIn()
+                        },
+                        modifier = Modifier.height(48.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        TextMMD(
+                            text = stringResource(R.string.common_dialog_button_tryagain),
+                            style = KompaktTypography900.labelMedium
+                        )
+                    }
+                } else {
+                    TextMMD(
+                        text = stringResource(R.string.kompakt_login_connecting),
+                        style = KompaktTypography900.labelMedium,
+                        textAlign = TextAlign.Center
+                    )
+                    CircularProgressIndicatorMMD(size = 24.dp)
+                }
+            }
         }
     }
 

@@ -5,23 +5,16 @@
 package at.bitfire.davdroid.ui.setup
 
 import android.accounts.Account
-import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Help
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,15 +24,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
-import at.bitfire.davdroid.ui.ExternalUris
-import at.bitfire.davdroid.ui.ExternalUris.withStatParams
-import at.bitfire.davdroid.ui.composable.AppTheme
+import at.bitfire.davdroid.ui.KompaktTypography900
+import at.bitfire.davdroid.ui.composable.KompaktTheme
+import com.mudita.mmd.components.progress_indicator.CircularProgressIndicatorMMD
+import com.mudita.mmd.components.text.TextMMD
+import com.mudita.mmd.components.top_app_bar.TopAppBarMMD
 
 /**
  * Kompakt variant of [LoginScreen].
@@ -90,12 +85,8 @@ fun KompaktLoginScreen(
         accountState.createdAccount?.let(onFinish)
     }
 
-    // get specific help URL from current login type (may be null → show "tested with" page)
-    val loginType = model.loginTypeUiState.loginType
-
     KompaktLoginScreenContent(
         page = model.page,
-        helpUri = loginType.helpUrl,
         // fall back to the editable details form only if automatic creation failed
         showAccountDetailsForm = accountState.couldNotCreateAccount,
         onNavUp = onNavUp,
@@ -107,37 +98,27 @@ fun KompaktLoginScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun KompaktLoginScreenContent(
     page: LoginScreenViewModel.Page,
-    helpUri: Uri?,
     showAccountDetailsForm: Boolean,
     onNavUp: () -> Unit = {},
     onFinish: (newAccount: Account?) -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    AppTheme {
+    KompaktTheme {
         Scaffold(
             topBar = {
-                TopAppBar(
+                TopAppBarMMD(
+                    title = {
+                        TextMMD(
+                            text = stringResource(R.string.kompakt_login_title),
+                            style = KompaktTypography900.titleMedium
+                        )
+                    },
                     navigationIcon = {
                         IconButton(onClick = onNavUp) {
                             Icon(
-                                Icons.AutoMirrored.Default.ArrowBack,
-                                stringResource(R.string.navigate_up)
+                                painter = painterResource(R.drawable.ic_kompakt_arrow_left),
+                                contentDescription = stringResource(R.string.navigate_up)
                             )
-                        }
-                    },
-                    title = {
-                        Text(stringResource(R.string.login_title))
-                    },
-                    actions = {
-                        val specificHelpUri = helpUri ?: ExternalUris.Homepage.baseUrl.buildUpon()
-                            .appendPath(ExternalUris.Homepage.PATH_TESTED_SERVICES)
-                            .withStatParams(LocalContext.current, "LoginScreen")
-                            .build()
-                        val uriHandler = LocalUriHandler.current
-                        IconButton(onClick = {
-                            uriHandler.openUri(specificHelpUri.toString())
-                        }) {
-                            Icon(Icons.AutoMirrored.Default.Help, stringResource(R.string.help))
                         }
                     }
                 )
@@ -158,7 +139,7 @@ private fun KompaktLoginScreenContent(
                         LoginDetailsPage(snackbarHostState = snackbarHostState)
 
                     LoginScreenViewModel.Page.DetectResources ->
-                        DetectResourcesPage()
+                        KompaktDetectResourcesPage()
 
                     LoginScreenViewModel.Page.AccountDetails ->
                         if (showAccountDetailsForm)
@@ -173,7 +154,7 @@ private fun KompaktLoginScreenContent(
                                 Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                CircularProgressIndicator()
+                                CircularProgressIndicatorMMD(size = 24.dp)
                             }
                 }
 

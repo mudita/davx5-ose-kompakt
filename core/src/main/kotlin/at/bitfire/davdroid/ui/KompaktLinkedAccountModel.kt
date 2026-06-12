@@ -12,6 +12,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import at.bitfire.davdroid.db.Collection
+import at.bitfire.davdroid.db.Service
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
 import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.repository.DavCollectionRepository
@@ -84,7 +85,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     companion object {
         /** sync interval (seconds) that the "Auto synchronization" toggle enables: once a day */
-        const val AUTO_SYNC_INTERVAL_SECONDS = 86400L
+        const val AUTO_SYNC_INTERVAL_SECONDS = 60L
 
         /** AccountManager userData flag marking that Kompakt init defaults have been applied for this account */
         const val KEY_DEFAULTS_APPLIED = "kompakt_defaults_applied"
@@ -315,6 +316,11 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     fun syncNow() {
         viewModelScope.launch(ioDispatcher) {
+            // Make sure the primary calendar is selected for sync before enqueuing. The init defaults
+            // do this asynchronously, but right after linking the user may tap "Sync now" before that
+            // ran — and a sync only processes collections with sync=true, so it would sync nothing.
+            ensureDefaultsApplied()
+
             // manual syncs skip the worker's network checks, so guard here: no internet → show message,
             // don't start a sync that would only fail
             val accountSettings = accountSettingsFactory.create(account)
@@ -325,6 +331,14 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             armed = true            // watch the resulting sync for success/failure feedback
             syncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)
         }
+    }
+
+    /** Applies the Kompakt init defaults now (selecting the primary calendar) if they haven't been yet. */
+    private suspend fun ensureDefaultsApplied() {
+        if (defaultsApplied())
+            return
+        val service = serviceRepository.getByAccountAndType(account.name, Service.TYPE_CALDAV) ?: return
+        maybeApplyDefaults(service.id)
     }
 
     fun unlink() {

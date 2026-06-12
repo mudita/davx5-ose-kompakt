@@ -624,6 +624,11 @@
     <string name="common_label_nointernetconnection">No internet connection</string>
     <string name="common_error_body_opensettingstocheck">Open settings to check data and Wi-Fi are switched on</string>
     <!-- missing frontitude keys -->
+    <string name="kompakt_login_title">Link account</string>
+    <string name="kompakt_login_connecting">Connecting to Google…</string>
+    <string name="kompakt_login_failed">Couldn\'t connect to Google</string>
+    <string name="kompakt_login_configuring">Setting up your account…</string>
+    <string name="kompakt_login_setup_failed">Couldn\'t set up your account</string>
     <string name="kompakt_linkedaccount_never_synced">Not synced yet</string>
     <string name="kompakt_linkedaccount_unlink">Unlink account</string>
 

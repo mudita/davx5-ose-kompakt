@@ -141,6 +141,10 @@ class KompaktGoogleLoginViewModel @AssistedInject constructor(
         uiState = uiState.copy(result = null)
     }
 
+    fun clearError() {
+        uiState = uiState.copy(error = null)
+    }
+
     private fun findGoogleAccount(): String? {
         val accountManager = AccountManager.get(context)
         return accountManager
