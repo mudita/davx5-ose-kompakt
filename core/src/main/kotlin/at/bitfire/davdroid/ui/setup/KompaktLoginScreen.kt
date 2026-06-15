@@ -32,9 +32,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.ui.KompaktTypography900
 import at.bitfire.davdroid.ui.composable.KompaktTheme
+import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
 import com.mudita.mmd.components.progress_indicator.CircularProgressIndicatorMMD
 import com.mudita.mmd.components.text.TextMMD
-import com.mudita.mmd.components.top_app_bar.TopAppBarMMD
 
 /**
  * Kompakt variant of [LoginScreen].
@@ -106,7 +106,7 @@ private fun KompaktLoginScreenContent(
     KompaktTheme {
         Scaffold(
             topBar = {
-                TopAppBarMMD(
+                KompaktTopAppBar(
                     title = {
                         TextMMD(
                             text = stringResource(R.string.kompakt_login_title),

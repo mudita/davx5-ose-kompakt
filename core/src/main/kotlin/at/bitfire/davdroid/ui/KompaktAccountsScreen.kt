@@ -39,7 +39,7 @@ import at.bitfire.davdroid.ui.composable.KompaktTheme
 import at.bitfire.davdroid.ui.setup.KompaktLoginActivity
 import com.mudita.mmd.components.buttons.ButtonMMD
 import com.mudita.mmd.components.text.TextMMD
-import com.mudita.mmd.components.top_app_bar.TopAppBarMMD
+import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
 
 /**
  * Kompakt account entry screen.
@@ -95,7 +95,7 @@ private fun KompaktLinkAccountScreen(
     KompaktTheme {
         Scaffold(
             topBar = {
-                TopAppBarMMD(
+                KompaktTopAppBar(
                     title = {
                         TextMMD(
                             text = stringResource(R.string.common_label_linkedaccount),

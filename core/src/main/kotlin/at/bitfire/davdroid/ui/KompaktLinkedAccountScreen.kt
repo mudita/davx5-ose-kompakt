@@ -51,11 +51,11 @@ import at.bitfire.davdroid.ui.composable.KompaktListCell
 import at.bitfire.davdroid.ui.composable.KompaktMessageSheet
 import at.bitfire.davdroid.ui.composable.KompaktModalSheet
 import at.bitfire.davdroid.ui.composable.KompaktTheme
+import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
 import com.mudita.mmd.components.buttons.OutlinedButtonMMD
 import com.mudita.mmd.components.progress_indicator.CircularProgressIndicatorMMD
 import com.mudita.mmd.components.switcher.SwitchMMD
 import com.mudita.mmd.components.text.TextMMD
-import com.mudita.mmd.components.top_app_bar.TopAppBarMMD
 
 /**
  * Stateful entry point for the Kompakt "Linked Account" detail screen: collects the view model state
@@ -135,7 +135,7 @@ fun KompaktLinkedAccountContent(
     KompaktTheme {
         Scaffold(
             topBar = {
-                TopAppBarMMD(
+                KompaktTopAppBar(
                     title = {
                         TextMMD(
                             text = stringResource(R.string.common_label_linkedaccount),

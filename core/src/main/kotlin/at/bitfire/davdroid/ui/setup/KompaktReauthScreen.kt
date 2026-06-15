@@ -26,8 +26,8 @@ import at.bitfire.davdroid.R
 import at.bitfire.davdroid.settings.Credentials
 import at.bitfire.davdroid.ui.KompaktTypography900
 import at.bitfire.davdroid.ui.composable.KompaktTheme
+import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
 import com.mudita.mmd.components.text.TextMMD
-import com.mudita.mmd.components.top_app_bar.TopAppBarMMD
 
 /**
  * Kompakt re-authorization screen: runs the Google OAuth flow for an EXISTING [account] and writes the
@@ -53,7 +53,7 @@ fun KompaktReauthScreen(
     KompaktTheme {
         Scaffold(
             topBar = {
-                TopAppBarMMD(
+                KompaktTopAppBar(
                     title = {
                         TextMMD(
                             text = stringResource(R.string.kompakt_login_title),
