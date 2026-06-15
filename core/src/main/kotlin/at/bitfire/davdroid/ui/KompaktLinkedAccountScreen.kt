@@ -5,6 +5,9 @@
 package at.bitfire.davdroid.ui
 
 import android.accounts.Account
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -39,6 +43,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.ui.KompaktLinkedAccountModel.SyncResult
+import at.bitfire.davdroid.ui.setup.KompaktLoginActivity
 import at.bitfire.davdroid.ui.composable.KompaktBottomBar
 import at.bitfire.davdroid.ui.composable.KompaktDottedDivider
 import at.bitfire.davdroid.ui.composable.KompaktFramedIcon
@@ -74,6 +79,18 @@ fun KompaktLinkedAccountScreen(
     val syncResult by model.syncResult.collectAsStateWithLifecycle()
     val showNoInternet by model.showNoInternet.collectAsStateWithLifecycle()
 
+    // re-authorize the existing account in place (refresh OAuth token, keeping all local data)
+    val context = LocalContext.current
+    val reauthLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { /* nothing to do: KompaktReauthModel persisted the token and enqueued a sync */ }
+    val onReauthorize = {
+        reauthLauncher.launch(
+            Intent(context, KompaktLoginActivity::class.java)
+                .putExtra(KompaktLoginActivity.EXTRA_REAUTH_ACCOUNT_NAME, account.name)
+        )
+    }
+
     KompaktLinkedAccountContent(
         email = model.email,
         autoSyncEnabled = autoSyncEnabled,
@@ -88,7 +105,8 @@ fun KompaktLinkedAccountScreen(
         onUnlink = model::unlink,
         onConsumeSyncResult = model::consumeSyncResult,
         onDismissNoInternet = model::consumeNoInternet,
-        onAccountLinkedDialogDismiss = onAccountLinkedDialogDismiss
+        onAccountLinkedDialogDismiss = onAccountLinkedDialogDismiss,
+        onReauthorize = onReauthorize
     )
 }
 
@@ -108,7 +126,8 @@ fun KompaktLinkedAccountContent(
     onUnlink: () -> Unit,
     onConsumeSyncResult: () -> Unit,
     onDismissNoInternet: () -> Unit,
-    onAccountLinkedDialogDismiss: () -> Unit
+    onAccountLinkedDialogDismiss: () -> Unit,
+    onReauthorize: () -> Unit
 ) {
     var showUnlinkDialog by remember { mutableStateOf(false) }
     var showDisableAutoSyncDialog by remember { mutableStateOf(false) }
@@ -298,6 +317,29 @@ fun KompaktLinkedAccountContent(
         )
     }
 
+    if (syncResult == SyncResult.AuthFailure) {
+        // token expired / access revoked: offer re-linking, or unlink and go back to the home screen
+        KompaktModalSheet(
+            onDismissRequest = {
+                onConsumeSyncResult()
+                onUnlink()
+            },
+            title = stringResource(R.string.calendar_accountsync_error_dialog_h1_accountnotlinked),
+            text = stringResource(R.string.calendar_accountsync_error_dialog_body_thetokenexpiredso),
+            icon = painterResource(R.drawable.ic_kompakt_alert),
+            confirmLabel = stringResource(R.string.calendar_accountsync_dialog_button_linkaccount),
+            onConfirm = {
+                onConsumeSyncResult()
+                onReauthorize()     // re-authorize in place; keeps the account and its local data
+            },
+            dismissLabel = stringResource(R.string.common_dialog_button_cancel),
+            onDismiss = {
+                onConsumeSyncResult()
+                onUnlink()          // user chose to remove the account
+            }
+        )
+    }
+
     if (showNoInternet) {
         KompaktMessageSheet(
             onDismissRequest = onDismissNoInternet,
@@ -396,7 +438,8 @@ private fun KompaktLinkedAccountContent_Idle_Preview() {
         onUnlink = {},
         onConsumeSyncResult = {},
         onDismissNoInternet = {},
-        onAccountLinkedDialogDismiss = {}
+        onAccountLinkedDialogDismiss = {},
+        onReauthorize = {}
     )
 }
 
@@ -417,7 +460,8 @@ private fun KompaktLinkedAccountContent_Syncing_Preview() {
         onUnlink = {},
         onConsumeSyncResult = {},
         onDismissNoInternet = {},
-        onAccountLinkedDialogDismiss = {}
+        onAccountLinkedDialogDismiss = {},
+        onReauthorize = {}
     )
 }
 
@@ -438,6 +482,7 @@ private fun KompaktLinkedAccountContent_Success_Preview() {
         onUnlink = {},
         onConsumeSyncResult = {},
         onDismissNoInternet = {},
-        onAccountLinkedDialogDismiss = {}
+        onAccountLinkedDialogDismiss = {},
+        onReauthorize = {}
     )
 }

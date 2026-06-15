@@ -4,9 +4,11 @@
 
 package at.bitfire.davdroid.ui.setup
 
+import android.accounts.Account
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import at.bitfire.davdroid.R
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -23,8 +25,32 @@ class KompaktLoginActivity @Inject constructor() : AppCompatActivity() {
 
     @Inject lateinit var loginTypesProvider: LoginTypesProvider
 
+    companion object {
+        /**
+         * If set to an existing account name, the activity re-authorizes that account in place
+         * (refreshes the OAuth token, keeping all local data) instead of linking a new account.
+         */
+        const val EXTRA_REAUTH_ACCOUNT_NAME = "reauthAccountName"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val reauthAccountName = intent.getStringExtra(EXTRA_REAUTH_ACCOUNT_NAME)
+        if (reauthAccountName != null) {
+            val account = Account(reauthAccountName, getString(R.string.account_type))
+            setContent {
+                KompaktReauthScreen(
+                    account = account,
+                    onNavUp = { onSupportNavigateUp() },
+                    onFinish = {
+                        setResult(RESULT_OK)
+                        finish()
+                    }
+                )
+            }
+            return
+        }
 
         val (initialLoginType, skipLoginTypePage) = loginTypesProvider.intentToInitialLoginType(intent)
 

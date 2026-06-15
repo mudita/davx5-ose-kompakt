@@ -136,7 +136,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     // manual sync lifecycle (loading indicator / success snackbar / error dialog)
 
-    enum class SyncResult { Success, Failure }
+    enum class SyncResult { Success, Failure, AuthFailure }
 
     /** WorkInfos of the calendar (EVENTS) one-time sync worker for this account. */
     private val eventsSyncWorkInfos =
@@ -149,6 +149,16 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             workInfo.state == WorkInfo.State.ENQUEUED ||
             workInfo.state == WorkInfo.State.BLOCKED
     }
+
+    /**
+     * `true` if this finished sync recorded an authentication error (HTTP 401 / token revoked).
+     * Parses the [SyncResult] that BaseSyncWorker serializes into its output under the "syncresult"
+     * key; on any other failure or an unparseable output we fall back to a generic failure.
+     */
+    private fun WorkInfo.hadAuthError(): Boolean =
+        outputData.getString("syncresult")
+            ?.let { Regex("numAuthExceptions=(\\d+)").find(it)?.groupValues?.get(1)?.toLongOrNull() }
+            ?.let { it > 0 } == true
 
     /** `true` while a calendar sync is enqueued/running (drives the "Loading data…" indicator). */
     val syncing: StateFlow<Boolean> = eventsSyncWorkInfos
@@ -187,9 +197,12 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
                 if (infos.isSyncActive()) {
                     sawActive = true
                 } else if (sawActive) {
-                    _syncResult.value =
-                        if (infos.any { it.state == WorkInfo.State.FAILED }) SyncResult.Failure
-                        else SyncResult.Success
+                    val failed = infos.filter { it.state == WorkInfo.State.FAILED }
+                    _syncResult.value = when {
+                        failed.any { it.hadAuthError() } -> SyncResult.AuthFailure
+                        failed.isNotEmpty() -> SyncResult.Failure
+                        else -> SyncResult.Success
+                    }
                     armed = false
                     sawActive = false
                 }

@@ -623,6 +623,8 @@
     <string name="common_dialog_button_tryagain">Try again</string>
     <string name="common_label_nointernetconnection">No internet connection</string>
     <string name="common_error_body_opensettingstocheck">Open settings to check data and Wi-Fi are switched on</string>
+    <string name="calendar_accountsync_error_dialog_h1_accountnotlinked">Account not linked</string>
+    <string name="calendar_accountsync_error_dialog_body_thetokenexpiredso">The token expired so please link accounts again</string>
     <!-- missing frontitude keys -->
     <string name="kompakt_login_title">Link account</string>
     <string name="kompakt_login_connecting">Connecting to Google…</string>
