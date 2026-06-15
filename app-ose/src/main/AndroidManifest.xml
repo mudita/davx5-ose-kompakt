@@ -23,7 +23,8 @@
         <!-- Kompakt launcher replaces the core AccountsActivity as the entry point -->
         <activity
             android:name="at.bitfire.davdroid.ui.KompaktAccountsActivity"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.Kompakt.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
