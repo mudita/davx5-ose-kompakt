@@ -235,7 +235,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     private fun defaultsApplied(): Boolean =
         try {
             AccountManager.get(context).getUserData(account, KEY_DEFAULTS_APPLIED) == "1"
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // account may no longer exist
             true
         }

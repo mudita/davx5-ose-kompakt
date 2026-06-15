@@ -73,15 +73,6 @@ class KompaktGoogleLoginViewModel @AssistedInject constructor(
         )
     }
 
-    fun setEmail(email: String) {
-        uiState = uiState.copy(email = email)
-    }
-
-    fun setCustomClientId(clientId: String) {
-        uiState = uiState.copy(customClientId = clientId)
-    }
-
-
     fun authorizationContract() = OAuthIntegration.AuthorizationContract(authService)
 
     fun signIn() =

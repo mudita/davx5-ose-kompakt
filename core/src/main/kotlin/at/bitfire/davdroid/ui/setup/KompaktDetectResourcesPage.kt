@@ -43,7 +43,6 @@ fun KompaktDetectResourcesPage(
 ) {
     val uiState = model.detectResourcesUiState
     KompaktDetectResourcesPageContent(
-        loading = uiState.loading,
         failed = uiState.foundNothing || uiState.loginValidationFailed,
         onRetry = model::navBack
     )
@@ -51,7 +50,6 @@ fun KompaktDetectResourcesPage(
 
 @Composable
 fun KompaktDetectResourcesPageContent(
-    loading: Boolean,
     failed: Boolean,
     onRetry: () -> Unit
 ) {
@@ -102,7 +100,7 @@ fun KompaktDetectResourcesPageContent(
 @Composable
 private fun KompaktDetectResourcesPage_Configuring_Preview() {
     KompaktTheme {
-        KompaktDetectResourcesPageContent(loading = true, failed = false, onRetry = {})
+        KompaktDetectResourcesPageContent(failed = false, onRetry = {})
     }
 }
 
@@ -110,6 +108,6 @@ private fun KompaktDetectResourcesPage_Configuring_Preview() {
 @Composable
 private fun KompaktDetectResourcesPage_Failed_Preview() {
     KompaktTheme {
-        KompaktDetectResourcesPageContent(loading = false, failed = true, onRetry = {})
+        KompaktDetectResourcesPageContent(failed = true, onRetry = {})
     }
 }

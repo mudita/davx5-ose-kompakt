@@ -6,12 +6,14 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:installLocation="internalOnly">
 
-    <application android:name=".App">
+    <application android:name=".App"
+            android:icon="@mipmap/ic_launcher">
 
         <!-- Remove the launcher intent filter from the core AccountsActivity -->
         <activity
             android:name="at.bitfire.davdroid.ui.AccountsActivity"
-            tools:node="merge">
+                android:exported="true"
+                tools:node="merge">
             <intent-filter tools:node="remove">
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>

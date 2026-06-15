@@ -25,7 +25,6 @@ class KompaktAccountsActivity : AppCompatActivity() {
         setContent {
             KompaktAccountsScreen(
                 initialSyncAccounts = syncAccounts,
-                accountsDrawerHandler = accountsDrawerHandler,
                 onBack = ::finish
             )
         }

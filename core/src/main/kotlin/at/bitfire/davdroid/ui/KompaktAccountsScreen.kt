@@ -50,7 +50,6 @@ import com.mudita.mmd.components.top_app_bar.TopAppBarMMD
 @Composable
 fun KompaktAccountsScreen(
     initialSyncAccounts: Boolean,
-    accountsDrawerHandler: AccountsDrawerHandler,
     onBack: () -> Unit,
     model: AccountsViewModel = hiltViewModel(
         creationCallback = { factory: AccountsViewModel.Factory ->
