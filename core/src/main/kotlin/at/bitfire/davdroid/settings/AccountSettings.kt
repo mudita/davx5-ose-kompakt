@@ -367,9 +367,7 @@ class AccountSettings @AssistedInject constructor(
         const val KEY_CERTIFICATE_ALIAS = "certificate_alias"
 
         const val CREDENTIALS_LOCK = "login_credentials_lock"
-        const val CREDENTIALS_LOCK_NO_LOCK = 0
-        const val CREDENTIALS_LOCK_AT_LOGIN = 1
-        const val CREDENTIALS_LOCK_AT_LOGIN_AND_SETTINGS = 2
+        const val CREDENTIALS_LOCK_AT_LOGIN_AND_SETTINGS = 0
 
         /** OAuth [AuthState] (serialized as JSON) */
         const val KEY_AUTH_STATE = "auth_state"

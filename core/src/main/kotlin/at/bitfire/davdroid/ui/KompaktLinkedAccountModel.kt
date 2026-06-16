@@ -306,15 +306,31 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }
 
     /**
-     * Selects the primary calendar for synchronization and enables automatic sync, exactly
-     * once per account. Returns `true` if the defaults are now applied (or were already), `false` if
-     * there are no calendars yet and the caller should retry later.
+     * Applies the Kompakt initialization defaults **once** per account, after collection discovery:
+     * selects the user's primary Google calendar for synchronization (and makes sure no other calendar
+     * is selected, so the initial state is exactly that single calendar) and enables automatic sync.
+     * The selection is not touched again afterwards.
+     *
+     * Returns `true` if the defaults are now applied (or were already), `false` if there are no
+     * calendars yet and the caller should retry later.
      */
     private suspend fun maybeApplyDefaults(serviceId: Long): Boolean = defaultsMutex.withLock {
         if (defaultsApplied())
             return true
+        val calendars = collectionRepository.getByService(serviceId)
+            .filter { it.type == Collection.TYPE_CALENDAR }
+        if (calendars.isEmpty())
+            return false
         val primaryId = findPrimaryCalendarId(serviceId) ?: return false
-        collectionRepository.setSync(primaryId, true)
+
+        // select only the primary calendar for sync
+        for (calendar in calendars) {
+            val shouldSync = calendar.id == primaryId
+            if (calendar.sync != shouldSync)
+                collectionRepository.setSync(calendar.id, shouldSync)
+        }
+
+        // enable automatic sync by default
         try {
             accountSettingsFactory.create(account).setSyncInterval(SyncDataType.EVENTS, AUTO_SYNC_INTERVAL_SECONDS)
         } catch (e: Exception) {

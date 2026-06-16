@@ -8,7 +8,6 @@ import android.accounts.Account
 import android.accounts.AccountManager
 import android.content.Context
 import android.os.Build
-import androidx.annotation.IntDef
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.CoroutineWorker
@@ -41,6 +40,7 @@ import java.util.Collections
 import java.util.logging.Level
 import java.util.logging.Logger
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 abstract class BaseSyncWorker(
     context: Context,
@@ -210,7 +210,7 @@ abstract class BaseSyncWorker(
                     // We block the SyncWorker here so that it won't be started by the sync framework immediately again.
                     // This should be replaced by proper work scheduling as soon as we don't depend on the sync framework anymore.
                     if (blockDuration > 0)
-                        delay(blockDuration * 1000)
+                        delay((blockDuration * 1000).milliseconds)
 
                     logger.warning("Retrying on soft error (attempt $runAttemptCount of $MAX_RUN_ATTEMPTS)")
                     return Result.retry()
@@ -268,8 +268,6 @@ abstract class BaseSyncWorker(
 
         /** Whether re-synchronization is requested. One of [NO_RESYNC] (default), [RESYNC_LIST] or [RESYNC_ENTRIES]. */
         internal const val INPUT_RESYNC = "resync"
-        @IntDef(NO_RESYNC, RESYNC_LIST, RESYNC_ENTRIES)
-        annotation class InputResync
         internal const val NO_RESYNC = 0
         /** Re-synchronization is requested. See [ResyncType.RESYNC_LIST] for details. */
         internal const val RESYNC_LIST = 1
