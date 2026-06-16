@@ -78,12 +78,16 @@ fun KompaktLinkedAccountScreen(
     val syncing by model.syncing.collectAsStateWithLifecycle()
     val syncResult by model.syncResult.collectAsStateWithLifecycle()
     val showNoInternet by model.showNoInternet.collectAsStateWithLifecycle()
+    val needsReauth by model.needsReauth.collectAsStateWithLifecycle()
 
     // re-authorize the existing account in place (refresh OAuth token, keeping all local data)
     val context = LocalContext.current
     val reauthLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
-    ) { /* nothing to do: KompaktReauthModel persisted the token and enqueued a sync */ }
+    ) {
+        // re-read the persisted flag: cleared if re-auth succeeded, still set if it was aborted/failed
+        model.reloadNeedsReauth()
+    }
     val onReauthorize = {
         reauthLauncher.launch(
             Intent(context, KompaktLoginActivity::class.java)
@@ -98,6 +102,7 @@ fun KompaktLinkedAccountScreen(
         syncing = syncing,
         syncResult = syncResult,
         showNoInternet = showNoInternet,
+        showAuthError = needsReauth,
         showAccountLinkedDialog = showAccountLinkedDialog,
         onBack = onBack,
         onToggleAutoSync = model::setAutoSync,
@@ -119,6 +124,7 @@ fun KompaktLinkedAccountContent(
     syncing: Boolean,
     syncResult: SyncResult?,
     showNoInternet: Boolean,
+    showAuthError: Boolean,
     showAccountLinkedDialog: Boolean,
     onBack: () -> Unit,
     onToggleAutoSync: (Boolean) -> Unit,
@@ -317,26 +323,18 @@ fun KompaktLinkedAccountContent(
         )
     }
 
-    if (syncResult == SyncResult.AuthFailure) {
-        // token expired / access revoked: offer re-linking, or unlink and go back to the home screen
+    if (showAuthError) {
+        // token expired / access revoked: persistent until re-auth succeeds. Offer re-linking
+        // (in place, keeping local data), or unlink and go back to the home screen.
         KompaktModalSheet(
-            onDismissRequest = {
-                onConsumeSyncResult()
-                onUnlink()
-            },
+            onDismissRequest = onUnlink,
             title = stringResource(R.string.calendar_accountsync_error_dialog_h1_accountnotlinked),
             text = stringResource(R.string.calendar_accountsync_error_dialog_body_thetokenexpiredso),
             icon = painterResource(R.drawable.ic_kompakt_alert),
             confirmLabel = stringResource(R.string.calendar_accountsync_dialog_button_linkaccount),
-            onConfirm = {
-                onConsumeSyncResult()
-                onReauthorize()     // re-authorize in place; keeps the account and its local data
-            },
+            onConfirm = onReauthorize,      // flag stays set; cleared on successful re-auth + reload
             dismissLabel = stringResource(R.string.common_dialog_button_cancel),
-            onDismiss = {
-                onConsumeSyncResult()
-                onUnlink()          // user chose to remove the account
-            }
+            onDismiss = onUnlink
         )
     }
 
@@ -431,6 +429,7 @@ private fun KompaktLinkedAccountContent_Idle_Preview() {
         syncing = false,
         syncResult = null,
         showNoInternet = false,
+        showAuthError = false,
         showAccountLinkedDialog = false,
         onBack = {},
         onToggleAutoSync = {},
@@ -453,6 +452,7 @@ private fun KompaktLinkedAccountContent_Syncing_Preview() {
         syncing = true,
         syncResult = null,
         showNoInternet = false,
+        showAuthError = false,
         showAccountLinkedDialog = false,
         onBack = {},
         onToggleAutoSync = {},
@@ -475,6 +475,7 @@ private fun KompaktLinkedAccountContent_Success_Preview() {
         syncing = false,
         syncResult = SyncResult.Success,
         showNoInternet = false,
+        showAuthError = false,
         showAccountLinkedDialog = false,
         onBack = {},
         onToggleAutoSync = {},

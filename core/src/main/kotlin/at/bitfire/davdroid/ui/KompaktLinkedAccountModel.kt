@@ -60,8 +60,8 @@ import java.util.logging.Logger
  * last synchronization time, and offers actions to toggle auto-sync, sync now and unlink the account.
  *
  * It also applies the Kompakt initialization defaults exactly once per account: after collection
- * discovery completes, the primary Google calendar is selected for synchronization while the account's
- * automatic sync stays manual (the user enables 24h auto-sync via the toggle).
+ * discovery completes, the primary Google calendar is selected for synchronization and automatic sync
+ * is enabled by default (the user can turn it off via the toggle).
  */
 @HiltViewModel(assistedFactory = KompaktLinkedAccountModel.Factory::class)
 class KompaktLinkedAccountModel @AssistedInject constructor(
@@ -89,6 +89,9 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
         /** AccountManager userData flag marking that Kompakt init defaults have been applied for this account */
         const val KEY_DEFAULTS_APPLIED = "kompakt_defaults_applied"
+
+        /** AccountManager userData flag marking that the account's OAuth token is invalid and needs re-authorization */
+        const val KEY_NEEDS_REAUTH = "kompakt_needs_reauth"
     }
 
     val email: String = account.name
@@ -136,7 +139,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     // manual sync lifecycle (loading indicator / success snackbar / error dialog)
 
-    enum class SyncResult { Success, Failure, AuthFailure }
+    enum class SyncResult { Success, Failure }
 
     /** WorkInfos of the calendar (EVENTS) one-time sync worker for this account. */
     private val eventsSyncWorkInfos =
@@ -185,26 +188,70 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         _showNoInternet.value = false
     }
 
+    /**
+     * `true` when the account's OAuth token is invalid and needs re-authorization. This is a
+     * *persistent* condition (stored in [KEY_NEEDS_REAUTH]) so the "Account not linked" dialog
+     * keeps showing across screen re-entries, aborted re-auth attempts and app restarts, until
+     * re-auth (or a successful sync) clears it.
+     */
+    private val _needsReauth = MutableStateFlow(readNeedsReauth())
+    val needsReauth: StateFlow<Boolean> = _needsReauth.asStateFlow()
+
+    private fun readNeedsReauth(): Boolean =
+        try {
+            AccountManager.get(context).getUserData(account, KEY_NEEDS_REAUTH) == "1"
+        } catch (_: Exception) {
+            false
+        }
+
+    private fun setNeedsReauthState(value: Boolean) {
+        _needsReauth.value = value
+        try {
+            AccountManager.get(context).setUserData(account, KEY_NEEDS_REAUTH, if (value) "1" else null)
+        } catch (e: Exception) {
+            logger.log(Level.WARNING, "Couldn't persist needsReauth for $account", e)
+        }
+    }
+
+    /** Re-read the persisted re-auth flag (call after returning from the re-auth flow). */
+    fun reloadNeedsReauth() {
+        _needsReauth.value = readNeedsReauth()
+    }
+
     init {
-        // Translate the EVENTS worker lifecycle into a one-shot Success/Failure result, but only for
-        // syncs the user started via syncNow() (armed). The flow also contains the previous finished
-        // sync's WorkInfo, so without arming we'd surface a stale result on screen open.
+        // Watch the EVENTS worker lifecycle. The persistent "needs re-auth" flag is updated on every
+        // observed sync (so background/auto syncs count too); the transient Success/Failure result is
+        // only surfaced for syncs the user started via syncNow() (armed). The flow also contains the
+        // previous finished sync's WorkInfo, so we only react after seeing the sync go active first.
         viewModelScope.launch {
             var sawActive = false
             eventsSyncWorkInfos.collect { infos ->
-                if (!armed)
-                    return@collect
                 if (infos.isSyncActive()) {
                     sawActive = true
-                } else if (sawActive) {
-                    val failed = infos.filter { it.state == WorkInfo.State.FAILED }
+                    return@collect
+                }
+                if (!sawActive)
+                    return@collect
+                sawActive = false
+
+                val failed = infos.filter { it.state == WorkInfo.State.FAILED }
+                val authError = failed.any { it.hadAuthError() }
+                val success = failed.isEmpty()
+
+                // persistent: token bad / good again
+                if (authError)
+                    setNeedsReauthState(true)
+                else if (success)
+                    setNeedsReauthState(false)
+
+                // transient user-facing result (auth errors are shown via the persistent needsReauth dialog)
+                if (armed) {
                     _syncResult.value = when {
-                        failed.any { it.hadAuthError() } -> SyncResult.AuthFailure
-                        failed.isNotEmpty() -> SyncResult.Failure
-                        else -> SyncResult.Success
+                        success -> SyncResult.Success
+                        authError -> null
+                        else -> SyncResult.Failure
                     }
                     armed = false
-                    sawActive = false
                 }
             }
         }
@@ -262,7 +309,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }
 
     /**
-     * Selects the primary calendar for synchronization and sets the account to manual sync, exactly
+     * Selects the primary calendar for synchronization and enables automatic sync, exactly
      * once per account. Returns `true` if the defaults are now applied (or were already), `false` if
      * there are no calendars yet and the caller should retry later.
      */
@@ -272,11 +319,11 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         val primaryId = findPrimaryCalendarId(serviceId) ?: return false
         collectionRepository.setSync(primaryId, true)
         try {
-            accountSettingsFactory.create(account).setSyncInterval(SyncDataType.EVENTS, null)
+            accountSettingsFactory.create(account).setSyncInterval(SyncDataType.EVENTS, AUTO_SYNC_INTERVAL_SECONDS)
         } catch (e: Exception) {
-            logger.log(Level.WARNING, "Couldn't set manual sync for $account", e)
+            logger.log(Level.WARNING, "Couldn't set automatic sync for $account", e)
         }
-        _autoSyncEnabled.value = false
+        _autoSyncEnabled.value = true
         markDefaultsApplied()
         true
     }

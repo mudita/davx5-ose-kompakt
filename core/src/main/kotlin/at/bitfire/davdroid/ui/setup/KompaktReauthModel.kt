@@ -5,12 +5,16 @@
 package at.bitfire.davdroid.ui.setup
 
 import android.accounts.Account
+import android.accounts.AccountManager
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
 import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.sync.worker.SyncWorkerManager
+import at.bitfire.davdroid.ui.KompaktLinkedAccountModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +33,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class KompaktReauthModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val accountSettingsFactory: AccountSettings.Factory,
     private val syncWorkerManager: SyncWorkerManager,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
@@ -57,6 +62,8 @@ class KompaktReauthModel @Inject constructor(
 
                 else -> try {
                     accountSettingsFactory.create(account).updateAuthState(authState)
+                    // token is valid again: clear the persistent "needs re-auth" flag
+                    AccountManager.get(context).setUserData(account, KompaktLinkedAccountModel.KEY_NEEDS_REAUTH, null)
                     syncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)
                 } catch (e: Exception) {
                     logger.log(Level.WARNING, "Couldn't store re-authorized credentials for $account", e)
