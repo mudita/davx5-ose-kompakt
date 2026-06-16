@@ -5,6 +5,7 @@
 package at.bitfire.davdroid.sync.worker
 
 import android.accounts.Account
+import android.accounts.AccountManager
 import android.content.Context
 import android.os.Build
 import androidx.annotation.IntDef
@@ -176,6 +177,20 @@ abstract class BaseSyncWorker(
 
         // Start syncing
         syncer()
+
+        // Kompakt: persist (across process restarts) whether the account's OAuth token needs
+        // re-authorization, so the linked-account screen can show the re-auth dialog immediately on
+        // app entry — even when the failing sync was a background/periodic one (whose WorkInfo output
+        // isn't retained). Set on HTTP 401, cleared on a clean sync.
+        if (dataType == SyncDataType.EVENTS) {
+            val accountManager = AccountManager.get(applicationContext)
+            when {
+                syncResult.numAuthExceptions > 0 ->
+                    accountManager.setUserData(account, AccountSettings.KEY_NEEDS_REAUTH, "1")
+                !syncResult.hasError() ->
+                    accountManager.setUserData(account, AccountSettings.KEY_NEEDS_REAUTH, null)
+            }
+        }
 
         // convert SyncResult from Syncers to worker Data
         val output = Data.Builder()

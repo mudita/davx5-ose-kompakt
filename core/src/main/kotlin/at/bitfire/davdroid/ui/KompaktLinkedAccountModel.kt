@@ -89,9 +89,6 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
         /** AccountManager userData flag marking that Kompakt init defaults have been applied for this account */
         const val KEY_DEFAULTS_APPLIED = "kompakt_defaults_applied"
-
-        /** AccountManager userData flag marking that the account's OAuth token is invalid and needs re-authorization */
-        const val KEY_NEEDS_REAUTH = "kompakt_needs_reauth"
     }
 
     val email: String = account.name
@@ -190,7 +187,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     /**
      * `true` when the account's OAuth token is invalid and needs re-authorization. This is a
-     * *persistent* condition (stored in [KEY_NEEDS_REAUTH]) so the "Account not linked" dialog
+     * *persistent* condition (stored in [AccountSettings.KEY_NEEDS_REAUTH]) so the "Account not linked" dialog
      * keeps showing across screen re-entries, aborted re-auth attempts and app restarts, until
      * re-auth (or a successful sync) clears it.
      */
@@ -199,7 +196,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     private fun readNeedsReauth(): Boolean =
         try {
-            AccountManager.get(context).getUserData(account, KEY_NEEDS_REAUTH) == "1"
+            AccountManager.get(context).getUserData(account, AccountSettings.KEY_NEEDS_REAUTH) == "1"
         } catch (_: Exception) {
             false
         }
@@ -207,7 +204,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     private fun setNeedsReauthState(value: Boolean) {
         _needsReauth.value = value
         try {
-            AccountManager.get(context).setUserData(account, KEY_NEEDS_REAUTH, if (value) "1" else null)
+            AccountManager.get(context).setUserData(account, AccountSettings.KEY_NEEDS_REAUTH, if (value) "1" else null)
         } catch (e: Exception) {
             logger.log(Level.WARNING, "Couldn't persist needsReauth for $account", e)
         }

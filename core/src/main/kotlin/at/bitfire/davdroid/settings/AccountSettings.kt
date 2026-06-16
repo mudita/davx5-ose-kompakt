@@ -374,6 +374,9 @@ class AccountSettings @AssistedInject constructor(
         /** OAuth [AuthState] (serialized as JSON) */
         const val KEY_AUTH_STATE = "auth_state"
 
+        /** Kompakt: `"1"` if the account's OAuth token is invalid and needs re-authorization (set by sync on HTTP 401) */
+        const val KEY_NEEDS_REAUTH = "kompakt_needs_reauth"
+
         const val KEY_PRECONFIGURATION_URL = "preconfiguration_url"
 
         const val KEY_WIFI_ONLY = "wifi_only"               // sync on WiFi only (default: false)

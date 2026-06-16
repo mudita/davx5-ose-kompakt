@@ -40,6 +40,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.ui.KompaktLinkedAccountModel.SyncResult
@@ -79,6 +81,12 @@ fun KompaktLinkedAccountScreen(
     val syncResult by model.syncResult.collectAsStateWithLifecycle()
     val showNoInternet by model.showNoInternet.collectAsStateWithLifecycle()
     val needsReauth by model.needsReauth.collectAsStateWithLifecycle()
+
+    // re-read the persisted re-auth flag whenever the screen comes to the foreground, so a background
+    // sync that failed with an auth error while the app was away surfaces the dialog immediately
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        model.reloadNeedsReauth()
+    }
 
     // re-authorize the existing account in place (refresh OAuth token, keeping all local data)
     val context = LocalContext.current
