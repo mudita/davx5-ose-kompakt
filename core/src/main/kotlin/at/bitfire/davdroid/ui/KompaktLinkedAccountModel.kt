@@ -7,6 +7,11 @@ package at.bitfire.davdroid.ui
 import android.accounts.Account
 import android.accounts.AccountManager
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
+import androidx.core.content.getSystemService
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
@@ -34,6 +39,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -44,6 +51,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -101,6 +110,9 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
         /** Max time a user-initiated "Sync now" waits for collection discovery before giving up. */
         const val DISCOVERY_WAIT_MS = 30_000L
+
+        /** Grace period before treating "offline while syncing" as a lost connection (ignores brief blips). */
+        const val OFFLINE_GRACE_MS = 2_000L
     }
 
     val email: String = account.name
@@ -227,6 +239,22 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         _needsReauth.value = readNeedsReauth()
     }
 
+    /** Emits whether a usable (validated) network connection is currently available. */
+    private val networkAvailable = callbackFlow {
+        val connectivityManager = context.getSystemService<ConnectivityManager>()!!
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            val networks = hashSetOf<Network>()
+            override fun onAvailable(network: Network) { networks += network; trySend(networks.isNotEmpty()) }
+            override fun onLost(network: Network) { networks -= network; trySend(networks.isNotEmpty()) }
+        }
+        val request = NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+            .build()
+        connectivityManager.registerNetworkCallback(request, callback)
+        awaitClose { connectivityManager.unregisterNetworkCallback(callback) }
+    }
+
     init {
         // Watch the EVENTS worker lifecycle. The persistent "needs re-auth" flag is updated on every
         // observed sync (so background/auto syncs count too); the transient Success/Failure result is
@@ -245,24 +273,42 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
                 val failed = infos.filter { it.state == WorkInfo.State.FAILED }
                 val authError = failed.any { it.hadAuthError() }
-                val success = failed.isEmpty()
+                val succeeded = infos.any { it.state == WorkInfo.State.SUCCEEDED }
 
-                // persistent: token bad / good again
+                // persistent: token bad / good again (a cancelled worker is neither)
                 if (authError)
                     setNeedsReauthState(true)
-                else if (success)
+                else if (succeeded)
                     setNeedsReauthState(false)
 
                 // transient user-facing result (auth errors are shown via the persistent needsReauth dialog)
                 if (armed) {
                     _syncResult.value = when {
-                        success -> SyncResult.Success
+                        succeeded -> SyncResult.Success
                         authError -> null
-                        else -> SyncResult.Failure
+                        failed.isNotEmpty() -> SyncResult.Failure
+                        else -> null    // e.g. cancelled because connectivity was lost mid-sync
                     }
                     armed = false
                 }
             }
+        }
+
+        // If connectivity is lost while a user-initiated sync is in progress, the manual worker parks on
+        // its network constraint (retrying) and the "Loading data…" loader would otherwise hang forever.
+        // Cancel it and show the "No internet connection" message instead. Debounced to ignore brief blips.
+        viewModelScope.launch {
+            combine(syncing, networkAvailable) { active, online -> active && !online }
+                .distinctUntilChanged()
+                .collectLatest { offlineWhileSyncing ->
+                    if (!offlineWhileSyncing || !armed)
+                        return@collectLatest
+                    delay(OFFLINE_GRACE_MS.milliseconds)     // let a short network blip recover on its own
+                    armed = false               // disarm first so the cancel isn't reported as a result
+                    WorkManager.getInstance(context)
+                        .cancelUniqueWork(OneTimeSyncWorker.workerName(account, SyncDataType.EVENTS))
+                    _showNoInternet.value = true
+                }
         }
     }
 
