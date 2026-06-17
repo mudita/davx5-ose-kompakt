@@ -47,11 +47,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.logging.Level
 import java.util.logging.Logger
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * ViewModel for the Kompakt "Linked Account" detail screen.
@@ -87,8 +89,18 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         /** sync interval (seconds) that the "Auto synchronization" toggle enables: once a day */
         const val AUTO_SYNC_INTERVAL_SECONDS = 60L
 
-        /** AccountManager userData flag marking that Kompakt init defaults have been applied for this account */
+        /** AccountManager userData key holding the Kompakt init-defaults version applied for this account */
         const val KEY_DEFAULTS_APPLIED = "kompakt_defaults_applied"
+
+        /**
+         * Current version of the Kompakt init defaults. Bump to re-run the (idempotent) primary-calendar
+         * selection once on existing accounts — e.g. to correct accounts where an older version locked in
+         * a wrong calendar. Auto-sync default is only ever applied on the very first setup (version 0).
+         */
+        const val DEFAULTS_VERSION = 2
+
+        /** Max time a user-initiated "Sync now" waits for collection discovery before giving up. */
+        const val DISCOVERY_WAIT_MS = 30_000L
     }
 
     val email: String = account.name
@@ -270,12 +282,12 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             }
         }
 
-        // apply Kompakt init defaults once, after collection discovery has produced calendars
+        // apply Kompakt init defaults (once per defaults version), after collection discovery
         viewModelScope.launch(ioDispatcher) {
-            if (defaultsApplied())
+            if (appliedDefaultsVersion() >= DEFAULTS_VERSION)
                 return@launch
             serviceRepository.getCalDavServiceFlow(account.name).filterNotNull().collectLatest { service ->
-                if (defaultsApplied())
+                if (appliedDefaultsVersion() >= DEFAULTS_VERSION)
                     return@collectLatest
                 // collections may already be present (e.g. relaunch right after login)
                 if (maybeApplyDefaults(service.id))
@@ -289,39 +301,43 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         }
     }
 
-    private fun defaultsApplied(): Boolean =
+    /** Version of the Kompakt init defaults already applied to this account (0 = none / first setup). */
+    private fun appliedDefaultsVersion(): Int =
         try {
-            AccountManager.get(context).getUserData(account, KEY_DEFAULTS_APPLIED) == "1"
+            AccountManager.get(context).getUserData(account, KEY_DEFAULTS_APPLIED)?.toIntOrNull() ?: 0
         } catch (_: Exception) {
-            // account may no longer exist
-            true
+            // account may no longer exist → treat as up-to-date so we don't keep trying
+            DEFAULTS_VERSION
         }
 
     private fun markDefaultsApplied() {
         try {
-            AccountManager.get(context).setUserData(account, KEY_DEFAULTS_APPLIED, "1")
+            AccountManager.get(context).setUserData(account, KEY_DEFAULTS_APPLIED, DEFAULTS_VERSION.toString())
         } catch (e: Exception) {
             logger.log(Level.WARNING, "Couldn't mark Kompakt defaults applied for $account", e)
         }
     }
 
     /**
-     * Applies the Kompakt initialization defaults **once** per account, after collection discovery:
-     * selects the user's primary Google calendar for synchronization (and makes sure no other calendar
-     * is selected, so the initial state is exactly that single calendar) and enables automatic sync.
-     * The selection is not touched again afterwards.
+     * Applies the Kompakt initialization defaults, after collection discovery: selects **only** the
+     * user's primary Google calendar for synchronization. On the very first setup it also enables
+     * automatic sync by default (later runs — e.g. a defaults-version bump that re-corrects the
+     * selection — do not touch the auto-sync setting, to respect the user's toggle choice).
      *
-     * Returns `true` if the defaults are now applied (or were already), `false` if there are no
-     * calendars yet and the caller should retry later.
+     * Runs at most once per [DEFAULTS_VERSION]. Returns `true` if defaults are applied (or already
+     * up to date), `false` if the primary calendar can't be identified yet and the caller should retry.
      */
     private suspend fun maybeApplyDefaults(serviceId: Long): Boolean = defaultsMutex.withLock {
-        if (defaultsApplied())
+        val version = appliedDefaultsVersion()
+        if (version >= DEFAULTS_VERSION)
             return true
         val calendars = collectionRepository.getByService(serviceId)
             .filter { it.type == Collection.TYPE_CALENDAR }
         if (calendars.isEmpty())
             return false
-        val primaryId = findPrimaryCalendarId(serviceId) ?: return false
+        // Don't guess: if the primary isn't identifiable yet (e.g. not discovered), wait and retry
+        // rather than locking in a wrong calendar.
+        val primaryId = findPrimaryCalendarId(calendars) ?: return false
 
         // select only the primary calendar for sync
         for (calendar in calendars) {
@@ -330,42 +346,46 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
                 collectionRepository.setSync(calendar.id, shouldSync)
         }
 
-        // enable automatic sync by default
-        try {
-            accountSettingsFactory.create(account).setSyncInterval(SyncDataType.EVENTS, AUTO_SYNC_INTERVAL_SECONDS)
-        } catch (e: Exception) {
-            logger.log(Level.WARNING, "Couldn't set automatic sync for $account", e)
+        // enable automatic sync by default — only on the very first setup
+        if (version == 0) {
+            try {
+                accountSettingsFactory.create(account).setSyncInterval(SyncDataType.EVENTS, AUTO_SYNC_INTERVAL_SECONDS)
+            } catch (e: Exception) {
+                logger.log(Level.WARNING, "Couldn't set automatic sync for $account", e)
+            }
+            _autoSyncEnabled.value = true
         }
-        _autoSyncEnabled.value = true
         markDefaultsApplied()
         true
     }
 
     /**
-     * Finds the user's primary Google calendar among the discovered calendar collections.
-     * Google's primary calendar URL contains the account email (the "@" may be `%40`-encoded).
-     * Falls back to a calendar whose display name matches the email, then to the first event-capable
-     * calendar.
+     * Identifies the user's **primary** Google calendar among the discovered calendars. Google's primary
+     * calendar is the one whose CalDAV collection id is the account email, so its URL contains the email
+     * (the "@" is usually `%40`-encoded); its display name also equals the email. Returns `null` if the
+     * primary can't be confidently identified — we deliberately do **not** fall back to an arbitrary
+     * calendar, to avoid selecting a secondary/added one (e.g. a test calendar).
      */
-    private suspend fun findPrimaryCalendarId(serviceId: Long): Long? {
-        val calendars = collectionRepository.getByService(serviceId)
-            .filter { it.type == Collection.TYPE_CALENDAR }
-        if (calendars.isEmpty())
-            return null
+    /** Loads the account's calendar collections and identifies the primary one. */
+    private suspend fun findPrimaryCalendarId(serviceId: Long): Long? =
+        findPrimaryCalendarId(
+            collectionRepository.getByService(serviceId).filter { it.type == Collection.TYPE_CALENDAR }
+        )
 
+    private fun findPrimaryCalendarId(calendars: List<Collection>): Long? {
         val email = account.name.lowercase()
         val emailEncoded = email.replace("@", "%40")
+
         calendars.firstOrNull { collection ->
             val url = collection.url.toString().lowercase()
             url.contains(email) || url.contains(emailEncoded)
         }?.let { return it.id }
 
         calendars.firstOrNull { collection ->
-            collection.displayName?.lowercase()?.let { it == email || it.contains(email) } == true
+            collection.displayName?.lowercase() == email
         }?.let { return it.id }
 
-        calendars.firstOrNull { it.supportsVEVENT != false }?.let { return it.id }
-        return calendars.first().id
+        return null
     }
 
 
@@ -406,11 +426,24 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         }
     }
 
-    /** Applies the Kompakt init defaults now (selecting the primary calendar) if they haven't been yet. */
+    /**
+     * Ensures the primary calendar is selected for sync before a user-initiated sync. Right after
+     * linking the calendars may not be discovered yet, so if the first attempt can't identify the
+     * primary, wait (bounded) for collection discovery to finish and try again — otherwise a quick
+     * "Sync now" tap would enqueue a sync with nothing selected and sync nothing.
+     */
     private suspend fun ensureDefaultsApplied() {
-        if (defaultsApplied())
+        if (appliedDefaultsVersion() >= DEFAULTS_VERSION)
             return
         val service = serviceRepository.getByAccountAndType(account.name, Service.TYPE_CALDAV) ?: return
+        if (maybeApplyDefaults(service.id))
+            return
+        // primary not discovered yet → wait for the refresh worker to finish, then apply
+        withTimeoutOrNull(DISCOVERY_WAIT_MS.milliseconds) {
+            RefreshCollectionsWorker
+                .existsFlow(context, RefreshCollectionsWorker.workerName(service.id), WorkInfo.State.SUCCEEDED)
+                .first { succeeded -> succeeded }
+        }
         maybeApplyDefaults(service.id)
     }
 

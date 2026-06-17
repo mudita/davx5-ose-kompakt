@@ -1,0 +1,65 @@
+/*
+ * Copyright © All Contributors. See LICENSE and AUTHORS in the root directory for details.
+ */
+
+package at.bitfire.davdroid.ui.setup
+
+import android.accounts.Account
+import android.content.Context
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.work.WorkInfo
+import at.bitfire.davdroid.db.Service
+import at.bitfire.davdroid.di.qualifier.IoDispatcher
+import at.bitfire.davdroid.repository.DavServiceRepository
+import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
+
+/**
+ * Waits for the newly linked account's setup to complete (CalDAV collection discovery) before the
+ * Kompakt login flow navigates to the Linked Account screen. This way the "Account linked / Sync now"
+ * dialog only appears once the calendars are discovered, so tapping "Sync now" works immediately
+ * instead of after a delay.
+ */
+@HiltViewModel
+class KompaktLoginFinalizeModel @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val serviceRepository: DavServiceRepository,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+) : ViewModel() {
+
+    companion object {
+        /** Max time to wait for collection discovery before navigating anyway (failsafe). */
+        private const val DISCOVERY_WAIT_MS = 30_000L
+    }
+
+    private val _ready = MutableStateFlow(false)
+    /** `true` once setup is finished (or the failsafe timeout elapsed) and the flow may navigate on. */
+    val ready: StateFlow<Boolean> = _ready.asStateFlow()
+
+    fun awaitSetup(account: Account) {
+        if (_ready.value)
+            return
+        viewModelScope.launch(ioDispatcher) {
+            val service = serviceRepository.getByAccountAndType(account.name, Service.TYPE_CALDAV)
+            if (service != null)
+                withTimeoutOrNull(DISCOVERY_WAIT_MS.milliseconds) {
+                    RefreshCollectionsWorker
+                        .existsFlow(context, RefreshCollectionsWorker.workerName(service.id), WorkInfo.State.SUCCEEDED)
+                        .first { succeeded -> succeeded }
+                }
+            _ready.value = true
+        }
+    }
+
+}

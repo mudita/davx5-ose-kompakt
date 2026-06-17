@@ -22,18 +22,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.ui.KompaktTypography900
 import at.bitfire.davdroid.ui.composable.KompaktTheme
 import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
-import com.mudita.mmd.components.progress_indicator.CircularProgressIndicatorMMD
 import com.mudita.mmd.components.text.TextMMD
 
 /**
@@ -81,8 +78,17 @@ fun KompaktLoginScreen(
             model.createAccount()
         }
     }
+    // Don't navigate to the Linked Account screen until account setup (collection discovery) is done,
+    // so the "Account linked / Sync now" dialog only appears when sync is actually ready.
+    val finalizeModel: KompaktLoginFinalizeModel = hiltViewModel()
+    val setupReady by finalizeModel.ready.collectAsStateWithLifecycle()
     LaunchedEffect(accountState.createdAccount) {
-        accountState.createdAccount?.let(onFinish)
+        accountState.createdAccount?.let { finalizeModel.awaitSetup(it) }
+    }
+    LaunchedEffect(setupReady, accountState.createdAccount) {
+        val account = accountState.createdAccount
+        if (account != null && setupReady)
+            onFinish(account)
     }
 
     KompaktLoginScreenContent(
@@ -149,13 +155,8 @@ private fun KompaktLoginScreenContent(
                                 onAccountCreated = { account -> onFinish(account) }
                             )
                         else
-                            // creating the account with the prepared defaults
-                            Box(
-                                Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicatorMMD(size = 24.dp)
-                            }
+                            // creating the account and waiting for setup (collection discovery) to finish
+                            KompaktSetupProgress()
                 }
 
             }

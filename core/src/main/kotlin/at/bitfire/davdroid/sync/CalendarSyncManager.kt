@@ -49,6 +49,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.Reader
 import java.io.StringReader
 import java.io.StringWriter
+import java.time.Instant
 import java.time.ZonedDateTime
 import java.util.Optional
 import java.util.logging.Level
@@ -222,15 +223,29 @@ class CalendarSyncManager @AssistedInject constructor(
     }
 
     override suspend fun listAllRemote(callback: MultiResponseCallback) {
-        // calculate time range limits
-        val limitStart = accountSettings.getTimeRangePastDays()?.let { pastDays ->
-            ZonedDateTime.now().minusDays(pastDays.toLong()).toInstant()
+        val now = ZonedDateTime.now()
+
+        // Kompakt: the very first (initial) sync is bounded to a small window to keep the first
+        // download light: events from the previous 30 days up to 6 months into the future.
+        // Subsequent syncs use the regular behavior (configured past limit, no future bound).
+        val initialSync = localCollection.lastSyncState == null
+
+        val limitStart: Instant?
+        val limitEnd: Instant?
+        if (initialSync) {
+            limitStart = now.minusDays(30).toInstant()
+            limitEnd = now.plusMonths(6).toInstant()
+        } else {
+            limitStart = accountSettings.getTimeRangePastDays()?.let { pastDays ->
+                now.minusDays(pastDays.toLong()).toInstant()
+            }
+            limitEnd = null
         }
 
         return SyncException.wrapWithRemoteResourceSuspending(collection.url) {
-            logger.info("Querying events since $limitStart")
+            logger.info("Querying events in [$limitStart, $limitEnd] (initialSync=$initialSync)")
             runInterruptible {
-                davCollection.calendarQuery(Component.VEVENT, limitStart, null, callback)
+                davCollection.calendarQuery(Component.VEVENT, limitStart, limitEnd, callback)
             }
         }
     }

@@ -53,6 +53,14 @@ fun KompaktDetectResourcesPageContent(
     failed: Boolean,
     onRetry: () -> Unit
 ) {
+    if (!failed) {
+        // configuring the account
+        KompaktSetupProgress()
+        return
+    }
+
+    // resource detection failed (no service found / login validation failed):
+    // show a message and let the user retry the whole sign-in
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -64,33 +72,49 @@ fun KompaktDetectResourcesPageContent(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             KompaktFramedIcon(painter = painterResource(R.drawable.ic_google_g))
-
-            if (failed) {
-                // resource detection failed (no service found / login validation failed):
-                // show a message and let the user retry the whole sign-in
+            TextMMD(
+                text = stringResource(R.string.kompakt_login_setup_failed),
+                style = KompaktTypography900.labelMedium,
+                textAlign = TextAlign.Center
+            )
+            ButtonMMD(
+                onClick = onRetry,
+                modifier = Modifier.height(48.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
                 TextMMD(
-                    text = stringResource(R.string.kompakt_login_setup_failed),
-                    style = KompaktTypography900.labelMedium,
-                    textAlign = TextAlign.Center
+                    text = stringResource(R.string.common_dialog_button_tryagain),
+                    style = KompaktTypography900.labelMedium
                 )
-                ButtonMMD(
-                    onClick = onRetry,
-                    modifier = Modifier.height(48.dp),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    TextMMD(
-                        text = stringResource(R.string.common_dialog_button_tryagain),
-                        style = KompaktTypography900.labelMedium
-                    )
-                }
-            } else {
-                TextMMD(
-                    text = stringResource(R.string.kompakt_login_configuring),
-                    style = KompaktTypography900.labelMedium,
-                    textAlign = TextAlign.Center
-                )
-                CircularProgressIndicatorMMD(size = 24.dp)
             }
+        }
+    }
+}
+
+/**
+ * Centered "Setting up your account…" progress UI (framed Google icon + status line + spinner).
+ * Shown while the account is being configured — during resource detection and while the Kompakt
+ * login flow waits for collection discovery to finish before navigating on.
+ */
+@Composable
+fun KompaktSetupProgress(modifier: Modifier = Modifier) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            KompaktFramedIcon(painter = painterResource(R.drawable.ic_google_g))
+            TextMMD(
+                text = stringResource(R.string.kompakt_login_configuring),
+                style = KompaktTypography900.labelMedium,
+                textAlign = TextAlign.Center
+            )
+            CircularProgressIndicatorMMD(size = 24.dp)
         }
     }
 }
