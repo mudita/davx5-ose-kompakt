@@ -19,6 +19,7 @@ import at.bitfire.davdroid.R
 import at.bitfire.davdroid.push.PushNotificationManager
 import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.sync.AddressBookSyncer
+import at.bitfire.davdroid.sync.AutomaticSyncManager
 import at.bitfire.davdroid.sync.CalendarSyncer
 import at.bitfire.davdroid.sync.JtxSyncer
 import at.bitfire.davdroid.sync.ResyncType
@@ -49,6 +50,9 @@ abstract class BaseSyncWorker(
 
     @Inject
     lateinit var accountSettingsFactory: AccountSettings.Factory
+
+    @Inject
+    lateinit var automaticSyncManager: Lazy<AutomaticSyncManager>
 
     @Inject
     lateinit var addressBookSyncer: AddressBookSyncer.Factory
@@ -128,7 +132,18 @@ abstract class BaseSyncWorker(
                 }
             }
 
-            return doSyncWork(account, dataType)
+            val result = doSyncWork(account, dataType)
+
+            // A successful manual sync (in-app or external trigger) pushes the next
+            // automatic sync back by a full interval, counting from now.
+            if (result is Result.Success && inputData.getBoolean(INPUT_MANUAL, false))
+                try {
+                    automaticSyncManager.get().reschedulePeriodic(account, dataType)
+                } catch (e: Exception) {
+                    logger.log(Level.WARNING, "Couldn't reschedule periodic sync after manual sync", e)
+                }
+
+            return result
         } finally {
             logger.info("${javaClass.simpleName} finished for $syncTag")
             runningSyncs -= syncTag

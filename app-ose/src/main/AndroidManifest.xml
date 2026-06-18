@@ -6,6 +6,10 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:installLocation="internalOnly">
 
+    <permission
+        android:name="com.davx5.ose.permission.TRIGGER_SYNC"
+        android:protectionLevel="signature" />
+
     <application android:name=".App"
             android:icon="@mipmap/ic_launcher">
 
@@ -63,6 +67,15 @@
                 <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
             </intent-filter>
         </provider>
+
+        <receiver
+            android:name="at.bitfire.davdroid.ui.KompaktSyncRequestReceiver"
+            android:exported="true"
+            android:permission="com.davx5.ose.permission.TRIGGER_SYNC">
+            <intent-filter>
+                <action android:name="com.davx5.ose.action.SYNC_NOW" />
+            </intent-filter>
+        </receiver>
 
         <!-- provider to share debug info/logs -->
         <provider

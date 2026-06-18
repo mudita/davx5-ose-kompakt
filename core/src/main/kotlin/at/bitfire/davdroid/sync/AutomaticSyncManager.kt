@@ -151,4 +151,23 @@ class AutomaticSyncManager @Inject constructor(
             disableAutomaticSync(account, dataType)
     }
 
+    /**
+     * Pushes the next periodic (automatic) sync back by a full interval, counting from now. Intended to be
+     * called after a *successful manual* sync, so an automatic sync doesn't run again right away.
+     *
+     * No-op if periodic sync is not enabled for this account/data type.
+     *
+     * @param account   account whose periodic sync should be rescheduled
+     * @param dataType  data type whose periodic sync should be rescheduled
+     */
+    @WorkerThread
+    fun reschedulePeriodic(account: Account, dataType: SyncDataType) {
+        val accountSettings = accountSettingsFactory.create(account)
+        val syncInterval = accountSettings.getSyncInterval(dataType) ?: return  // periodic not enabled
+        workerManager.enablePeriodic(
+            account, dataType, syncInterval, accountSettings.getSyncWifiOnly(),
+            rescheduleFromNow = true
+        )
+    }
+
 }

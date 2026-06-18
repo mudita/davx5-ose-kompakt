@@ -236,14 +236,24 @@ class SyncWorkerManager @Inject constructor(
      * @param interval   interval between recurring syncs in seconds
      * @return operation object to check when and whether activation was successful
      */
-    fun enablePeriodic(account: Account, dataType: SyncDataType, interval: Long, syncWifiOnly: Boolean): Operation {
-        logger.fine("Updating periodic worker for account=$account, dataType=$dataType, interval=$interval, syncWifiOnly=$syncWifiOnly")
+    fun enablePeriodic(
+        account: Account,
+        dataType: SyncDataType,
+        interval: Long,
+        syncWifiOnly: Boolean,
+        rescheduleFromNow: Boolean = false
+    ): Operation {
+        logger.fine("Updating periodic worker for account=$account, dataType=$dataType, interval=$interval, syncWifiOnly=$syncWifiOnly, rescheduleFromNow=$rescheduleFromNow")
         val workRequest = buildPeriodic(account, dataType, interval, syncWifiOnly)
         return WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             PeriodicSyncWorker.workerName(account, dataType),
-            // if a periodic sync exists already, we want to update it with the new interval
-            // and/or new required network type (applies on next iteration of periodic worker)
-            ExistingPeriodicWorkPolicy.UPDATE,
+            // UPDATE keeps the existing schedule (just updates interval/constraints for the next iteration);
+            // CANCEL_AND_REENQUEUE restarts the period from now (used to push the next automatic sync back
+            // after a successful manual sync).
+            if (rescheduleFromNow)
+                ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE
+            else
+                ExistingPeriodicWorkPolicy.UPDATE,
             workRequest
         )
     }

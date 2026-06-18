@@ -144,7 +144,6 @@ abstract class SyncManager<LocalType : LocalResource, out CollectionType : Local
                 logger.info("No reason to synchronize, aborting")
                 return@withContext
             }
-            syncStatsRepository.logSyncTime(collection.id, dataType)
 
             logger.info("Querying server capabilities")
             var remoteSyncState = queryCapabilities()
@@ -248,6 +247,10 @@ abstract class SyncManager<LocalType : LocalResource, out CollectionType : Local
                 }
             else
                 logger.info("Remote collection didn't change, no reason to sync")
+
+            // record the last sync time at completion, and only for a successful run
+            if (!syncResult.hasError())
+                syncStatsRepository.logSyncTime(collection.id, dataType)
 
         } catch (potentiallyWrappedException: Throwable) {
             var local: LocalResource? = null
