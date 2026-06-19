@@ -623,6 +623,8 @@
     <string name="common_dialog_button_tryagain">Try again</string>
     <string name="common_label_nointernetconnection">No internet connection</string>
     <string name="common_error_body_opensettingstocheck">Open settings to check data and Wi-Fi are switched on</string>
+    <string name="common_label_yourstorageisfull">Your storage is full</string>
+    <string name="common_error_body_changestoragelocationorfree">Change storage location or free some space then try again</string>
     <string name="calendar_accountsync_error_dialog_h1_accountnotlinked">Account not linked</string>
     <string name="calendar_accountsync_error_dialog_body_thetokenexpiredso">The token expired so please link accounts again</string>
     <!-- missing frontitude keys -->

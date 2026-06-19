@@ -25,6 +25,7 @@ import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.repository.DavSyncStatsRepository
 import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
 import at.bitfire.davdroid.settings.AccountSettings
+import at.bitfire.davdroid.sync.KompaktStorage
 import at.bitfire.davdroid.sync.SyncConditions
 import at.bitfire.davdroid.sync.SyncDataType
 import at.bitfire.davdroid.sync.worker.OneTimeSyncWorker
@@ -210,6 +211,24 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }
 
     /**
+     * `true` while the device is critically low on storage (system threshold; see [KompaktStorage]). Like the
+     * re-auth flag this is a *persistent* condition surfaced immediately on screen entry and re-checked on
+     * resume, so the "Your storage is full" message stays visible until space frees. Storage state is queried
+     * live, so no extra persistence is needed.
+     */
+    private val _showOutOfStorage = MutableStateFlow(KompaktStorage.isStorageLow(context))
+    val showOutOfStorage: StateFlow<Boolean> = _showOutOfStorage.asStateFlow()
+
+    fun consumeOutOfStorage() {
+        _showOutOfStorage.value = false
+    }
+
+    /** Re-check live free storage (call on screen entry / resume). */
+    fun refreshStorageState() {
+        _showOutOfStorage.value = KompaktStorage.isStorageLow(context)
+    }
+
+    /**
      * `true` when the account's OAuth token is invalid and needs re-authorization. This is a
      * *persistent* condition (stored in [AccountSettings.KEY_NEEDS_REAUTH]) so the "Account not linked" dialog
      * keeps showing across screen re-entries, aborted re-auth attempts and app restarts, until
@@ -275,17 +294,17 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
                 val authError = failed.any { it.hadAuthError() }
                 val succeeded = infos.any { it.state == WorkInfo.State.SUCCEEDED }
 
-                // persistent: token bad / good again (a cancelled worker is neither)
+                // persistent: token bad / good again (a canceled worker is neither)
                 if (authError)
                     setNeedsReauthState(true)
                 else if (succeeded)
                     setNeedsReauthState(false)
 
-                // transient user-facing result (auth errors are shown via the persistent needsReauth dialog)
+                // transient user-facing result (auth errors are shown via their own message)
                 if (armed) {
                     _syncResult.value = when {
                         succeeded -> SyncResult.Success
-                        authError -> null
+                        authError -> null               // → "Account not linked"
                         failed.isNotEmpty() -> SyncResult.Failure
                         else -> null    // e.g. cancelled because connectivity was lost mid-sync
                     }
@@ -460,8 +479,14 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             // ran — and a sync only processes collections with sync=true, so it would sync nothing.
             ensureDefaultsApplied()
 
-            // manual syncs skip the worker's network checks, so guard here: no internet → show message,
-            // don't start a sync that would only fail
+            // manual syncs skip the worker's constraints, so guard here: critically low storage → show the
+            // "Your storage is full" message, don't start a sync that would only fail
+            if (KompaktStorage.isStorageLow(context)) {
+                _showOutOfStorage.value = true
+                return@launch
+            }
+
+            // no internet → show message, don't start a sync that would only fail
             val accountSettings = accountSettingsFactory.create(account)
             if (!syncConditionsFactory.create(accountSettings).internetAvailable()) {
                 _showNoInternet.value = true

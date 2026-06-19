@@ -91,6 +91,9 @@ class SyncWorkerManager @Inject constructor(
         // build work request
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)   // require a network connection
+            // Kompakt: automatic (non-manual) one-time syncs wait while the system reports critically low
+            // storage and auto-run when it recovers. Manual syncs are pre-checked in the UI instead.
+            .apply { if (!manual) setRequiresStorageNotLow(true) }
             .build()
         return OneTimeWorkRequestBuilder<OneTimeSyncWorker>()
             .addTag(OneTimeSyncWorker.workerName(account, dataType))
@@ -141,6 +144,7 @@ class SyncWorkerManager @Inject constructor(
 
         // enqueue and start syncing
         val name = OneTimeSyncWorker.workerName(account, dataType)
+
         val request = buildOneTime(
             account = account,
             dataType = dataType,
@@ -219,7 +223,12 @@ class SyncWorkerManager @Inject constructor(
                     NetworkType.UNMETERED
                 else
                     NetworkType.CONNECTED
-            ).build()
+            )
+            // Kompakt: don't run periodic sync while the system reports critically low storage. WorkManager
+            // parks the worker (no dispatch → no SQLITE_FULL retry loop) and auto-runs it once the system
+            // reports STORAGE_OK again. Uses the same system threshold (min 500 MB / 10 %) as KompaktStorage.
+            .setRequiresStorageNotLow(true)
+            .build()
         return PeriodicWorkRequestBuilder<PeriodicSyncWorker>(interval, TimeUnit.SECONDS)
             .addTag(PeriodicSyncWorker.workerName(account, dataType))
             .addTag(commonTag(account, dataType))
@@ -244,9 +253,10 @@ class SyncWorkerManager @Inject constructor(
         rescheduleFromNow: Boolean = false
     ): Operation {
         logger.fine("Updating periodic worker for account=$account, dataType=$dataType, interval=$interval, syncWifiOnly=$syncWifiOnly, rescheduleFromNow=$rescheduleFromNow")
+        val name = PeriodicSyncWorker.workerName(account, dataType)
         val workRequest = buildPeriodic(account, dataType, interval, syncWifiOnly)
         return WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-            PeriodicSyncWorker.workerName(account, dataType),
+            name,
             // UPDATE keeps the existing schedule (just updates interval/constraints for the next iteration);
             // CANCEL_AND_REENQUEUE restarts the period from now (used to push the next automatic sync back
             // after a successful manual sync).

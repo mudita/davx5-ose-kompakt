@@ -54,6 +54,68 @@ Notes / caveats:
 - If the server returns **401** for the bogus path (instead of 404), you'll get "Account not linked"
   instead — use a different suffix, or fall back to Method B.
 
+## Out of storage — handling & testing
+
+### What happens
+
+- **Automatic sync (periodic + content-triggered one-time)** carries a
+  `Constraints.setRequiresStorageNotLow(true)` constraint (`SyncWorkerManager.buildPeriodic` /
+  `buildOneTime` for non-manual). While the system reports storage critically low, WorkManager **parks** the
+  worker (never dispatches it → no `trySetRunning` → no `SQLITE_FULL` tight loop) and **auto-runs it the
+  moment the system reports `STORAGE_OK`** again. No cancel/re-enable logic, no app interaction needed.
+  This constraint uses the system's own low-storage signal (`DeviceStorageMonitorService`,
+  `ACTION_DEVICE_STORAGE_LOW/OK`), i.e. the same `min(500 MB, 10 %)` threshold as `KompaktStorage`.
+- **Manual "Sync now"** is pre-checked in `KompaktLinkedAccountModel.syncNow()`: if
+  `KompaktStorage.isStorageLow(context)`, it shows the **"Your storage is full"** message and does not enqueue
+  (manual workers have no storage constraint, so we must guard here — same pattern as the no-internet check).
+- **The UI message is persistent/live**, like the re-auth dialog: `showOutOfStorage` is seeded from
+  `KompaktStorage.isStorageLow()` on screen entry and re-checked on `ON_RESUME`
+  (`model.refreshStorageState()`), so entering the app with low storage shows the message immediately and it
+  clears once space frees.
+
+`KompaktStorage.isStorageLow(context)` mirrors the framework `StorageManager.getStorageLowBytes()` formula:
+`min(sys_storage_threshold_max_bytes [default 500 MB], total * sys_storage_threshold_percentage% [default
+10 %])`, read from `Settings.Global` (fallbacks `STORAGE_THRESHOLD_MAX_BYTES_DEFAULT` /
+`STORAGE_THRESHOLD_PERCENTAGE_DEFAULT`).
+
+### Testing
+
+- **UI message + manual guard:** fill storage below the system threshold (e.g. `adb shell` write a large file
+  until free space drops past the "storage running out" point), open the linked-account screen → the
+  **"Your storage is full"** message appears immediately; tapping **Synchronize now** keeps showing it and
+  does not start a sync. Delete the file → on next resume the message clears.
+- **Automatic park & auto-resume:** with auto-sync on, fill storage low → the periodic/one-time sync workers
+  sit ENQUEUED with the storage-not-low constraint unmet (no `SQLITE_FULL` loop in logcat). Free space → the
+  worker runs automatically (no app interaction), typically within ~1 min. Verified on the emulator
+  (target SDK 36): `dumpsys jobscheduler` shows the job's `STORAGE_NOT_LOW` flip from unsatisfied to satisfied,
+  then `PeriodicSyncWorker called … Worker result SUCCESS`.
+- **Quick UI check:** temporarily raise `STORAGE_THRESHOLD_MAX_BYTES_DEFAULT` /
+  `STORAGE_THRESHOLD_PERCENTAGE_DEFAULT` in `KompaktStorage` above current free space, or preview the
+  `KompaktMessageSheet` UI directly.
+
+### Why no extra "storage watcher" of our own (design decision)
+
+`requiresStorageNotLow` is **enforced by the platform JobScheduler**, not by an app-side broadcast receiver:
+`dumpsys jobscheduler` lists the sync job with `Required constraints: STORAGE_NOT_LOW`, and JobScheduler's own
+`StorageController` satisfies/unsatisfies it server-side. Consequences:
+
+- The deprecation of delivering `ACTION_DEVICE_STORAGE_LOW` to apps targeting API ≥26 **does not affect us** —
+  we never receive that broadcast; JobScheduler tracks the condition itself.
+- The signal comes from `DeviceStorageMonitorService` — the **same** component that raises the system
+  "storage running out / some functions may not work" notification. So if the device shows that warning
+  (it does on Mudita), the constraint works from the same source. The threshold also matches `KompaktStorage`
+  (`min(500 MB, 10 %)`).
+
+Therefore we deliberately **do not add our own polling / re-enable mechanism** for automatic sync — it would be
+redundant with the platform. The only first-party storage check we keep is the synchronous
+`KompaktStorage.isStorageLow()` used for the live UI message and the manual-sync pre-check (manual workers carry
+no constraint); that is state-read, not a recovery loop.
+
+> One-time confirmation on the target Mudita device: fill storage below the threshold → the automatic worker
+> parks (no `SQLITE_FULL` loop), then free space → it resumes on its own within ~1 min. If for some reason it
+> does **not** resume there, revisit a fallback (e.g. re-ensure the periodic worker on screen entry, or a 1 h
+> retry); until then it's unnecessary.
+
 ## Method B (alternative — local provider error)
 
 Revoke the calendar runtime permission, then sync:

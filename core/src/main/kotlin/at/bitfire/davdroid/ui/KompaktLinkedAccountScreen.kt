@@ -80,12 +80,14 @@ fun KompaktLinkedAccountScreen(
     val syncing by model.syncing.collectAsStateWithLifecycle()
     val syncResult by model.syncResult.collectAsStateWithLifecycle()
     val showNoInternet by model.showNoInternet.collectAsStateWithLifecycle()
+    val showOutOfStorage by model.showOutOfStorage.collectAsStateWithLifecycle()
     val needsReauth by model.needsReauth.collectAsStateWithLifecycle()
 
-    // re-read the persisted re-auth flag whenever the screen comes to the foreground, so a background
-    // sync that failed with an auth error while the app was away surfaces the dialog immediately
+    // re-read the persisted re-auth flag and re-check free storage whenever the screen comes to the
+    // foreground, so a background auth failure or a low-storage condition surfaces its message immediately
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         model.reloadNeedsReauth()
+        model.refreshStorageState()
     }
 
     // re-authorize the existing account in place (refresh OAuth token, keeping all local data)
@@ -110,6 +112,7 @@ fun KompaktLinkedAccountScreen(
         syncing = syncing,
         syncResult = syncResult,
         showNoInternet = showNoInternet,
+        showOutOfStorage = showOutOfStorage,
         showAuthError = needsReauth,
         showAccountLinkedDialog = showAccountLinkedDialog,
         onBack = onBack,
@@ -118,6 +121,7 @@ fun KompaktLinkedAccountScreen(
         onUnlink = model::unlink,
         onConsumeSyncResult = model::consumeSyncResult,
         onDismissNoInternet = model::consumeNoInternet,
+        onDismissOutOfStorage = model::consumeOutOfStorage,
         onAccountLinkedDialogDismiss = onAccountLinkedDialogDismiss,
         onReauthorize = onReauthorize
     )
@@ -132,6 +136,7 @@ fun KompaktLinkedAccountContent(
     syncing: Boolean,
     syncResult: SyncResult?,
     showNoInternet: Boolean,
+    showOutOfStorage: Boolean,
     showAuthError: Boolean,
     showAccountLinkedDialog: Boolean,
     onBack: () -> Unit,
@@ -140,6 +145,7 @@ fun KompaktLinkedAccountContent(
     onUnlink: () -> Unit,
     onConsumeSyncResult: () -> Unit,
     onDismissNoInternet: () -> Unit,
+    onDismissOutOfStorage: () -> Unit,
     onAccountLinkedDialogDismiss: () -> Unit,
     onReauthorize: () -> Unit
 ) {
@@ -354,6 +360,16 @@ fun KompaktLinkedAccountContent(
             icon = painterResource(R.drawable.ic_kompakt_alert)
         )
     }
+
+    if (showOutOfStorage) {
+        KompaktMessageSheet(
+            onDismissRequest = onDismissOutOfStorage,
+            title = stringResource(R.string.common_label_yourstorageisfull),
+            text = stringResource(R.string.common_error_body_changestoragelocationorfree),
+            icon = painterResource(R.drawable.ic_kompakt_alert),
+            buttonLabel = stringResource(R.string.common_dialog_button_cancel)
+        )
+    }
 }
 
 /** Google icon + account email header. */
@@ -437,6 +453,7 @@ private fun KompaktLinkedAccountContent_Idle_Preview() {
         syncing = false,
         syncResult = null,
         showNoInternet = false,
+        showOutOfStorage = false,
         showAuthError = false,
         showAccountLinkedDialog = false,
         onBack = {},
@@ -445,6 +462,7 @@ private fun KompaktLinkedAccountContent_Idle_Preview() {
         onUnlink = {},
         onConsumeSyncResult = {},
         onDismissNoInternet = {},
+        onDismissOutOfStorage = {},
         onAccountLinkedDialogDismiss = {},
         onReauthorize = {}
     )
@@ -460,6 +478,7 @@ private fun KompaktLinkedAccountContent_Syncing_Preview() {
         syncing = true,
         syncResult = null,
         showNoInternet = false,
+        showOutOfStorage = false,
         showAuthError = false,
         showAccountLinkedDialog = false,
         onBack = {},
@@ -468,6 +487,7 @@ private fun KompaktLinkedAccountContent_Syncing_Preview() {
         onUnlink = {},
         onConsumeSyncResult = {},
         onDismissNoInternet = {},
+        onDismissOutOfStorage = {},
         onAccountLinkedDialogDismiss = {},
         onReauthorize = {}
     )
@@ -483,6 +503,7 @@ private fun KompaktLinkedAccountContent_Success_Preview() {
         syncing = false,
         syncResult = SyncResult.Success,
         showNoInternet = false,
+        showOutOfStorage = false,
         showAuthError = false,
         showAccountLinkedDialog = false,
         onBack = {},
@@ -491,6 +512,7 @@ private fun KompaktLinkedAccountContent_Success_Preview() {
         onUnlink = {},
         onConsumeSyncResult = {},
         onDismissNoInternet = {},
+        onDismissOutOfStorage = {},
         onAccountLinkedDialogDismiss = {},
         onReauthorize = {}
     )
