@@ -16,7 +16,7 @@ android {
         applicationId = "at.bitfire.davdroid"
 
         // versionCode and versionName are defined in the build-logic submodule (AppVersion)
-        base.archivesName = "davx5-$versionCode-$versionName"
+        base.archivesName = "KompaktDavx-$versionCode-$versionName"
 
         /* Android prevents having two apps installed with the same provider authority name. In that case,
         Google Play just shows a generic "Can't install DAVx5" message. So we derive the authority names

@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -58,8 +60,8 @@ fun KompaktAccountsScreen(
     )
 ) {
     val context = LocalContext.current
-    val accounts by model.accountInfos.collectAsStateWithLifecycle(emptyList())
-    val account = accounts.firstOrNull()?.name
+    val accounts by model.accountInfos.collectAsStateWithLifecycle(initialValue = null)
+    val account = accounts?.firstOrNull()?.name
 
     // Set when the Kompakt login flow returns successfully, so the "Account linked" modal is shown
     // once on top of the linked-account detail screen. Survives the recomposition that happens while
@@ -76,21 +78,30 @@ fun KompaktAccountsScreen(
         loginLauncher.launch(Intent(context, KompaktLoginActivity::class.java))
     }
 
-    if (account == null)
-        KompaktLinkAccountScreen(onAddAccount = onAddAccount)
-    else
-        KompaktLinkedAccountScreen(
-            account = account,
-            onBack = onBack,
-            showAccountLinkedDialog = justLinked,
-            onAccountLinkedDialogDismiss = { justLinked = false }
-        )
+    when {
+        accounts == null ->
+            KompaktTheme {
+                Box(modifier = Modifier.fillMaxSize())
+            }
+
+        account == null ->
+            KompaktLinkAccountScreen(onAddAccount = onAddAccount, onBack = onBack)
+
+        else ->
+            KompaktLinkedAccountScreen(
+                account = account,
+                onBack = onBack,
+                showAccountLinkedDialog = justLinked,
+                onAccountLinkedDialogDismiss = { justLinked = false }
+            )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun KompaktLinkAccountScreen(
-    onAddAccount: () -> Unit
+    onAddAccount: () -> Unit,
+    onBack: () -> Unit
 ) {
     KompaktTheme {
         Scaffold(
@@ -101,6 +112,14 @@ private fun KompaktLinkAccountScreen(
                             text = stringResource(R.string.common_label_linkedaccount),
                             style = KompaktTypography900.titleMedium
                         )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_kompakt_arrow_left),
+                                contentDescription = stringResource(R.string.navigate_up)
+                            )
+                        }
                     }
                 )
             }
