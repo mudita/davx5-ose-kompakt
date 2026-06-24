@@ -79,7 +79,8 @@ fun KompaktAccountsScreen(
     }
 
     when {
-        accounts == null ->
+        // Still loading, or login just succeeded
+        accounts == null || (justLinked && account == null) ->
             KompaktTheme {
                 Box(modifier = Modifier.fillMaxSize())
             }

@@ -42,6 +42,11 @@
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
 
+        <!-- Kompakt OAuth: runs the Google authorization in an embedded WebView (no Chrome/Custom Tabs on device) -->
+        <activity
+            android:name="at.bitfire.davdroid.ui.setup.KompaktOAuthWebViewActivity"
+            android:exported="false" />
+
         <!-- Required for Hilt/WorkManager integration. See
         - https://developer.android.com/develop/background-work/background-tasks/persistent/configuration/custom-configuration#remove-default
         - https://developer.android.com/training/dependency-injection/hilt-jetpack#workmanager

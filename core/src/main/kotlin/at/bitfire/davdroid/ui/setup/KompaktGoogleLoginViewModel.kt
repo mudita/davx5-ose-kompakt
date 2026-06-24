@@ -73,7 +73,7 @@ class KompaktGoogleLoginViewModel @AssistedInject constructor(
         )
     }
 
-    fun authorizationContract() = OAuthIntegration.AuthorizationContract(authService)
+    fun authorizationContract() = KompaktOAuthWebViewActivity.Contract()
 
     fun signIn() =
         oAuthGoogle.signIn(
