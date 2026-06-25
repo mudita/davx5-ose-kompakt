@@ -635,6 +635,7 @@
     <string name="kompakt_login_setup_failed">Couldn\'t set up your account</string>
     <string name="kompakt_linkedaccount_never_synced">Not synced yet</string>
     <string name="kompakt_linkedaccount_unlink">Unlink account</string>
+    <string name="kompakt_skip">Skip</string>
 
     <!-- cert4android -->
 </resources>

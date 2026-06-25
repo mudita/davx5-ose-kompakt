@@ -25,7 +25,8 @@ fun KompaktTopAppBar(
     title: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     navigationIcon: @Composable () -> Unit = {},
-    actions: @Composable RowScope.() -> Unit = {}
+    actions: @Composable RowScope.() -> Unit = {},
+    showDivider: Boolean = true
 ) {
     Column {
         TopAppBarMMD(
@@ -35,9 +36,10 @@ fun KompaktTopAppBar(
             actions = actions,
             showDivider = false
         )
-        HorizontalDivider(
-            thickness = 2.dp,
-            color = MaterialTheme.colorScheme.outlineVariant
-        )
+        if (showDivider)
+            HorizontalDivider(
+                thickness = 2.dp,
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
     }
 }

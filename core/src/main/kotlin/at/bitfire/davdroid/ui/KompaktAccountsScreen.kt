@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,6 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,6 +42,7 @@ import at.bitfire.davdroid.ui.composable.KompaktFramedIcon
 import at.bitfire.davdroid.ui.composable.KompaktTheme
 import at.bitfire.davdroid.ui.setup.KompaktLoginActivity
 import com.mudita.mmd.components.buttons.ButtonMMD
+import com.mudita.mmd.components.buttons.OutlinedButtonMMD
 import com.mudita.mmd.components.text.TextMMD
 import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
 
@@ -53,6 +56,8 @@ import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
 fun KompaktAccountsScreen(
     initialSyncAccounts: Boolean,
     onBack: () -> Unit,
+    onboarding: Boolean = false,
+    onSkip: () -> Unit = onBack,
     model: AccountsViewModel = hiltViewModel(
         creationCallback = { factory: AccountsViewModel.Factory ->
             factory.create(initialSyncAccounts)
@@ -86,7 +91,12 @@ fun KompaktAccountsScreen(
             }
 
         account == null ->
-            KompaktLinkAccountScreen(onAddAccount = onAddAccount, onBack = onBack)
+            KompaktLinkAccountScreen(
+                onAddAccount = onAddAccount,
+                onBack = onBack,
+                onboarding = onboarding,
+                onSkip = onSkip
+            )
 
         else ->
             KompaktLinkedAccountScreen(
@@ -102,27 +112,52 @@ fun KompaktAccountsScreen(
 @Composable
 private fun KompaktLinkAccountScreen(
     onAddAccount: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onboarding: Boolean = false,
+    onSkip: () -> Unit = onBack
 ) {
     KompaktTheme {
         Scaffold(
             topBar = {
-                KompaktTopAppBar(
-                    title = {
-                        TextMMD(
-                            text = stringResource(R.string.common_label_linkedaccount),
-                            style = KompaktTypography900.titleMedium
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_kompakt_arrow_left),
-                                contentDescription = stringResource(R.string.navigate_up)
-                            )
+                if (onboarding)
+                    // Onboarding mode: no title, back arrow or bottom divider — just a "Skip" action.
+                    KompaktTopAppBar(
+                        title = {},
+                        showDivider = false,
+                        actions = {
+                            OutlinedButtonMMD(
+                                onClick = onSkip,
+                                // 12dp + the 4dp the top bar already adds = 16dp from the screen edge.
+                                modifier = Modifier
+                                    .padding(end = 12.dp)
+                                    .height(36.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp)
+                            ) {
+                                TextMMD(
+                                    text = stringResource(R.string.kompakt_skip),
+                                    style = KompaktTypography900.labelMedium
+                                )
+                            }
                         }
-                    }
-                )
+                    )
+                else
+                    KompaktTopAppBar(
+                        title = {
+                            TextMMD(
+                                text = stringResource(R.string.common_label_linkedaccount),
+                                style = KompaktTypography900.titleMedium
+                            )
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = onBack) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_kompakt_arrow_left),
+                                    contentDescription = stringResource(R.string.navigate_up)
+                                )
+                            }
+                        }
+                    )
             }
         ) { padding ->
             Column(
@@ -187,4 +222,16 @@ private fun KompaktLinkAccountScreen(
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun KompaktLinkAccountScreen_Preview() {
+    KompaktLinkAccountScreen(onAddAccount = {}, onBack = {})
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun KompaktLinkAccountScreen_Onboarding_Preview() {
+    KompaktLinkAccountScreen(onAddAccount = {}, onBack = {}, onboarding = true, onSkip = {})
 }

@@ -1,5 +1,46 @@
 # Kompakt — integration points for other apps
 
+## Launching the account screen in onboarding mode
+
+Another app on the device (e.g. the Mudita calendar app) can launch the Kompakt account screen in
+**onboarding mode**. This is meant for first-run flows: the calling app sends the user to Kompakt to link
+an account, with an explicit way to back out.
+
+The change versus the normal account screen is purely cosmetic and only applies **when no account is
+linked yet**: the link screen drops its title and back arrow and shows a **"Skip"** button in the top app
+bar instead. If an account is **already linked**, the normal screen is shown regardless of onboarding
+mode.
+
+### Contract
+
+- **Action:** `com.davx5.ose.action.ONBOARDING` (`KompaktAccountsActivity.ACTION_ONBOARDING`)
+- **Target:** `KompaktAccountsActivity` — launch **explicitly** by component/package. The activity is
+  already `exported`, so no extra intent-filter is required and no permission is needed.
+
+### Caller — code
+
+```kotlin
+val intent = Intent("com.davx5.ose.action.ONBOARDING")
+    .setClassName("at.bitfire.davdroid", "at.bitfire.davdroid.ui.KompaktAccountsActivity")
+context.startActivity(intent)
+// or, if you want the skip/cancel result:
+// startActivityForResult(intent, REQUEST_ONBOARDING)
+```
+
+### Behaviour & results
+
+- **No account linked** → the link screen shows the **Skip** button (no title, no back arrow).
+  - **Skip** finishes the activity with `RESULT_CANCELED`.
+  - Linking succeeds → the normal linked-account screen with the "Account linked" dialog is shown (the
+    user stays in Kompakt; the activity is not auto-finished).
+- **Account already linked** → the normal account screen is shown (onboarding mode has no effect).
+
+### Notes / limitations
+
+- Onboarding mode only affects the **empty / link** state. Once an account exists it is a no-op.
+- Because the user stays in Kompakt after linking, there is no automatic return to the caller on success;
+  the caller returns to its own UI when the user navigates back.
+
 ## Triggering a manual sync from another app
 
 Another app on the device (e.g. the Mudita calendar app) can request an immediate **manual** sync of the

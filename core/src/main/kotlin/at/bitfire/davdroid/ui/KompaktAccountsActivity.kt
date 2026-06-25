@@ -21,13 +21,26 @@ class KompaktAccountsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         val syncAccounts = intent.action == Intent.ACTION_SYNC
+        // Launched from another app (e.g. the calendar) to onboard the user. When no account exists
+        // yet, the link screen shows a "Skip" button instead of the usual title + back arrow.
+        val onboarding = intent.action == ACTION_ONBOARDING
 
         setContent {
             KompaktAccountsScreen(
                 initialSyncAccounts = syncAccounts,
-                onBack = ::finish
+                onboarding = onboarding,
+                onBack = ::finish,
+                onSkip = {
+                    setResult(RESULT_CANCELED)
+                    finish()
+                }
             )
         }
+    }
+
+    companion object {
+        /** Intent action used by other apps to launch the account screen in onboarding mode. */
+        const val ACTION_ONBOARDING = "com.davx5.ose.action.ONBOARDING"
     }
 
 }
