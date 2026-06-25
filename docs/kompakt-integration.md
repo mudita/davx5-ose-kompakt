@@ -41,14 +41,18 @@ context.startActivity(intent)
 - Because the user stays in Kompakt after linking, there is no automatic return to the caller on success;
   the caller returns to its own UI when the user navigates back.
 
-## Triggering a manual sync from another app
+## Requesting a sync from another app
 
-Another app on the device (e.g. the Mudita calendar app) can request an immediate **manual** sync of the
+Another app on the device (e.g. the Mudita calendar app) can request a sync of the
 linked account by sending a broadcast to the Kompakt app.
+
+The request is **throttled**: a sync is only enqueued if the last successful sync finished at least
+**15 minutes** ago (or no successful sync has ever happened). If a successful sync completed less than 15
+minutes ago, the broadcast is a **no‑op**.
 
 ### Contract
 
-- **Action:** `com.davx5.ose.action.SYNC_NOW`
+- **Action:** `com.davx5.ose.action.REQUEST_SYNC`
 - **Target package:** `at.bitfire.davdroid` (the broadcast must be explicit — set the package)
 - **Permission:** `com.davx5.ose.permission.TRIGGER_SYNC` — **`signature`** protection level
 
@@ -60,8 +64,10 @@ linked account by sending a broadcast to the Kompakt app.
 2. The caller must **declare** the permission with `<uses-permission>` (below).
 3. The broadcast must be **explicit** (target package `at.bitfire.davdroid`); implicit broadcasts for a
    custom action won't be delivered on modern Android.
-4. An account must be linked. With no linked account the broadcast is a no‑op.
-5. Normal sync conditions still apply afterwards (e.g. connectivity) — the broadcast only *enqueues* a
+4. **At least 15 minutes** must have elapsed since the last successful sync (otherwise the request is
+   silently ignored).
+5. An account must be linked. With no linked account the broadcast is a no‑op.
+6. Normal sync conditions still apply afterwards (e.g. connectivity) — the broadcast only *enqueues* a
    manual sync; it does not bypass the lack of a network.
 
 ### Caller — manifest
@@ -73,13 +79,14 @@ linked account by sending a broadcast to the Kompakt app.
 ### Caller — code
 
 ```kotlin
-val intent = Intent("com.davx5.ose.action.SYNC_NOW")
+val intent = Intent("com.davx5.ose.action.REQUEST_SYNC")
     .setPackage("at.bitfire.davdroid")
 context.sendBroadcast(intent)
 ```
 
 ### What happens
 
+If at least 15 minutes have passed since the last successful sync,
 `KompaktSyncRequestReceiver` (in the Kompakt app) enqueues a one‑time manual sync for every linked
 account via `SyncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)` — the same path used
 by the in‑app "Synchronize now" button and the sync widget. The "Last synchronization" timestamp updates
