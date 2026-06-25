@@ -10,6 +10,13 @@
         android:name="com.davx5.ose.permission.TRIGGER_SYNC"
         android:protectionLevel="signature" />
 
+    <!-- Signature-level permission required to read the auth (token) state, see KompaktAuthState -->
+    <permission
+        android:name="com.davx5.ose.permission.READ_AUTH_STATE"
+        android:protectionLevel="signature" />
+    <!-- Held by this app so it can send the permission-protected AUTH_STATE_CHANGED broadcast -->
+    <uses-permission android:name="com.davx5.ose.permission.READ_AUTH_STATE" />
+
     <application android:name=".App"
             android:icon="@mipmap/ic_launcher">
 
@@ -81,6 +88,13 @@
                 <action android:name="com.davx5.ose.action.REQUEST_SYNC" />
             </intent-filter>
         </receiver>
+
+        <!-- Exposes the per-account auth (token) state to same-signed apps, see KompaktAuthState -->
+        <provider
+            android:name="at.bitfire.davdroid.ui.KompaktAuthStateProvider"
+            android:authorities="at.bitfire.davdroid.kompakt.authstate"
+            android:exported="true"
+            android:readPermission="com.davx5.ose.permission.READ_AUTH_STATE" />
 
         <!-- provider to share debug info/logs -->
         <provider

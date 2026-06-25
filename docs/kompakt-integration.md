@@ -106,3 +106,70 @@ worker with `CANCEL_AND_REENQUEUE`). A failed manual sync does not reschedule.
   coalesced/queued (it won't run a second concurrent sync).
 - Testing from `adb` shell is **not** possible because of the signature permission (shell isn't
   same‑signed); it can only be exercised from a same‑signed app.
+
+## Reading the authentication (token) state from another app
+
+Another app on the device (e.g. the Mudita calendar app) can find out whether a linked account's OAuth
+token has **expired / needs re‑authorization**, so it can react in its own UI (e.g. prompt the user to
+re‑login) instead of silently failing to sync.
+
+DAVx5 detects this during sync: an HTTP 401 from the server raises `numAuthExceptions`, which sets a
+per‑account `needs_reauth` flag (cleared again on the next clean sync). That flag is exposed two ways,
+both guarded by the **same** signature condition as `REQUEST_SYNC`.
+
+### Contract
+
+- **Source of truth (pull):** `ContentProvider` at
+  `content://at.bitfire.davdroid.kompakt.authstate/auth_state` (`KompaktAuthState.CONTENT_URI`),
+  **read‑only**. One row per linked account with columns:
+  - `_id` (Int) — row index
+  - `account_name` (String)
+  - `account_type` (String)
+  - `needs_reauth` (Int) — **1** if the token is invalid and needs re‑authorization, **0** otherwise
+- **Change notification (push):** broadcast action `com.davx5.ose.action.AUTH_STATE_CHANGED`
+  (`KompaktAuthState.ACTION_AUTH_STATE_CHANGED`), sent **only on a state transition** for an account,
+  with extras `account_name` (String) and `needs_reauth` (Int). The provider URI is also notified via
+  `ContentResolver.notifyChange`, so a `ContentObserver` works too.
+- **Permission:** `com.davx5.ose.permission.READ_AUTH_STATE` — **`signature`** protection level. Required
+  to query the provider **and** to receive the broadcast. Same‑signing condition as above; the caller
+  must `<uses-permission>` it.
+
+### Caller — manifest
+
+```xml
+<uses-permission android:name="com.davx5.ose.permission.READ_AUTH_STATE" />
+```
+
+### Caller — code
+
+Pull the current state at any time:
+
+```kotlin
+val uri = Uri.parse("content://at.bitfire.davdroid.kompakt.authstate/auth_state")
+context.contentResolver.query(uri, null, null, null, null)?.use { c ->
+    while (c.moveToNext()) {
+        val name = c.getString(c.getColumnIndexOrThrow("account_name"))
+        val needsReauth = c.getInt(c.getColumnIndexOrThrow("needs_reauth")) == 1
+        // …react…
+    }
+}
+```
+
+Get notified of changes — **`ContentObserver` is recommended** (not subject to the Android 8+
+implicit‑broadcast limitations for manifest receivers):
+
+```kotlin
+context.contentResolver.registerContentObserver(uri, /* notifyForDescendants = */ false, observer)
+// observer.onChange() → re‑query the provider for the new state
+```
+
+Alternatively, a **runtime‑registered** `BroadcastReceiver` on `com.davx5.ose.action.AUTH_STATE_CHANGED`
+(the app must hold `READ_AUTH_STATE`).
+
+### Notes / limitations
+
+- The provider is **read‑only**; other apps cannot mutate the auth state.
+- The broadcast fires only on **transitions** (valid→invalid and invalid→valid), not on every failed
+  sync. For the absolute current state, always query the provider.
+- Same as `REQUEST_SYNC`: it **cannot** be tested from `adb` shell because of the signature permission;
+  exercise it from a same‑signed app.

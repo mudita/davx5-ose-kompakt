@@ -18,6 +18,7 @@ import androidx.work.WorkerParameters
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.push.PushNotificationManager
 import at.bitfire.davdroid.settings.AccountSettings
+import at.bitfire.davdroid.ui.KompaktAuthStateBroadcaster
 import at.bitfire.davdroid.sync.AddressBookSyncer
 import at.bitfire.davdroid.sync.AutomaticSyncManager
 import at.bitfire.davdroid.sync.CalendarSyncer
@@ -199,12 +200,22 @@ abstract class BaseSyncWorker(
         // isn't retained). Set on HTTP 401, cleared on a clean sync.
         if (dataType == SyncDataType.EVENTS) {
             val accountManager = AccountManager.get(applicationContext)
-            when {
-                syncResult.numAuthExceptions > 0 ->
+            val wasNeedingReauth = accountManager.getUserData(account, AccountSettings.KEY_NEEDS_REAUTH) == "1"
+            val nowNeedingReauth = when {
+                syncResult.numAuthExceptions > 0 -> {
                     accountManager.setUserData(account, AccountSettings.KEY_NEEDS_REAUTH, "1")
-                !syncResult.hasError() ->
+                    true
+                }
+                !syncResult.hasError() -> {
                     accountManager.setUserData(account, AccountSettings.KEY_NEEDS_REAUTH, null)
+                    false
+                }
+                else -> wasNeedingReauth
             }
+            // Kompakt: on a state transition, notify other (same-signed) apps so they can react
+            // (e.g. prompt re-login). See KompaktAuthState / docs/kompakt-integration.md.
+            if (nowNeedingReauth != wasNeedingReauth)
+                KompaktAuthStateBroadcaster.notifyAuthStateChanged(applicationContext, account, nowNeedingReauth)
         }
 
         // convert SyncResult from Syncers to worker Data

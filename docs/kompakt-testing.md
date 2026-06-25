@@ -144,3 +144,96 @@ adb shell "sqlite3 /data/system_ce/0/accounts_ce.db \
   \"SELECT e.key, e.value FROM accounts a JOIN extras e ON e.accounts_id=a._id \
     WHERE a.type='bitfire.at.davdroid' AND (e.key LIKE 'kompakt%' OR e.key LIKE 'sync_interval%');\""
 ```
+
+## Auth (token) state export — testing
+
+The auth state is exposed to other apps two ways (see `docs/kompakt-integration.md` and `KompaktAuthState`):
+a read‑only `ContentProvider` at `content://at.bitfire.davdroid.kompakt.authstate/auth_state` (column
+`needs_reauth` = 0/1 per account), and an `AUTH_STATE_CHANGED` broadcast fired **only on a transition**.
+Both are guarded by the signature permission `com.davx5.ose.permission.READ_AUTH_STATE`.
+
+> Like `REQUEST_SYNC`, the signature permission means **`adb shell` cannot read the provider or receive the
+> broadcast** (shell isn't same‑signed). So we test in two parts: drive/inspect the underlying state with
+> `adb`, then read the exposed surface either from a same‑signed app or via a debug‑only relaxation.
+
+### 1. Trigger a transition (valid -> token expired -> valid)
+
+The flag flips -- and the push fires -- only through the **real sync path**, when EVENTS sync hits a 401
+(`numAuthExceptions > 0` in `BaseSyncWorker` -> `kompakt_needs_reauth` set to `"1"`, `AUTH_STATE_CHANGED`
+with `needs_reauth=1`). After re-linking and a clean sync it flips back (and fires `needs_reauth=0`).
+
+> **`needs_reauth` is set only by a real HTTP 401.** `SyncManager.handleException` increments
+> `numAuthExceptions` **only** for `UnauthorizedException`. Overwriting `auth_state` with a junk string
+> like `'broken'` does **not** work: `AccountSettings.credentials()` calls `AuthState.jsonDeserialize`
+> with no try/catch, so a non-JSON blob throws `JSONException` -> categorized as an *unclassified* error
+> ("sync failed"), never a 401 -> the flag stays `0` and no push fires. The token must stay valid JSON;
+> only its **contents** may be invalidated.
+
+Revoke the account's access on the Google side
+(Google Account -> Security -> third-party access -> remove DAVx5), then tap **Synchronize now**. The
+refresh token is now invalid -> AppAuth's refresh fails (`invalid_grant`) -> `OAuthInterceptor` returns
+`null` -> the request goes out without a bearer -> server returns **401** -> `needs_reauth` flips to 1
+and `AUTH_STATE_CHANGED` fires. Re-link the account to recover.
+
+### 2. Inspect the source-of-truth flag (what the provider will report)
+
+The provider reports `needs_reauth=1` exactly when the `kompakt_needs_reauth` extra is `"1"` -- verify it
+with the accounts-DB query in *Inspecting state on the device* above.
+
+### 3. Confirm the push actually fired (it is edge-triggered)
+
+`AUTH_STATE_CHANGED` **and** the `notifyChange` on the provider URI fire only on a **transition**
+(`nowNeedingReauth != wasNeedingReauth` in `BaseSyncWorker`), not on every failed sync. **The provider
+reporting `needs_reauth=1` does not prove the push fired** -- the provider just reads the persisted flag.
+If the flag was already `1` from an earlier failed sync, the next 401 is not a transition, so nothing is
+emitted.
+
+To observe a push, force a clean **`0 -> 1`** edge: clear the flag first (restore the token and run a
+successful sync, or set the `kompakt_needs_reauth` extra to `NULL` + framework reload), confirm the
+provider reports `0`, then trigger the 401 **once**.
+
+> Don't rely on `adb shell dumpsys activity broadcasts | grep AUTH_STATE_CHANGED`: for a
+> permission-protected *implicit* broadcast with no installed receiver the history is tiny.
+
+Reliable ways to observe:
+- A **`ContentObserver`** from a same-signed app on `KompaktAuthState.CONTENT_URI` (easiest -- you already
+  know the provider works); see step 4.
+- A temporary `Log`/`logger.info` line in `KompaktAuthStateBroadcaster.notifyAuthStateChanged` (debug
+  build only), then `adb logcat | grep AUTH_STATE_CHANGED`.
+
+### 4. Read the provider / receive the push (cross‑app — the real end‑to‑end test)
+
+Needs a **same‑signed** app declaring `<uses-permission android:name="com.davx5.ose.permission.READ_AUTH_STATE" />`:
+
+```kotlin
+val uri = Uri.parse("content://at.bitfire.davdroid.kompakt.authstate/auth_state")
+
+// pull — current state
+contentResolver.query(uri, null, null, null, null)?.use { c ->
+    while (c.moveToNext())
+        Log.i("authstate", "${c.getString(1)} needsReauth=${c.getInt(3)}")  // account_name, needs_reauth
+}
+
+// push — observe changes (recommended; immune to the Android 8+ implicit-broadcast limits)
+contentResolver.registerContentObserver(uri, /* notifyForDescendants = */ false, observer)
+
+// push — or a runtime receiver
+registerReceiver(
+    receiver,
+    IntentFilter("com.davx5.ose.action.AUTH_STATE_CHANGED"),
+    "com.davx5.ose.permission.READ_AUTH_STATE",
+    null,
+    Context.RECEIVER_EXPORTED
+)
+```
+
+### 4b. Debug‑only shortcut (eyeball the cursor without a companion app)
+
+In a **local** build only, temporarily remove `android:readPermission` from the `<provider>` in
+`app-ose/src/main/AndroidManifest.xml` or start `adb` as `root`, then:
+
+```bash
+adb shell content query --uri content://at.bitfire.davdroid.kompakt.authstate/auth_state
+```
+
+Revert before committing — never ship the provider without the permission.
