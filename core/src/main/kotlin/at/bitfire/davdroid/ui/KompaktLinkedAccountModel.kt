@@ -16,6 +16,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import at.bitfire.davdroid.BuildConfig
 import at.bitfire.davdroid.db.Collection
 import at.bitfire.davdroid.db.Service
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
@@ -96,8 +97,13 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }
 
     companion object {
-        /** sync interval (seconds) that the "Auto synchronization" toggle enables: once a day */
-        const val AUTO_SYNC_INTERVAL_SECONDS = 60L
+        /**
+         * Sync interval (seconds) that the "Auto synchronization" toggle enables.
+         *
+         * In debug builds this is shortened to 15 minutes to make testing easier; release builds
+         * use the production default of once a day (24 h).
+         */
+        val AUTO_SYNC_INTERVAL_SECONDS = if (BuildConfig.DEBUG) 15 * 60L else 24 * 60 * 60L
 
         /** AccountManager userData key holding the Kompakt init-defaults version applied for this account */
         const val KEY_DEFAULTS_APPLIED = "kompakt_defaults_applied"

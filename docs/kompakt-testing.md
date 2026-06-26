@@ -2,6 +2,24 @@
 
 Practical recipes for testing the Kompakt account/sync flow on a device or emulator.
 
+## Auto-sync interval (debug vs. release)
+
+The interval that the **"Auto synchronization"** toggle enables depends on the build type
+(`KompaktLinkedAccountModel.AUTO_SYNC_INTERVAL_SECONDS`):
+
+| Build | Auto-sync interval |
+|---|---|
+| **Debug** (e.g. `assembleOseDebug`) | **15 minutes** — short, to make testing easier |
+| **Release** (non-debug) | **24 hours** — production default |
+
+So on a **debug** build, after enabling auto-sync, expect a background sync roughly every 15 min (Android may
+batch/defer it a little — `WorkManager` periodic work has a minimum 15 min interval and is not exact). On a
+release build it is once a day. To verify the actual scheduled interval on a device:
+
+```bash
+adb shell dumpsys jobscheduler | grep -A3 -i "at.bitfire.davdroid"
+```
+
 ## Sync error handling — what shows when
 
 The Kompakt "Linked Account" screen (`KompaktLinkedAccountModel` / `KompaktLinkedAccountScreen`) surfaces
