@@ -2,6 +2,8 @@
  * Copyright © All Contributors. See LICENSE and AUTHORS in the root directory for details.
  */
 
+import tasks.KompaktDeployTask
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
@@ -14,6 +16,8 @@ plugins {
 android {
     defaultConfig {
         applicationId = "at.bitfire.davdroid.mudita"
+
+        System.getenv("VERSION_CODE")?.toIntOrNull()?.let { versionCode = it }
 
         // versionCode and versionName are defined in the build-logic submodule (AppVersion)
         base.archivesName = "KompaktDavx-$versionCode-$versionName"
@@ -129,4 +133,29 @@ dependencies {
     implementation(libs.guava)
     implementation(libs.okhttp.base)
     implementation(libs.openid.appauth)
+}
+
+tasks.register<KompaktDeployTask>("uploadApkToNexus") {
+    val prefix = (project.findProperty("tagPrefix") as String?) ?: "development"
+    val baseVersion = android.defaultConfig.versionName ?: ""
+    appName = "davx"
+    tagPrefix = prefix
+    versionName = baseVersion + "-ose" + if (prefix == "qa") "-SNAPSHOT" else ""
+    nexusUrl = (project.findProperty("nexusUrl") as String?) ?: ""
+    nexusUsername = (project.findProperty("nexusUsername") as String?) ?: ""
+    nexusPassword = (project.findProperty("nexusPassword") as String?) ?: ""
+}
+
+tasks.register("checkVersion") {
+    doFirst {
+        val current = android.defaultConfig.versionName
+        val ref = System.getenv("GITHUB_REF") ?: throw GradleException("GITHUB_REF not set")
+        val match = Regex("(release|development|qa)\\.(\\d+\\.\\d+\\.\\d+(-\\w*)?)")
+            .find(ref.removePrefix("refs/tags/"))
+            ?: throw GradleException("The git tag does not follow the required 'type.x.y.z' pattern.")
+        val tagVersion = match.groupValues[2]
+        if (current != tagVersion) {
+            throw GradleException("Build version ($current) does not match tag version ($tagVersion).")
+        }
+    }
 }

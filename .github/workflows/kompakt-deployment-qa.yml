@@ -1,0 +1,46 @@
+name: Kompakt Deployment - QA
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kompakt
+
+jobs:
+  deploy:
+    name: Deploy QA to Nexus
+    runs-on: ubuntu-latest
+    env:
+      ARTIFACTORY_URL: ${{ secrets.ARTIFACTORY_URL }}
+      ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+      ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: pip install requests
+
+      - name: Bump VERSION_CODE
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION_CODE=$(python3 buildSrc/src/main/kotlin/scripts/bump_build_version.py BUILD_NUMBER)
+          echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Assemble QA
+        run: ./gradlew assembleOseQa
+
+      - name: Upload to Nexus
+        run: ./gradlew uploadApkToNexus -PnexusUsername="$ARTIFACTORY_USERNAME" -PnexusPassword="$ARTIFACTORY_PASSWORD" -PnexusUrl="$ARTIFACTORY_URL" -PtagPrefix=qa
