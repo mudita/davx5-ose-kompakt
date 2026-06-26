@@ -29,7 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.ui.KompaktTypography900
-import at.bitfire.davdroid.ui.composable.KompaktTheme
+import at.bitfire.davdroid.ui.composable.KompaktScreen
 import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
 import com.mudita.mmd.components.text.TextMMD
 import net.openid.appauth.AuthorizationRequest
@@ -88,7 +88,7 @@ class KompaktOAuthWebViewActivity : ComponentActivity() {
         })
 
         setContent {
-            KompaktTheme {
+            KompaktScreen {
                 Scaffold(
                     topBar = {
                         KompaktTopAppBar(

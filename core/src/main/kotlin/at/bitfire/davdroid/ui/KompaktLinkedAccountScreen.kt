@@ -52,7 +52,7 @@ import at.bitfire.davdroid.ui.composable.KompaktFramedIcon
 import at.bitfire.davdroid.ui.composable.KompaktListCell
 import at.bitfire.davdroid.ui.composable.KompaktMessageSheet
 import at.bitfire.davdroid.ui.composable.KompaktModalSheet
-import at.bitfire.davdroid.ui.composable.KompaktTheme
+import at.bitfire.davdroid.ui.composable.KompaktScreen
 import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
 import com.mudita.mmd.components.buttons.OutlinedButtonMMD
 import com.mudita.mmd.components.progress_indicator.CircularProgressIndicatorMMD
@@ -152,7 +152,7 @@ fun KompaktLinkedAccountContent(
     var showUnlinkDialog by remember { mutableStateOf(false) }
     var showDisableAutoSyncDialog by remember { mutableStateOf(false) }
 
-    KompaktTheme {
+    KompaktScreen {
         Scaffold(
             topBar = {
                 KompaktTopAppBar(

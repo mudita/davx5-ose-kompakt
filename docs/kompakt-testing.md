@@ -163,6 +163,33 @@ adb shell "sqlite3 /data/system_ce/0/accounts_ce.db \
     WHERE a.type='bitfire.at.davdroid' AND (e.key LIKE 'kompakt%' OR e.key LIKE 'sync_interval%');\""
 ```
 
+## Offline+ overlay — testing
+
+The Offline+ overlay covers any Kompakt screen while the hardware switch is on (see
+`docs/kompakt-integration.md`). It is driven by two system broadcasts plus an initial sysfs read.
+
+On a real Mudita Kompakt device, just toggle the physical Offline+ switch on any screen — the overlay
+should appear/disappear immediately, and its back arrow should still navigate up the app's screen stack.
+
+Without the hardware switch (emulator / other phone), simulate the broadcasts with `adb`:
+
+```bash
+# show the overlay (Offline+ enabled)
+adb shell am broadcast -a android.intent.action.ACTION_HWSWITCH_LOCKED
+
+# hide the overlay (Offline+ disabled)
+adb shell am broadcast -a android.intent.action.ACTION_HWSWITCH_UNLOCKED
+```
+
+> The broadcasts are received `RECEIVER_EXPORTED` with no permission, so `adb shell` can deliver them.
+> The receiver is only registered while a Kompakt screen is in the foreground, so make sure the app is
+> open. On resume the initial state is re-read from
+> `/sys/bus/platform/drivers/pmic-codec-accdet/irqkey_state` (value `0` = off).
+
+**Non-Kompakt devices:** the file is absent → `readInitialState()` returns `false` and no error is raised,
+so the overlay never shows unless you send the `LOCKED` broadcast above. This confirms the feature
+degrades silently on other phones.
+
 ## Auth (token) state export — testing
 
 The auth state is exposed to other apps two ways (see `docs/kompakt-integration.md` and `KompaktAuthState`):

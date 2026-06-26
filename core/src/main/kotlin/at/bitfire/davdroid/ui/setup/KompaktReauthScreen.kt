@@ -25,7 +25,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.settings.Credentials
 import at.bitfire.davdroid.ui.KompaktTypography900
-import at.bitfire.davdroid.ui.composable.KompaktTheme
+import at.bitfire.davdroid.ui.composable.KompaktScreen
 import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
 import com.mudita.mmd.components.text.TextMMD
 
@@ -50,7 +50,7 @@ fun KompaktReauthScreen(
         return
     }
 
-    KompaktTheme {
+    KompaktScreen {
         Scaffold(
             topBar = {
                 KompaktTopAppBar(

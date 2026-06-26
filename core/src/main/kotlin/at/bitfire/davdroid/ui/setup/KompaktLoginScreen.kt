@@ -29,7 +29,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.ui.KompaktTypography900
-import at.bitfire.davdroid.ui.composable.KompaktTheme
+import at.bitfire.davdroid.ui.composable.KompaktScreen
 import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
 import com.mudita.mmd.components.text.TextMMD
 
@@ -109,7 +109,7 @@ private fun KompaktLoginScreenContent(
     onFinish: (newAccount: Account?) -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    KompaktTheme {
+    KompaktScreen {
         Scaffold(
             topBar = {
                 KompaktTopAppBar(

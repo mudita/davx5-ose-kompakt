@@ -41,6 +41,45 @@ context.startActivity(intent)
 - Because the user stays in Kompakt after linking, there is no automatic return to the caller on success;
   the caller returns to its own UI when the user navigates back.
 
+## Reacting to the Offline+ hardware switch
+
+The Mudita Kompakt device has a physical **Offline+** switch. While it is on, account synchronization is
+blocked, so the app covers **every** Kompakt screen with a full-screen notice ("You're using Offline+")
+regardless of where the user currently is. This is an **inbound** integration: Kompakt *consumes* signals
+emitted by the platform; nothing needs to call into the app.
+
+### Signals consumed (platform → Kompakt)
+
+- **State changes (push):** system broadcasts
+  - `android.intent.action.ACTION_HWSWITCH_LOCKED` → Offline+ **enabled**
+  - `android.intent.action.ACTION_HWSWITCH_UNLOCKED` → Offline+ **disabled**
+- **Initial state (pull):** sysfs file `/sys/bus/platform/drivers/pmic-codec-accdet/irqkey_state`, read on
+  screen entry. Value **`0`** = Offline+ off; any other value = on.
+
+### Implementation
+
+- `KompaktOfflinePlusState` (process-wide `object`, mirrors `ForegroundTracker`) holds the
+  `StateFlow<Boolean> enabled` and the sysfs read (`readInitialState()`).
+- `ObserveOfflinePlusHardware()` (composable) is driven by `repeatOnLifecycle(STARTED)`: each time a
+  Kompakt screen enters the foreground it **re-reads the sysfs value** and registers the receiver for the
+  two broadcasts (`broadcastReceiverFlow(...)`, `RECEIVER_EXPORTED`); when it leaves the foreground the
+  receiver is unregistered. Re-reading on every resume recovers the correct state even if a switch
+  toggle's broadcast was missed while the app was backgrounded.
+- `KompaktOfflinePlusHost()` ties it together: it runs the observer (skipped in `@Preview` via
+  `LocalInspectionMode`) and, when `enabled` is true, draws `KompaktOfflinePlusOverlay` on top of the
+  screen. The overlay's back arrow performs normal system back, so the user can still navigate the app.
+- **Single injection point:** `KompaktScreen` (the root wrapper every Kompakt screen uses instead of
+  `KompaktTheme`) is `KompaktTheme { content(); KompaktOfflinePlusHost() }`. The whole Kompakt surface is
+  3 activities (`KompaktAccountsActivity`, `KompaktLoginActivity`, `KompaktOAuthWebViewActivity`) and the
+  account flow lives inside `KompaktAccountsActivity` via composable switching, so wrapping at
+  `KompaktScreen` covers every screen. `KompaktTheme` itself stays styling-only.
+
+### Non-Kompakt devices
+
+The feature degrades silently: the broadcasts simply never arrive, and the sysfs file does not exist, so
+`readInitialState()` returns `false` (the read is wrapped in a `try/catch` that logs at `fine` level and
+never raises an error). The overlay is therefore never shown on other phones.
+
 ## Requesting a sync from another app
 
 Another app on the device (e.g. the Mudita calendar app) can request a sync of the

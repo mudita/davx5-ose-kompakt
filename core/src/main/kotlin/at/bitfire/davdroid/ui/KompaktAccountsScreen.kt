@@ -39,7 +39,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.ui.composable.KompaktFramedIcon
-import at.bitfire.davdroid.ui.composable.KompaktTheme
+import at.bitfire.davdroid.ui.composable.KompaktScreen
 import at.bitfire.davdroid.ui.setup.KompaktLoginActivity
 import com.mudita.mmd.components.buttons.ButtonMMD
 import com.mudita.mmd.components.buttons.OutlinedButtonMMD
@@ -86,7 +86,7 @@ fun KompaktAccountsScreen(
     when {
         // Still loading, or login just succeeded
         accounts == null || (justLinked && account == null) ->
-            KompaktTheme {
+            KompaktScreen {
                 Box(modifier = Modifier.fillMaxSize())
             }
 
@@ -116,7 +116,7 @@ private fun KompaktLinkAccountScreen(
     onboarding: Boolean = false,
     onSkip: () -> Unit = onBack
 ) {
-    KompaktTheme {
+    KompaktScreen {
         Scaffold(
             topBar = {
                 if (onboarding)
@@ -135,7 +135,7 @@ private fun KompaktLinkAccountScreen(
                                 contentPadding = PaddingValues(horizontal = 10.dp)
                             ) {
                                 TextMMD(
-                                    text = stringResource(R.string.kompakt_skip),
+                                    text = stringResource(R.string.common_button_skip),
                                     style = KompaktTypography900.labelMedium
                                 )
                             }
