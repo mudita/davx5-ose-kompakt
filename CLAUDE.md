@@ -6,6 +6,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is **davx5-ose-kompakt** — a fork of [DAVx⁵ OSE](https://github.com/bitfireAT/davx5-ose) (CalDAV/CardDAV/WebDAV sync for Android), customized for a Mudita e-ink AOSP device with a custom Material Design library. The upstream project is GPLv3.
 
+## Branch & Upstream Maintenance
+
+- **Upstream remote**: `upstream` → `https://github.com/bitfireAT/davx5-ose.git` (add with `git remote add upstream …` if missing).
+- **`main`** — a pristine mirror of `upstream/main`, no Kompakt commits. Refresh with `git fetch upstream --tags && git checkout main && git merge --ff-only upstream/main && git push origin main`.
+- **`kompakt`** — the product branch: all Kompakt commits rebased on top of an upstream **release tag**. This is where all work lives.
+- **Current Kompakt base: `v4.5.15-ose`.** ⚠️ Update this line whenever you rebase onto a newer tag — it is the `<OLD-tag>` argument for the next upgrade.
+
+### Upgrading to a newer upstream release
+
+```bash
+git fetch upstream --tags
+git branch kompakt-backup kompakt              # safety net — kompakt is the only branch with our work
+git rebase --onto <NEW-tag> v4.5.15-ose kompakt   # replace v4.5.15-ose with the current base above
+# resolve conflicts → ./gradlew :synctools:compileDebugKotlin :core:compileDebugKotlin :app-ose:compileOseDebugKotlin → test on device
+git push --force-with-lease origin kompakt
+```
+
+Then update the "Current Kompakt base" line above to `<NEW-tag>`. Never `git merge upstream` into `kompakt` (keeps history linear); never commit Kompakt code to `main`.
+
 ## Build Commands
 
 ```bash
