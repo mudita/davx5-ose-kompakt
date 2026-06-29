@@ -70,6 +70,9 @@ fun KompaktLinkedAccountScreen(
     showAccountLinkedDialog: Boolean = false,
     onAccountLinkedDialogDismiss: () -> Unit = {},
     model: KompaktLinkedAccountModel = hiltViewModel(
+        // Key by account so switching the linked account (unlink A → link B) builds a fresh
+        // ViewModel instead of reusing the cached one for the previous account (SHP-571).
+        key = account.name,
         creationCallback = { factory: KompaktLinkedAccountModel.Factory ->
             factory.create(account)
         }
