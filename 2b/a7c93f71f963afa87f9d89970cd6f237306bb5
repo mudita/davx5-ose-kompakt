@@ -1,0 +1,36 @@
+core/build.gradle.kts
+  2788f291701fbeba 84
+frontitude/build.gradle.kts
+  2788f291701fbeba 1-19
+frontitude/frontituderc.json
+  2788f291701fbeba 1-10
+frontitude/move_frontitude_files.py
+  2788f291701fbeba 1-37
+frontitude/src/main/AndroidManifest.xml
+  2788f291701fbeba 1-2
+settings.gradle.kts
+  2788f291701fbeba 44
+frontitude/.gitignore
+  2788f291701fbeba 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "2ba7c93f71f963afa87f9d89970cd6f237306bb5",
+  "prompts": {
+    "2788f291701fbeba": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f026a7ef-a47b-4130-9cb7-40ddf1616b2c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 31867,
+      "total_deletions": 0,
+      "accepted_lines": 71,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/444bcecdf7da153c56cd456750594bf1dabf407bcd08fc841bd5d449ad78854c"
+    }
+  }
+}
