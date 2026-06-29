@@ -70,11 +70,11 @@ android {
     }
 
     signingConfigs {
-        create("bitfire") {
-            storeFile = file(System.getenv("ANDROID_KEYSTORE") ?: "/dev/null")
-            storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
-            keyAlias = System.getenv("ANDROID_KEY_ALIAS")
-            keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+        getByName("debug") {
+            storeFile = rootProject.file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "system-debug"
+            keyPassword = "android"
         }
     }
 
@@ -85,8 +85,12 @@ android {
 
             isShrinkResources = true
 
-            // must be after signingConfigs {} block
-            signingConfig = signingConfigs.findByName("bitfire")
+            signingConfig = signingConfigs.getByName("debug")
+        }
+        create("qa") {
+            initWith(getByName("release"))
+            matchingFallbacks += listOf("release")
+            versionNameSuffix = "-SNAPSHOT"
         }
     }
 }
