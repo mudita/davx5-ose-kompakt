@@ -1,0 +1,26 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktGoogleLoginViewModel.kt
+  306b2944a3cf76b1 77-83,87
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktGoogleLogin.kt
+  306b2944a3cf76b1 22,27,74-77,80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "1f9700e130eb7fb56d96f3261f03487b0150c34b",
+  "prompts": {
+    "306b2944a3cf76b1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d83a6977-8a34-4a28-a4e0-e73ea34cc071",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 5,
+      "accepted_lines": 15,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/865a07844e4dc3b4c3b2fb60f18667e46aefdfe9ff0aa1701db55985b0e0f886"
+    }
+  }
+}
