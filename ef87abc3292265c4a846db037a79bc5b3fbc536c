@@ -1,0 +1,24 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktOAuthWebViewActivity.kt
+  71d7bd80fb141b20 167,172-191
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "ef87abc3292265c4a846db037a79bc5b3fbc536c",
+  "prompts": {
+    "71d7bd80fb141b20": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c898c01f-bb0d-4789-bca8-e651d831679a",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 21,
+      "total_deletions": 9,
+      "accepted_lines": 21,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/f2050d87ff2f183c1b6415f916a113dd98b04fff1ca9b5d5f0dc616d6c670092"
+    }
+  }
+}
