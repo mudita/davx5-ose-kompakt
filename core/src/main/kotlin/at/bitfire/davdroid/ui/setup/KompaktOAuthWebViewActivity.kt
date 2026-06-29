@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.os.ConfigurationCompat
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.ui.KompaktTypography900
 import at.bitfire.davdroid.ui.composable.KompaktTheme
@@ -74,6 +75,11 @@ class KompaktOAuthWebViewActivity : ComponentActivity() {
             return
         }
 
+        val localizedAuthUrl = withCurrentLocale(
+            authUrl,
+            ConfigurationCompat.getLocales(resources.configuration).get(0)?.toLanguageTag()
+        )
+
         // back: navigate within the auth pages first; only finish (= cancel) at the start
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -116,7 +122,7 @@ class KompaktOAuthWebViewActivity : ComponentActivity() {
                         factory = { context ->
                             createWebView(context, request, redirectUri).also { view ->
                                 webView = view
-                                view.loadUrl(authUrl)
+                                view.loadUrl(localizedAuthUrl)
                             }
                         }
                     )
@@ -148,6 +154,38 @@ class KompaktOAuthWebViewActivity : ComponentActivity() {
             }
         }
         return view
+    }
+
+    /**
+     * Returns [url] with its `hl` and `ui_locales` query parameters overwritten with [locale] — the
+     * current configuration locale of this Activity. The auth URL is built once (in
+     * [at.bitfire.davdroid.network.KompaktOAuthGoogle.signIn]) and stored in the launch intent, so on a
+     * configuration-change recreation (e.g. the user changed the system language) it would otherwise be
+     * replayed in the language it was built with. This Activity is recreated with the current
+     * configuration on such a change, so re-deriving the language here keeps the Google page in the
+     * device's current language. Only the language parameters change; state/PKCE and every other
+     * parameter are kept verbatim (no decode/re-encode round-trip), so the OAuth flow is unaffected.
+     */
+    private fun withCurrentLocale(url: String, locale: String?): String {
+        if (locale == null) return url
+        val uri = Uri.parse(url)
+
+        val kept = uri.encodedQuery
+            ?.split("&")
+            ?.filter { it.isNotEmpty() }
+            ?.filterNot {
+                val key = it.substringBefore("=")
+                key == PARAM_HL || key == PARAM_UI_LOCALES
+            }
+            .orEmpty()
+
+        val encodedLocale = Uri.encode(locale)
+        val newQuery = (kept + listOf(
+            "$PARAM_HL=$encodedLocale",
+            "$PARAM_UI_LOCALES=$encodedLocale"
+        )).joinToString("&")
+
+        return uri.buildUpon().encodedQuery(newQuery).build().toString()
     }
 
     /**
@@ -208,6 +246,9 @@ class KompaktOAuthWebViewActivity : ComponentActivity() {
     }
 
     companion object {
+        private const val PARAM_HL = "hl"
+        private const val PARAM_UI_LOCALES = "ui_locales"
+
         private const val EXTRA_AUTH_URL = "auth_url"
         private const val EXTRA_REDIRECT_URI = "redirect_uri"
         private const val EXTRA_REQUEST_JSON = "request_json"

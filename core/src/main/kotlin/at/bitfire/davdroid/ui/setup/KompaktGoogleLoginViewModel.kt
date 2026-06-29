@@ -26,7 +26,6 @@ import kotlinx.coroutines.launch
 import net.openid.appauth.AuthorizationResponse
 import net.openid.appauth.AuthorizationService
 import org.json.JSONObject
-import java.util.Locale
 import java.util.logging.Level
 import java.util.logging.Logger
 
@@ -78,8 +77,7 @@ class KompaktGoogleLoginViewModel @AssistedInject constructor(
     fun signIn() =
         oAuthGoogle.signIn(
             email = uiState.emailWithDomain,
-            customClientId = uiState.customClientId.trimToNull(),
-            locale = Locale.getDefault().toLanguageTag()
+            customClientId = uiState.customClientId.trimToNull()
         )
 
     fun signInFailed() {
