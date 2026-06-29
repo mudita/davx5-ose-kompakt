@@ -6,6 +6,7 @@ package at.bitfire.davdroid.sync.worker
 
 import android.accounts.Account
 import android.accounts.AccountManager
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import androidx.core.app.NotificationCompat
@@ -82,7 +83,9 @@ abstract class BaseSyncWorker(
     @Inject
     lateinit var taskSyncer: TaskSyncer.Factory
 
-
+    // androidx.work marks Result.Success as @RestrictTo(LIBRARY_GROUP)
+    // so it causes lint error, but code works correctly
+    @SuppressLint("RestrictedApi")
     override suspend fun doWork(): Result {
         // ensure we got the required arguments
         val account = Account(
