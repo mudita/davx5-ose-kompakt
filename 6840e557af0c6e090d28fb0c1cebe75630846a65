@@ -1,0 +1,24 @@
+docs/superpowers/specs/2026-06-26-frontitude-calendar-source-design.md
+  2788f291701fbeba 1-226
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "6840e557af0c6e090d28fb0c1cebe75630846a65",
+  "prompts": {
+    "2788f291701fbeba": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f026a7ef-a47b-4130-9cb7-40ddf1616b2c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 31867,
+      "total_deletions": 0,
+      "accepted_lines": 31867,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/444bcecdf7da153c56cd456750594bf1dabf407bcd08fc841bd5d449ad78854c"
+    }
+  }
+}

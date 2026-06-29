@@ -1,0 +1,24 @@
+core/src/main/res/values/strings.xml
+  2788f291701fbeba 598,603-604
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "79375b00eb024b0528bca50ce3cb5749d2597dc1",
+  "prompts": {
+    "2788f291701fbeba": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f026a7ef-a47b-4130-9cb7-40ddf1616b2c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 31707,
+      "total_deletions": 86,
+      "accepted_lines": 31654,
+      "overriden_lines": 6,
+      "messages_url": "https://gitai.miquido.dev/cas/c75153ea589b8c166557ee5225e1c4131cf3a187a2e4eda39db52f7eca96fde3"
+    }
+  }
+}
