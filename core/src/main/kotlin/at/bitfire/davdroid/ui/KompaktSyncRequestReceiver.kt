@@ -22,7 +22,7 @@ import kotlin.time.Duration.Companion.minutes
  * Lets another app on the device request a sync of the linked account(s).
  *
  * Invoked by an explicit broadcast with action [ACTION_REQUEST_SYNC] targeted at this app's package. The
- * receiver is exported but guarded by the signature-level permission `com.davx5.ose.permission.TRIGGER_SYNC`
+ * receiver is exported but guarded by the signature-level permission `at.bitfire.davdroid.mudita.permission.TRIGGER_SYNC`
  * (declared in the app-ose manifest), so only apps signed with the same key may request a sync.
  *
  * The request is **throttled**: a sync is only enqueued if the last successful sync finished at least
@@ -34,7 +34,7 @@ import kotlin.time.Duration.Companion.minutes
 class KompaktSyncRequestReceiver : BroadcastReceiver() {
 
     companion object {
-        const val ACTION_REQUEST_SYNC = "com.davx5.ose.action.REQUEST_SYNC"
+        const val ACTION_REQUEST_SYNC = "at.bitfire.davdroid.mudita.action.REQUEST_SYNC"
 
         /** Minimum time that must elapse after the last successful sync before another request is honored. */
         val SYNC_THROTTLE_MS = 15.minutes.inWholeMilliseconds

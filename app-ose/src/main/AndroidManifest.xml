@@ -7,15 +7,15 @@
         android:installLocation="internalOnly">
 
     <permission
-        android:name="com.davx5.ose.permission.TRIGGER_SYNC"
+        android:name="at.bitfire.davdroid.mudita.permission.TRIGGER_SYNC"
         android:protectionLevel="signature" />
 
     <!-- Signature-level permission required to read the auth (token) state, see KompaktAuthState -->
     <permission
-        android:name="com.davx5.ose.permission.READ_AUTH_STATE"
+        android:name="at.bitfire.davdroid.mudita.permission.READ_AUTH_STATE"
         android:protectionLevel="signature" />
     <!-- Held by this app so it can send the permission-protected AUTH_STATE_CHANGED broadcast -->
-    <uses-permission android:name="com.davx5.ose.permission.READ_AUTH_STATE" />
+    <uses-permission android:name="at.bitfire.davdroid.mudita.permission.READ_AUTH_STATE" />
 
     <application android:name=".App"
             android:icon="@mipmap/ic_launcher">
@@ -83,18 +83,18 @@
         <receiver
             android:name="at.bitfire.davdroid.ui.KompaktSyncRequestReceiver"
             android:exported="true"
-            android:permission="com.davx5.ose.permission.TRIGGER_SYNC">
+            android:permission="at.bitfire.davdroid.mudita.permission.TRIGGER_SYNC">
             <intent-filter>
-                <action android:name="com.davx5.ose.action.REQUEST_SYNC" />
+                <action android:name="at.bitfire.davdroid.mudita.action.REQUEST_SYNC" />
             </intent-filter>
         </receiver>
 
         <!-- Exposes the per-account auth (token) state to same-signed apps, see KompaktAuthState -->
         <provider
             android:name="at.bitfire.davdroid.ui.KompaktAuthStateProvider"
-            android:authorities="at.bitfire.davdroid.kompakt.authstate"
+            android:authorities="at.bitfire.davdroid.mudita.kompakt.authstate"
             android:exported="true"
-            android:readPermission="com.davx5.ose.permission.READ_AUTH_STATE" />
+            android:readPermission="at.bitfire.davdroid.mudita.permission.READ_AUTH_STATE" />
 
         <!-- provider to share debug info/logs -->
         <provider

@@ -40,7 +40,7 @@ class KompaktAccountsActivity : AppCompatActivity() {
 
     companion object {
         /** Intent action used by other apps to launch the account screen in onboarding mode. */
-        const val ACTION_ONBOARDING = "com.davx5.ose.action.ONBOARDING"
+        const val ACTION_ONBOARDING = "at.bitfire.davdroid.mudita.action.ONBOARDING"
     }
 
 }

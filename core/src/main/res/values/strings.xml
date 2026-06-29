@@ -5,11 +5,11 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <!-- common strings -->
-    <string name="app_name" translatable="false">DAVx⁵</string>
+    <string name="app_name" translatable="false">DAVx⁵ Mudita</string>
 
     <string name="account_invalid">Account does not exist (anymore)</string>
-    <string name="account_type" translatable="false">bitfire.at.davdroid</string>
-    <string name="account_type_address_book" translatable="false">at.bitfire.davdroid.address_book</string>
+    <string name="account_type" translatable="false">bitfire.at.davdroid.mudita</string>
+    <string name="account_type_address_book" translatable="false">at.bitfire.davdroid.address_book.mudita</string>
     <string name="account_title_address_book">DAVx⁵ Address book</string>
     <string name="account_prefs_use_app">Don\'t change the account here! Directly use the app to manage accounts instead.</string>
     <string name="dialog_delete">Delete</string>

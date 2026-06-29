@@ -44,7 +44,7 @@ class KompaktOAuthGoogle @Inject constructor(
     }
 
     companion object {
-        private const val CLIENT_ID = "1069050168830-eg09u4tk1cmboobevhm4k3bj1m4fav9i.apps.googleusercontent.com"
+        private const val CLIENT_ID = "1044477190035-8pja9fc38b3tq57ipqqqckpka61f0blr.apps.googleusercontent.com"
     }
 
 }

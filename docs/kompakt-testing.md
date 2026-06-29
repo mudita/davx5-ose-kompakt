@@ -17,7 +17,7 @@ batch/defer it a little — `WorkManager` periodic work has a minimum 15 min int
 release build it is once a day. To verify the actual scheduled interval on a device:
 
 ```bash
-adb shell dumpsys jobscheduler | grep -A3 -i "at.bitfire.davdroid"
+adb shell dumpsys jobscheduler | grep -A3 -i "at.bitfire.davdroid.mudita"
 ```
 
 ## Sync error handling — what shows when
@@ -45,14 +45,14 @@ Requires a debug build (so `run-as` works) and an already‑linked account.
 
 ```bash
 # 1) stop the app so it doesn't cache the DB
-adb shell am force-stop at.bitfire.davdroid
+adb shell am force-stop at.bitfire.davdroid.mudita
 
 # 2) append garbage to the synced calendar's URL → server returns 404
-adb shell "run-as at.bitfire.davdroid sqlite3 databases/services.db \
+adb shell "run-as at.bitfire.davdroid.mudita sqlite3 databases/services.db \
   \"UPDATE collection SET url = url || 'force404/' WHERE sync = 1;\""
 
 # 3) open the app and tap 'Synchronize now'
-adb shell monkey -p at.bitfire.davdroid -c android.intent.category.LAUNCHER 1
+adb shell monkey -p at.bitfire.davdroid.mudita -c android.intent.category.LAUNCHER 1
 ```
 
 Expected: after "Loading data…", the **"Account sync failed / Try again"** dialog appears.
@@ -60,8 +60,8 @@ Expected: after "Loading data…", the **"Account sync failed / Try again"** dia
 Restore afterwards:
 
 ```bash
-adb shell am force-stop at.bitfire.davdroid
-adb shell "run-as at.bitfire.davdroid sqlite3 databases/services.db \
+adb shell am force-stop at.bitfire.davdroid.mudita
+adb shell "run-as at.bitfire.davdroid.mudita sqlite3 databases/services.db \
   \"UPDATE collection SET url = replace(url, 'force404/', '') WHERE sync = 1;\""
 ```
 
@@ -139,11 +139,11 @@ no constraint); that is state-read, not a recovery loop.
 Revoke the calendar runtime permission, then sync:
 
 ```bash
-adb shell pm revoke at.bitfire.davdroid android.permission.WRITE_CALENDAR
-adb shell pm revoke at.bitfire.davdroid android.permission.READ_CALENDAR
+adb shell pm revoke at.bitfire.davdroid.mudita android.permission.WRITE_CALENDAR
+adb shell pm revoke at.bitfire.davdroid.mudita android.permission.READ_CALENDAR
 # tap 'Synchronize now' → Calendar Provider access error → "Account sync failed"
-adb shell pm grant at.bitfire.davdroid android.permission.READ_CALENDAR
-adb shell pm grant at.bitfire.davdroid android.permission.WRITE_CALENDAR
+adb shell pm grant at.bitfire.davdroid.mudita android.permission.READ_CALENDAR
+adb shell pm grant at.bitfire.davdroid.mudita android.permission.WRITE_CALENDAR
 ```
 
 Less reliable than Method A — DAVx5 may treat a missing permission as "permissions required" rather than a
@@ -153,22 +153,22 @@ sync failure.
 
 ```bash
 # calendar collections + which one is selected for sync
-adb shell "run-as at.bitfire.davdroid sqlite3 databases/services.db \
+adb shell "run-as at.bitfire.davdroid.mudita sqlite3 databases/services.db \
   \"SELECT id, sync, displayName, url FROM collection;\""
 
 # Kompakt per-account flags (needs root, e.g. emulator)
 adb root
 adb shell "sqlite3 /data/system_ce/0/accounts_ce.db \
   \"SELECT e.key, e.value FROM accounts a JOIN extras e ON e.accounts_id=a._id \
-    WHERE a.type='bitfire.at.davdroid' AND (e.key LIKE 'kompakt%' OR e.key LIKE 'sync_interval%');\""
+    WHERE a.type='bitfire.at.davdroid.mudita' AND (e.key LIKE 'kompakt%' OR e.key LIKE 'sync_interval%');\""
 ```
 
 ## Auth (token) state export — testing
 
 The auth state is exposed to other apps two ways (see `docs/kompakt-integration.md` and `KompaktAuthState`):
-a read‑only `ContentProvider` at `content://at.bitfire.davdroid.kompakt.authstate/auth_state` (column
+a read‑only `ContentProvider` at `content://at.bitfire.davdroid.mudita.kompakt.authstate/auth_state` (column
 `needs_reauth` = 0/1 per account), and an `AUTH_STATE_CHANGED` broadcast fired **only on a transition**.
-Both are guarded by the signature permission `com.davx5.ose.permission.READ_AUTH_STATE`.
+Both are guarded by the signature permission `at.bitfire.davdroid.mudita.permission.READ_AUTH_STATE`.
 
 > Like `REQUEST_SYNC`, the signature permission means **`adb shell` cannot read the provider or receive the
 > broadcast** (shell isn't same‑signed). So we test in two parts: drive/inspect the underlying state with
@@ -221,10 +221,10 @@ Reliable ways to observe:
 
 ### 4. Read the provider / receive the push (cross‑app — the real end‑to‑end test)
 
-Needs a **same‑signed** app declaring `<uses-permission android:name="com.davx5.ose.permission.READ_AUTH_STATE" />`:
+Needs a **same‑signed** app declaring `<uses-permission android:name="at.bitfire.davdroid.mudita.permission.READ_AUTH_STATE" />`:
 
 ```kotlin
-val uri = Uri.parse("content://at.bitfire.davdroid.kompakt.authstate/auth_state")
+val uri = Uri.parse("content://at.bitfire.davdroid.mudita.kompakt.authstate/auth_state")
 
 // pull — current state
 contentResolver.query(uri, null, null, null, null)?.use { c ->
@@ -238,8 +238,8 @@ contentResolver.registerContentObserver(uri, /* notifyForDescendants = */ false,
 // push — or a runtime receiver
 registerReceiver(
     receiver,
-    IntentFilter("com.davx5.ose.action.AUTH_STATE_CHANGED"),
-    "com.davx5.ose.permission.READ_AUTH_STATE",
+    IntentFilter("at.bitfire.davdroid.mudita.action.AUTH_STATE_CHANGED"),
+    "at.bitfire.davdroid.mudita.permission.READ_AUTH_STATE",
     null,
     Context.RECEIVER_EXPORTED
 )
@@ -251,7 +251,7 @@ In a **local** build only, temporarily remove `android:readPermission` from the 
 `app-ose/src/main/AndroidManifest.xml` or start `adb` as `root`, then:
 
 ```bash
-adb shell content query --uri content://at.bitfire.davdroid.kompakt.authstate/auth_state
+adb shell content query --uri content://at.bitfire.davdroid.mudita.kompakt.authstate/auth_state
 ```
 
 Revert before committing — never ship the provider without the permission.

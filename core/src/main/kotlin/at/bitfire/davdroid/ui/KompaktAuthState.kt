@@ -26,16 +26,16 @@ import androidx.core.net.toUri
 object KompaktAuthState {
 
     /** Authority of [KompaktAuthStateProvider]. Must match the `<provider>` entry in the manifest. */
-    const val AUTHORITY = "at.bitfire.davdroid.kompakt.authstate"
+    const val AUTHORITY = "at.bitfire.davdroid.mudita.kompakt.authstate"
 
     /** Content URI to query the per-account auth state and to observe for changes. */
     val CONTENT_URI: Uri = "content://$AUTHORITY/auth_state".toUri()
 
     /** Signature-level permission required to read the provider and to receive the broadcast. */
-    const val PERMISSION = "com.davx5.ose.permission.READ_AUTH_STATE"
+    const val PERMISSION = "at.bitfire.davdroid.mudita.permission.READ_AUTH_STATE"
 
     /** Broadcast action sent when an account's auth state changes. */
-    const val ACTION_AUTH_STATE_CHANGED = "com.davx5.ose.action.AUTH_STATE_CHANGED"
+    const val ACTION_AUTH_STATE_CHANGED = "at.bitfire.davdroid.mudita.action.AUTH_STATE_CHANGED"
 
     /** Broadcast extra: name of the affected account (String). */
     const val EXTRA_ACCOUNT_NAME = "account_name"

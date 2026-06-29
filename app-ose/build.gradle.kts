@@ -13,7 +13,7 @@ plugins {
 
 android {
     defaultConfig {
-        applicationId = "at.bitfire.davdroid"
+        applicationId = "at.bitfire.davdroid.mudita"
 
         // versionCode and versionName are defined in the build-logic submodule (AppVersion)
         base.archivesName = "KompaktDavx-$versionCode-$versionName"

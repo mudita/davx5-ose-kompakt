@@ -13,15 +13,15 @@ mode.
 
 ### Contract
 
-- **Action:** `com.davx5.ose.action.ONBOARDING` (`KompaktAccountsActivity.ACTION_ONBOARDING`)
+- **Action:** `at.bitfire.davdroid.mudita.action.ONBOARDING` (`KompaktAccountsActivity.ACTION_ONBOARDING`)
 - **Target:** `KompaktAccountsActivity` — launch **explicitly** by component/package. The activity is
   already `exported`, so no extra intent-filter is required and no permission is needed.
 
 ### Caller — code
 
 ```kotlin
-val intent = Intent("com.davx5.ose.action.ONBOARDING")
-    .setClassName("at.bitfire.davdroid", "at.bitfire.davdroid.ui.KompaktAccountsActivity")
+val intent = Intent("at.bitfire.davdroid.mudita.action.ONBOARDING")
+    .setClassName("at.bitfire.davdroid.mudita", "at.bitfire.davdroid.ui.KompaktAccountsActivity")
 context.startActivity(intent)
 // or, if you want the skip/cancel result:
 // startActivityForResult(intent, REQUEST_ONBOARDING)
@@ -52,9 +52,9 @@ minutes ago, the broadcast is a **no‑op**.
 
 ### Contract
 
-- **Action:** `com.davx5.ose.action.REQUEST_SYNC`
-- **Target package:** `at.bitfire.davdroid` (the broadcast must be explicit — set the package)
-- **Permission:** `com.davx5.ose.permission.TRIGGER_SYNC` — **`signature`** protection level
+- **Action:** `at.bitfire.davdroid.mudita.action.REQUEST_SYNC`
+- **Target package:** `at.bitfire.davdroid.mudita` (the broadcast must be explicit — set the package)
+- **Permission:** `at.bitfire.davdroid.mudita.permission.TRIGGER_SYNC` — **`signature`** protection level
 
 ### Conditions that must be met
 
@@ -62,7 +62,7 @@ minutes ago, the broadcast is a **no‑op**.
    signed with the **same certificate** as the Kompakt app (e.g. both platform‑signed on the Mudita
    device). A differently‑signed app is rejected by the system.
 2. The caller must **declare** the permission with `<uses-permission>` (below).
-3. The broadcast must be **explicit** (target package `at.bitfire.davdroid`); implicit broadcasts for a
+3. The broadcast must be **explicit** (target package `at.bitfire.davdroid.mudita`); implicit broadcasts for a
    custom action won't be delivered on modern Android.
 4. **At least 15 minutes** must have elapsed since the last successful sync (otherwise the request is
    silently ignored).
@@ -73,14 +73,14 @@ minutes ago, the broadcast is a **no‑op**.
 ### Caller — manifest
 
 ```xml
-<uses-permission android:name="com.davx5.ose.permission.TRIGGER_SYNC" />
+<uses-permission android:name="at.bitfire.davdroid.mudita.permission.TRIGGER_SYNC" />
 ```
 
 ### Caller — code
 
 ```kotlin
-val intent = Intent("com.davx5.ose.action.REQUEST_SYNC")
-    .setPackage("at.bitfire.davdroid")
+val intent = Intent("at.bitfire.davdroid.mudita.action.REQUEST_SYNC")
+    .setPackage("at.bitfire.davdroid.mudita")
 context.sendBroadcast(intent)
 ```
 
@@ -120,24 +120,24 @@ both guarded by the **same** signature condition as `REQUEST_SYNC`.
 ### Contract
 
 - **Source of truth (pull):** `ContentProvider` at
-  `content://at.bitfire.davdroid.kompakt.authstate/auth_state` (`KompaktAuthState.CONTENT_URI`),
+  `content://at.bitfire.davdroid.mudita.kompakt.authstate/auth_state` (`KompaktAuthState.CONTENT_URI`),
   **read‑only**. One row per linked account with columns:
   - `_id` (Int) — row index
   - `account_name` (String)
   - `account_type` (String)
   - `needs_reauth` (Int) — **1** if the token is invalid and needs re‑authorization, **0** otherwise
-- **Change notification (push):** broadcast action `com.davx5.ose.action.AUTH_STATE_CHANGED`
+- **Change notification (push):** broadcast action `at.bitfire.davdroid.mudita.action.AUTH_STATE_CHANGED`
   (`KompaktAuthState.ACTION_AUTH_STATE_CHANGED`), sent **only on a state transition** for an account,
   with extras `account_name` (String) and `needs_reauth` (Int). The provider URI is also notified via
   `ContentResolver.notifyChange`, so a `ContentObserver` works too.
-- **Permission:** `com.davx5.ose.permission.READ_AUTH_STATE` — **`signature`** protection level. Required
+- **Permission:** `at.bitfire.davdroid.mudita.permission.READ_AUTH_STATE` — **`signature`** protection level. Required
   to query the provider **and** to receive the broadcast. Same‑signing condition as above; the caller
   must `<uses-permission>` it.
 
 ### Caller — manifest
 
 ```xml
-<uses-permission android:name="com.davx5.ose.permission.READ_AUTH_STATE" />
+<uses-permission android:name="at.bitfire.davdroid.mudita.permission.READ_AUTH_STATE" />
 ```
 
 ### Caller — code
@@ -145,7 +145,7 @@ both guarded by the **same** signature condition as `REQUEST_SYNC`.
 Pull the current state at any time:
 
 ```kotlin
-val uri = Uri.parse("content://at.bitfire.davdroid.kompakt.authstate/auth_state")
+val uri = Uri.parse("content://at.bitfire.davdroid.mudita.kompakt.authstate/auth_state")
 context.contentResolver.query(uri, null, null, null, null)?.use { c ->
     while (c.moveToNext()) {
         val name = c.getString(c.getColumnIndexOrThrow("account_name"))
@@ -163,7 +163,7 @@ context.contentResolver.registerContentObserver(uri, /* notifyForDescendants = *
 // observer.onChange() → re‑query the provider for the new state
 ```
 
-Alternatively, a **runtime‑registered** `BroadcastReceiver` on `com.davx5.ose.action.AUTH_STATE_CHANGED`
+Alternatively, a **runtime‑registered** `BroadcastReceiver` on `at.bitfire.davdroid.mudita.action.AUTH_STATE_CHANGED`
 (the app must hold `READ_AUTH_STATE`).
 
 ### Notes / limitations
