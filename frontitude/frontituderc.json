@@ -1,0 +1,10 @@
+{
+	"library": false,
+	"projects": [
+		{
+			"name": "Calendar",
+			"id": "07ad6e36-10e1-47ff-af23-1d986438fc9e"
+		}
+	],
+	"filePath": "./src/main/res/values/strings.xml"
+}

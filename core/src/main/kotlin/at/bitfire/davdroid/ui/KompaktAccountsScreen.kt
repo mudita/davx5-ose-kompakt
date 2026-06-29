@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
+import com.mudita.frontitude.R as RFrontitude
 import at.bitfire.davdroid.ui.composable.KompaktFramedIcon
 import at.bitfire.davdroid.ui.composable.KompaktTheme
 import at.bitfire.davdroid.ui.setup.KompaktLoginActivity
@@ -135,7 +136,7 @@ private fun KompaktLinkAccountScreen(
                                 contentPadding = PaddingValues(horizontal = 10.dp)
                             ) {
                                 TextMMD(
-                                    text = stringResource(R.string.kompakt_skip),
+                                    text = stringResource(RFrontitude.string.common_button_skip),
                                     style = KompaktTypography900.labelMedium
                                 )
                             }
@@ -145,7 +146,7 @@ private fun KompaktLinkAccountScreen(
                     KompaktTopAppBar(
                         title = {
                             TextMMD(
-                                text = stringResource(R.string.common_label_linkedaccount),
+                                text = stringResource(RFrontitude.string.common_label_linkedaccount),
                                 style = KompaktTypography900.titleMedium
                             )
                         },
@@ -187,13 +188,13 @@ private fun KompaktLinkAccountScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         TextMMD(
-                            text = stringResource(R.string.calendar_accountsync_dialog_h1_linkagoogleaccount),
+                            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_linkagoogleaccount),
                             style = KompaktTypography900.titleMedium,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
                         )
                         TextMMD(
-                            text = stringResource(R.string.calendar_accountsync_body_connectwithyourmaingoogle),
+                            text = stringResource(RFrontitude.string.calendar_accountsync_body_connectwithyourmaingoogle),
                             style = KompaktTypography500.bodyMedium,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
@@ -214,7 +215,7 @@ private fun KompaktLinkAccountScreen(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         TextMMD(
-                            text = stringResource(R.string.calendar_accountsync_dialog_button_linkaccount),
+                            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_linkaccount),
                             style = KompaktTypography900.titleMedium
                         )
                     }

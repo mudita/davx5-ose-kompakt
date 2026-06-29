@@ -28,6 +28,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import at.bitfire.davdroid.R
+import com.mudita.frontitude.R as RFrontitude
 import at.bitfire.davdroid.ui.KompaktTypography900
 import at.bitfire.davdroid.ui.composable.KompaktTheme
 import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
@@ -94,7 +95,7 @@ class KompaktOAuthWebViewActivity : ComponentActivity() {
                         KompaktTopAppBar(
                             title = {
                                 TextMMD(
-                                    text = stringResource(R.string.kompakt_login_title),
+                                    text = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_linkaccount),
                                     style = KompaktTypography900.titleMedium
                                 )
                             },

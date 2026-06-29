@@ -594,48 +594,5 @@
     <string name="widget_icon_sync_label">Icon Sync Button</string>
     <string name="widget_sync_description">Tap to run synchronization manually.</string>
 
-    <!-- Kompakt -->
-    <string name="calendar_accountsync_dialog_button_linkaccount">Link account</string>
-    <string name="common_label_linkedaccount">Linked Account</string>
-    <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Link a Google account</string>
-    <string name="calendar_accountsync_body_connectwithyourmaingoogle">Connect with your main Google calendar and share events</string>
-    <string name="common_label_calendar">Calendar</string>
-    <string name="calendar_accountsync_toggle_button_autosyncronization">Auto synchronization</string>
-    <string name="calendar_accountsync_notification_yourcalendarsyncseach">Your calendar syncs each time you open the calendar app and every 24hrs</string>
-    <string name="common_label_or">Or</string>
-    <string name="calendar_accountsync_button_synchronizenow">Synchronize now</string>
-    <string name="calendar_accountsync_label_lastsynchronization">Last synchronization</string>
-    <string name="calendar_accountsync_dialog_h1_unlinkaccount">Unlink account?</string>
-    <string name="calendar_accountsync_dialog_body_thiswillremoveanythingimportedfrom">This will remove anything imported from your Google account</string>
-    <string name="calendar_accountsync_dialog_button_unlink">Unlink</string>
-    <string name="calendar_accountsync_dialog_h1_disableautosync">Disable auto sync?</string>
-    <string name="calendar_accountsync_dialog_body_nothingwillsynchronize">Nothing will synchronize with your Google account unless you sync manually</string>
-    <string name="calendar_accountsync_dialog_button_disable">Disable</string>
-    <string name="common_dialog_button_cancel">Cancel</string>
-    <string name="calendar_accountsync_dialog_h1_accountlinked">Account linked</string>
-    <string name="calendar_accountsync_dialog_body_csyncnowtoimportyour">Sync now to import your events to %s</string>
-    <string name="calendar_accountsync_dialog_button_syncnow">Sync now</string>
-    <string name="common_dialog_button_later">Later</string>
-    <string name="common_status_loadingdata">Loading data…</string>
-    <string name="calendar_accountsync_toast_datasynchroniszed">Data synchronized</string>
-    <string name="calendar_accountsync_error_dialog_h1_accountsyncfailed">Account sync failed</string>
-    <string name="calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour">We couldn\'t synchronize with your Google account, please try again</string>
-    <string name="common_dialog_button_tryagain">Try again</string>
-    <string name="common_label_nointernetconnection">No internet connection</string>
-    <string name="common_error_body_opensettingstocheck">Open settings to check data and Wi-Fi are switched on</string>
-    <string name="common_label_yourstorageisfull">Your storage is full</string>
-    <string name="common_error_body_changestoragelocationorfree">Change storage location or free some space then try again</string>
-    <string name="calendar_accountsync_error_dialog_h1_accountnotlinked">Account not linked</string>
-    <string name="calendar_accountsync_error_dialog_body_thetokenexpiredso">The token expired so please link accounts again</string>
-    <!-- missing frontitude keys -->
-    <string name="kompakt_login_title">Link account</string>
-    <string name="kompakt_login_connecting">Connecting to Google…</string>
-    <string name="kompakt_login_failed">Couldn\'t connect to Google</string>
-    <string name="kompakt_login_configuring">Setting up your account…</string>
-    <string name="kompakt_login_setup_failed">Couldn\'t set up your account</string>
-    <string name="kompakt_linkedaccount_never_synced">Not synced yet</string>
-    <string name="kompakt_linkedaccount_unlink">Unlink account</string>
-    <string name="kompakt_skip">Skip</string>
-
     <!-- cert4android -->
 </resources>

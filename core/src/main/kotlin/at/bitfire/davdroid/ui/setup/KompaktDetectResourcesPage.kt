@@ -21,6 +21,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import at.bitfire.davdroid.R
+import com.mudita.frontitude.R as RFrontitude
 import at.bitfire.davdroid.ui.KompaktTypography900
 import at.bitfire.davdroid.ui.composable.KompaktFramedIcon
 import at.bitfire.davdroid.ui.composable.KompaktTheme
@@ -73,7 +74,7 @@ fun KompaktDetectResourcesPageContent(
         ) {
             KompaktFramedIcon(painter = painterResource(R.drawable.ic_google_g))
             TextMMD(
-                text = stringResource(R.string.kompakt_login_setup_failed),
+                text = stringResource(RFrontitude.string.calendar_accountsync_error_h1_couldntsetupyouraccount),
                 style = KompaktTypography900.labelMedium,
                 textAlign = TextAlign.Center
             )
@@ -83,7 +84,7 @@ fun KompaktDetectResourcesPageContent(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 TextMMD(
-                    text = stringResource(R.string.common_dialog_button_tryagain),
+                    text = stringResource(RFrontitude.string.common_dialog_button_tryagain),
                     style = KompaktTypography900.labelMedium
                 )
             }
@@ -110,7 +111,7 @@ fun KompaktSetupProgress(modifier: Modifier = Modifier) {
         ) {
             KompaktFramedIcon(painter = painterResource(R.drawable.ic_google_g))
             TextMMD(
-                text = stringResource(R.string.kompakt_login_configuring),
+                text = stringResource(RFrontitude.string.calendar_accountsync_status_settingupyouraccount),
                 style = KompaktTypography900.labelMedium,
                 textAlign = TextAlign.Center
             )
