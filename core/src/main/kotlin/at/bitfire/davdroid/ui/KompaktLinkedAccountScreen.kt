@@ -281,7 +281,7 @@ fun KompaktLinkedAccountContent(
         KompaktModalSheet(
             onDismissRequest = { showUnlinkDialog = false },
             title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_unlinkaccount),
-            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_thiswillremoveanythingimportedfrom),
+            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_youwontseecalendarevents),
             icon = painterResource(R.drawable.ic_kompakt_alert),
             confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_unlink),
             onConfirm = {
