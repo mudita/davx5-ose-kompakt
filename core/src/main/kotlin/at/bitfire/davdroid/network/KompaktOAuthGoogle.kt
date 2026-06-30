@@ -29,19 +29,16 @@ class KompaktOAuthGoogle @Inject constructor(
         "https://oauth2.googleapis.com/token".toUri()
     )
 
-    fun signIn(email: String?, customClientId: String?, locale: String?): AuthorizationRequest {
-        val builder = AuthorizationRequest.Builder(
+    fun signIn(email: String?, customClientId: String?): AuthorizationRequest =
+        AuthorizationRequest.Builder(
             serviceConfig,
             customClientId ?: CLIENT_ID,
             ResponseTypeValues.CODE,
             oAuthIntegration.redirectUri
         )
-        return builder
             .setScopes(*SCOPES)
             .setLoginHint(email)
-            .setUiLocales(locale)
             .build()
-    }
 
     companion object {
         private const val CLIENT_ID = "1044477190035-8pja9fc38b3tq57ipqqqckpka61f0blr.apps.googleusercontent.com"
