@@ -16,15 +16,18 @@ plugins {
 
 val kompaktAppName = "davx"
 
+// Kompakt product version (see KompaktAppVersion); CI overrides the code via VERSION_CODE env.
+val kompaktVersionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: KompaktAppVersion.CODE
+val kompaktVersionName = KompaktAppVersion.NAME
+
 android {
     defaultConfig {
         applicationId = "at.bitfire.davdroid.mudita"
 
-        // Kompakt product version (see KompaktAppVersion); CI overrides the code via VERSION_CODE env.
-        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: KompaktAppVersion.CODE
-        versionName = KompaktAppVersion.NAME
+        versionCode = kompaktVersionCode
+        versionName = kompaktVersionName
 
-        base.archivesName = "$kompaktAppName-$versionName"
+        base.archivesName = "$kompaktAppName-$kompaktVersionName"
 
         /* Android prevents having two apps installed with the same provider authority name. In that case,
         Google Play just shows a generic "Can't install DAVx5" message. So we derive the authority names
@@ -97,6 +100,16 @@ android {
         create("qa") {
             initWith(getByName("release"))
             matchingFallbacks += listOf("release")
+        }
+    }
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            (output as? com.android.build.api.variant.impl.VariantOutputImpl)
+                ?.outputFileName
+                ?.set("$kompaktAppName-$kompaktVersionName($kompaktVersionCode)-${variant.buildType}.apk")
         }
     }
 }
