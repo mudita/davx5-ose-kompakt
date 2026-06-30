@@ -81,6 +81,7 @@ aboutLibraries {
 dependencies {
     // gradle project dependencies
     implementation(project(":synctools"))
+    implementation(project(":frontitude"))
 
     // Kotlin / Android
     implementation(libs.kotlin.stdlib)

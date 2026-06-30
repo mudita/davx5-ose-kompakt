@@ -44,6 +44,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
+import com.mudita.frontitude.R as RFrontitude
 import at.bitfire.davdroid.ui.KompaktLinkedAccountModel.SyncResult
 import at.bitfire.davdroid.ui.setup.KompaktLoginActivity
 import at.bitfire.davdroid.ui.composable.KompaktBottomBar
@@ -161,7 +162,7 @@ fun KompaktLinkedAccountContent(
                 KompaktTopAppBar(
                     title = {
                         TextMMD(
-                            text = stringResource(R.string.common_label_linkedaccount),
+                            text = stringResource(RFrontitude.string.common_label_linkedaccount),
                             style = KompaktTypography900.titleMedium
                         )
                     },
@@ -177,7 +178,7 @@ fun KompaktLinkedAccountContent(
                         IconButton(onClick = { showUnlinkDialog = true }) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_kompakt_logout),
-                                contentDescription = stringResource(R.string.kompakt_linkedaccount_unlink)
+                                contentDescription = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_unlinkaccount)
                             )
                         }
                     }
@@ -195,8 +196,8 @@ fun KompaktLinkedAccountContent(
                     // Calendar / Auto synchronization cell with toggle
                     KompaktListCell(
                         icon = painterResource(R.drawable.ic_kompakt_calendar),
-                        title = stringResource(R.string.common_label_calendar),
-                        subtitle = stringResource(R.string.calendar_accountsync_toggle_button_autosyncronization),
+                        title = stringResource(RFrontitude.string.common_label_calendar),
+                        subtitle = stringResource(RFrontitude.string.calendar_accountsync_toggle_button_autosyncronization),
                         trailing = {
                             SwitchMMD(
                                 checked = autoSyncEnabled,
@@ -210,7 +211,7 @@ fun KompaktLinkedAccountContent(
 
                     // Explanatory text (always visible)
                     TextMMD(
-                        text = stringResource(R.string.calendar_accountsync_notification_yourcalendarsyncseach),
+                        text = stringResource(RFrontitude.string.calendar_accountsync_notification_yourcalendarsyncseach),
                         style = KompaktTypography500.bodyMedium,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -226,7 +227,7 @@ fun KompaktLinkedAccountContent(
                     ) {
                         KompaktDottedDivider(modifier = Modifier.weight(1f))
                         TextMMD(
-                            text = stringResource(R.string.common_label_or),
+                            text = stringResource(RFrontitude.string.common_label_or),
                             style = KompaktTypography500.bodyMedium,
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
@@ -247,7 +248,7 @@ fun KompaktLinkedAccountContent(
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             TextMMD(
-                                text = stringResource(R.string.calendar_accountsync_button_synchronizenow),
+                                text = stringResource(RFrontitude.string.calendar_accountsync_button_synchronizenow),
                                 style = KompaktTypography900.labelMedium
                             )
                         }
@@ -261,8 +262,8 @@ fun KompaktLinkedAccountContent(
                     )
                     KompaktListCell(
                         icon = painterResource(R.drawable.ic_kompakt_success),
-                        title = stringResource(R.string.calendar_accountsync_label_lastsynchronization),
-                        subtitle = lastSync ?: stringResource(R.string.kompakt_linkedaccount_never_synced)
+                        title = stringResource(RFrontitude.string.calendar_accountsync_label_lastsynchronization),
+                        subtitle = lastSync ?: stringResource(RFrontitude.string.calendar_accountsync_status_notsyncedyet)
                     )
                 }
 
@@ -279,15 +280,15 @@ fun KompaktLinkedAccountContent(
     if (showUnlinkDialog) {
         KompaktModalSheet(
             onDismissRequest = { showUnlinkDialog = false },
-            title = stringResource(R.string.calendar_accountsync_dialog_h1_unlinkaccount),
-            text = stringResource(R.string.calendar_accountsync_dialog_body_thiswillremoveanythingimportedfrom),
+            title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_unlinkaccount),
+            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_thiswillremoveanythingimportedfrom),
             icon = painterResource(R.drawable.ic_kompakt_alert),
-            confirmLabel = stringResource(R.string.calendar_accountsync_dialog_button_unlink),
+            confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_unlink),
             onConfirm = {
                 showUnlinkDialog = false
                 onUnlink()
             },
-            dismissLabel = stringResource(R.string.common_dialog_button_cancel),
+            dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
             onDismiss = { showUnlinkDialog = false }
         )
     }
@@ -295,15 +296,15 @@ fun KompaktLinkedAccountContent(
     if (showDisableAutoSyncDialog) {
         KompaktModalSheet(
             onDismissRequest = { showDisableAutoSyncDialog = false },
-            title = stringResource(R.string.calendar_accountsync_dialog_h1_disableautosync),
-            text = stringResource(R.string.calendar_accountsync_dialog_body_nothingwillsynchronize),
+            title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_disableautosync),
+            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_nothingwillsyncronizewith),
             icon = painterResource(R.drawable.ic_kompakt_alert),
-            confirmLabel = stringResource(R.string.calendar_accountsync_dialog_button_disable),
+            confirmLabel = stringResource(RFrontitude.string.common_button_disable),
             onConfirm = {
                 showDisableAutoSyncDialog = false
                 onToggleAutoSync(false)
             },
-            dismissLabel = stringResource(R.string.common_dialog_button_cancel),
+            dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
             onDismiss = { showDisableAutoSyncDialog = false }
         )
     }
@@ -311,15 +312,15 @@ fun KompaktLinkedAccountContent(
     if (showAccountLinkedDialog) {
         KompaktModalSheet(
             onDismissRequest = onAccountLinkedDialogDismiss,
-            title = stringResource(R.string.calendar_accountsync_dialog_h1_accountlinked),
-            text = stringResource(R.string.calendar_accountsync_dialog_body_csyncnowtoimportyour, email),
+            title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_accountlinked),
+            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_csyncnowtoimportyour, email),
             icon = painterResource(R.drawable.ic_kompakt_success),
-            confirmLabel = stringResource(R.string.calendar_accountsync_dialog_button_syncnow),
+            confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_syncnow),
             onConfirm = {
                 onAccountLinkedDialogDismiss()
                 onSyncNow()
             },
-            dismissLabel = stringResource(R.string.common_dialog_button_later),
+            dismissLabel = stringResource(RFrontitude.string.common_dialog_button_later),
             onDismiss = onAccountLinkedDialogDismiss
         )
     }
@@ -327,15 +328,15 @@ fun KompaktLinkedAccountContent(
     if (syncResult == SyncResult.Failure) {
         KompaktModalSheet(
             onDismissRequest = onConsumeSyncResult,
-            title = stringResource(R.string.calendar_accountsync_error_dialog_h1_accountsyncfailed),
-            text = stringResource(R.string.calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour),
+            title = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_h1_accountsyncfailed),
+            text = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour),
             icon = painterResource(R.drawable.ic_kompakt_alert),
-            confirmLabel = stringResource(R.string.common_dialog_button_tryagain),
+            confirmLabel = stringResource(RFrontitude.string.common_dialog_button_tryagain),
             onConfirm = {
                 onConsumeSyncResult()
                 onSyncNow()
             },
-            dismissLabel = stringResource(R.string.common_dialog_button_cancel),
+            dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
             onDismiss = onConsumeSyncResult
         )
     }
@@ -345,12 +346,12 @@ fun KompaktLinkedAccountContent(
         // (in place, keeping local data), or unlink and go back to the home screen.
         KompaktModalSheet(
             onDismissRequest = onUnlink,
-            title = stringResource(R.string.calendar_accountsync_error_dialog_h1_accountnotlinked),
-            text = stringResource(R.string.calendar_accountsync_error_dialog_body_thetokenexpiredso),
+            title = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_h1_accountnotlinked),
+            text = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_body_thetokenexpiredso),
             icon = painterResource(R.drawable.ic_kompakt_alert),
-            confirmLabel = stringResource(R.string.calendar_accountsync_dialog_button_linkaccount),
+            confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_linkaccount),
             onConfirm = onReauthorize,      // flag stays set; cleared on successful re-auth + reload
-            dismissLabel = stringResource(R.string.common_dialog_button_cancel),
+            dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
             onDismiss = onUnlink
         )
     }
@@ -358,8 +359,8 @@ fun KompaktLinkedAccountContent(
     if (showNoInternet) {
         KompaktMessageSheet(
             onDismissRequest = onDismissNoInternet,
-            title = stringResource(R.string.common_label_nointernetconnection),
-            text = stringResource(R.string.common_error_body_opensettingstocheck),
+            title = stringResource(RFrontitude.string.common_label_nointernetconnection),
+            text = stringResource(RFrontitude.string.common_error_body_opensettingstocheck),
             icon = painterResource(R.drawable.ic_kompakt_alert)
         )
     }
@@ -367,10 +368,10 @@ fun KompaktLinkedAccountContent(
     if (showOutOfStorage) {
         KompaktMessageSheet(
             onDismissRequest = onDismissOutOfStorage,
-            title = stringResource(R.string.common_label_yourstorageisfull),
-            text = stringResource(R.string.common_error_body_changestoragelocationorfree),
+            title = stringResource(RFrontitude.string.common_error_dialog_h1_storageisfull),
+            text = stringResource(RFrontitude.string.common_error_dialog_body_changestorage),
             icon = painterResource(R.drawable.ic_kompakt_alert),
-            buttonLabel = stringResource(R.string.common_dialog_button_cancel)
+            buttonLabel = stringResource(RFrontitude.string.common_dialog_button_cancel)
         )
     }
 }
@@ -416,7 +417,7 @@ private fun SyncStatusBar(
                 CircularProgressIndicatorMMD(size = 24.dp)
                 Spacer(modifier = Modifier.width(12.dp))
                 TextMMD(
-                    text = stringResource(R.string.common_status_loadingdata),
+                    text = stringResource(RFrontitude.string.common_status_loadingdata),
                     style = KompaktTypography900.labelLarge
                 )
             }
@@ -424,7 +425,7 @@ private fun SyncStatusBar(
         syncResult == SyncResult.Success ->
             KompaktBottomBar(modifier = modifier) {
                 TextMMD(
-                    text = stringResource(R.string.calendar_accountsync_toast_datasynchroniszed),
+                    text = stringResource(RFrontitude.string.calendar_accountsync_toast_datasynchroniszed),
                     style = KompaktTypography500.bodyMedium,
                     modifier = Modifier.weight(1f)
                 )
@@ -432,7 +433,7 @@ private fun SyncStatusBar(
                 IconButton(onClick = onDismissSuccess) {
                     Icon(
                         painter = painterResource(R.drawable.ic_kompakt_close),
-                        contentDescription = stringResource(R.string.common_dialog_button_cancel),
+                        contentDescription = stringResource(RFrontitude.string.common_dialog_button_cancel),
                         modifier = Modifier.size(28.dp)
                     )
                 }

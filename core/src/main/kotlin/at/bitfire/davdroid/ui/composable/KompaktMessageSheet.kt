@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import at.bitfire.davdroid.R
+import com.mudita.frontitude.R as RFrontitude
 import at.bitfire.davdroid.ui.KompaktTypography500
 import at.bitfire.davdroid.ui.KompaktTypography900
 import com.mudita.mmd.ThemeMMD
@@ -112,7 +113,7 @@ fun KompaktMessageSheet(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_kompakt_close),
-                            contentDescription = stringResource(R.string.common_dialog_button_cancel),
+                            contentDescription = stringResource(RFrontitude.string.common_dialog_button_cancel),
                             modifier = Modifier.size(28.dp)
                         )
                     }
@@ -167,8 +168,8 @@ private fun MessageContent(
 private fun KompaktMessageSheet_CloseIcon_Preview() {
     KompaktMessageSheet(
         onDismissRequest = {},
-        title = stringResource(R.string.common_label_nointernetconnection),
-        text = stringResource(R.string.common_error_body_opensettingstocheck),
+        title = stringResource(RFrontitude.string.common_label_nointernetconnection),
+        text = stringResource(RFrontitude.string.common_error_body_opensettingstocheck),
         icon = painterResource(R.drawable.ic_kompakt_alert)
     )
 }
@@ -178,9 +179,9 @@ private fun KompaktMessageSheet_CloseIcon_Preview() {
 private fun KompaktMessageSheet_BottomButton_Preview() {
     KompaktMessageSheet(
         onDismissRequest = {},
-        title = stringResource(R.string.common_label_yourstorageisfull),
-        text = stringResource(R.string.common_error_body_changestoragelocationorfree),
+        title = stringResource(RFrontitude.string.common_error_dialog_h1_storageisfull),
+        text = stringResource(RFrontitude.string.common_error_dialog_body_changestorage),
         icon = painterResource(R.drawable.ic_kompakt_alert),
-        buttonLabel = stringResource(R.string.common_dialog_button_cancel)
+        buttonLabel = stringResource(RFrontitude.string.common_dialog_button_cancel)
     )
 }
