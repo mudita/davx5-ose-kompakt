@@ -2,6 +2,7 @@
  * Copyright © All Contributors. See LICENSE and AUTHORS in the root directory for details.
  */
 
+import davx5.buildlogic.KompaktAppVersion
 import tasks.KompaktDeployTask
 
 plugins {
@@ -13,14 +14,17 @@ plugins {
     id("davx5.common-buildconfig")
 }
 
+val kompaktAppName = "davx"
+
 android {
     defaultConfig {
         applicationId = "at.bitfire.davdroid.mudita"
 
-        System.getenv("VERSION_CODE")?.toIntOrNull()?.let { versionCode = it }
+        // Kompakt product version (see KompaktAppVersion); CI overrides the code via VERSION_CODE env.
+        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: KompaktAppVersion.CODE
+        versionName = KompaktAppVersion.NAME
 
-        // versionCode and versionName are defined in the build-logic submodule (AppVersion)
-        base.archivesName = "KompaktDavx-$versionCode-$versionName"
+        base.archivesName = "$kompaktAppName-$versionName"
 
         /* Android prevents having two apps installed with the same provider authority name. In that case,
         Google Play just shows a generic "Can't install DAVx5" message. So we derive the authority names
@@ -50,7 +54,6 @@ android {
     productFlavors {
         create("ose") {
             dimension = "distribution"
-            versionNameSuffix = "-ose"
         }
     }
 
@@ -94,7 +97,6 @@ android {
         create("qa") {
             initWith(getByName("release"))
             matchingFallbacks += listOf("release")
-            versionNameSuffix = "-SNAPSHOT"
         }
     }
 }
@@ -136,11 +138,9 @@ dependencies {
 }
 
 tasks.register<KompaktDeployTask>("uploadApkToNexus") {
-    val prefix = (project.findProperty("tagPrefix") as String?) ?: "development"
-    val baseVersion = android.defaultConfig.versionName ?: ""
-    appName = "davx"
-    tagPrefix = prefix
-    versionName = baseVersion + "-ose" + if (prefix == "qa") "-SNAPSHOT" else ""
+    appName = kompaktAppName
+    tagPrefix = (project.findProperty("tagPrefix") as String?) ?: "development"
+    versionName = android.defaultConfig.versionName ?: ""
     nexusUrl = (project.findProperty("nexusUrl") as String?) ?: ""
     nexusUsername = (project.findProperty("nexusUsername") as String?) ?: ""
     nexusPassword = (project.findProperty("nexusPassword") as String?) ?: ""
