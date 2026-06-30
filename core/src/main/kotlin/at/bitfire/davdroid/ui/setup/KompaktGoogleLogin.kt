@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import at.bitfire.davdroid.R
+import com.mudita.frontitude.R as RFrontitude
 import at.bitfire.davdroid.ui.KompaktTypography900
 import at.bitfire.davdroid.ui.composable.KompaktFramedIcon
 import com.mudita.mmd.components.buttons.ButtonMMD
@@ -98,7 +99,7 @@ object KompaktGoogleLogin : LoginType {
                     // authorization failed (e.g. user cancelled, no browser, token exchange error):
                     // show a message and let the user retry the whole sign-in
                     TextMMD(
-                        text = stringResource(R.string.kompakt_login_failed),
+                        text = stringResource(RFrontitude.string.calendar_accountsync_error_h1_couldntconnecttogoogle),
                         style = KompaktTypography900.labelMedium,
                         textAlign = TextAlign.Center
                     )
@@ -111,13 +112,13 @@ object KompaktGoogleLogin : LoginType {
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         TextMMD(
-                            text = stringResource(R.string.common_dialog_button_tryagain),
+                            text = stringResource(RFrontitude.string.common_dialog_button_tryagain),
                             style = KompaktTypography900.labelMedium
                         )
                     }
                 } else {
                     TextMMD(
-                        text = stringResource(R.string.kompakt_login_connecting),
+                        text = stringResource(RFrontitude.string.calendar_accountsync_status_connectingtogoogle),
                         style = KompaktTypography900.labelMedium,
                         textAlign = TextAlign.Center
                     )
