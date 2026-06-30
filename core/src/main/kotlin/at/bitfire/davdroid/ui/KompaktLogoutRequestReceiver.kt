@@ -17,7 +17,7 @@ import javax.inject.Inject
 
 /**
  * Kompakt: lets another (same-signed) app log the user out, i.e. remove the linked account(s)
- * from the device. Guarded by the signature permission com.davx5.ose.permission.LOGOUT.
+ * from the device. Guarded by the signature permission at.bitfire.davdroid.mudita.permission.LOGOUT.
  * Mirrors KompaktSyncRequestReceiver; see docs/kompakt-integration.md.
  */
 @AndroidEntryPoint
@@ -46,6 +46,6 @@ class KompaktLogoutRequestReceiver : BroadcastReceiver() {
     }
 
     companion object {
-        const val ACTION_LOGOUT = "com.davx5.ose.action.LOGOUT"
+        const val ACTION_LOGOUT = "at.bitfire.davdroid.mudita.action.LOGOUT"
     }
 }

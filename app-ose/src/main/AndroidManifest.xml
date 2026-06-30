@@ -17,7 +17,7 @@
 
     <!-- Signature-level permission required to request logout (account removal), see KompaktLogoutRequestReceiver -->
     <permission
-        android:name="com.davx5.ose.permission.LOGOUT"
+        android:name="at.bitfire.davdroid.mudita.permission.LOGOUT"
         android:protectionLevel="signature" />
     <!-- Held by this app so it can send the permission-protected AUTH_STATE_CHANGED broadcast -->
     <uses-permission android:name="at.bitfire.davdroid.mudita.permission.READ_AUTH_STATE" />
@@ -97,9 +97,9 @@
         <receiver
             android:name="at.bitfire.davdroid.ui.KompaktLogoutRequestReceiver"
             android:exported="true"
-            android:permission="com.davx5.ose.permission.LOGOUT">
+            android:permission="at.bitfire.davdroid.mudita.permission.LOGOUT">
             <intent-filter>
-                <action android:name="com.davx5.ose.action.LOGOUT" />
+                <action android:name="at.bitfire.davdroid.mudita.action.LOGOUT" />
             </intent-filter>
         </receiver>
 

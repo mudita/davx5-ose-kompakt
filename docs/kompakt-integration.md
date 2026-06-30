@@ -183,9 +183,9 @@ linked DAVx5 account so calendars and events disappear from `CalendarContract`.
 
 ### Contract
 
-- **Action:** `com.davx5.ose.action.LOGOUT`
-- **Target package:** `at.bitfire.davdroid` (the broadcast must be explicit — set the package)
-- **Permission:** `com.davx5.ose.permission.LOGOUT` — **`signature`** protection level
+- **Action:** `at.bitfire.davdroid.mudita.action.LOGOUT`
+- **Target package:** `at.bitfire.davdroid.mudita` (the broadcast must be explicit — set the package)
+- **Permission:** `at.bitfire.davdroid.mudita.permission.LOGOUT` — **`signature`** protection level
 
 ### Conditions that must be met
 
@@ -199,14 +199,14 @@ linked DAVx5 account so calendars and events disappear from `CalendarContract`.
 ### Caller — manifest
 
 ```xml
-<uses-permission android:name="com.davx5.ose.permission.LOGOUT" />
+<uses-permission android:name="at.bitfire.davdroid.mudita.permission.LOGOUT" />
 ```
 
 ### Caller — code
 
 ```kotlin
-val intent = Intent("com.davx5.ose.action.LOGOUT")
-    .setPackage("at.bitfire.davdroid")
+val intent = Intent("at.bitfire.davdroid.mudita.action.LOGOUT")
+    .setPackage("at.bitfire.davdroid.mudita")
 context.sendBroadcast(intent)
 ```
 
