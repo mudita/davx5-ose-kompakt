@@ -2,6 +2,9 @@
  * Copyright © All Contributors. See LICENSE and AUTHORS in the root directory for details.
  */
 
+import davx5.buildlogic.KompaktAppVersion
+import tasks.KompaktDeployTask
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
@@ -11,12 +14,17 @@ plugins {
     id("davx5.common-buildconfig")
 }
 
+val kompaktAppName = "davx"
+
 android {
     defaultConfig {
         applicationId = "at.bitfire.davdroid.mudita"
 
-        // versionCode and versionName are defined in the build-logic submodule (AppVersion)
-        base.archivesName = "KompaktDavx-$versionCode-$versionName"
+        // Kompakt product version (see KompaktAppVersion); CI overrides the code via VERSION_CODE env.
+        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: KompaktAppVersion.CODE
+        versionName = KompaktAppVersion.NAME
+
+        base.archivesName = "$kompaktAppName-$versionName"
 
         /* Android prevents having two apps installed with the same provider authority name. In that case,
         Google Play just shows a generic "Can't install DAVx5" message. So we derive the authority names
@@ -46,7 +54,6 @@ android {
     productFlavors {
         create("ose") {
             dimension = "distribution"
-            versionNameSuffix = "-ose"
         }
     }
 
@@ -90,7 +97,6 @@ android {
         create("qa") {
             initWith(getByName("release"))
             matchingFallbacks += listOf("release")
-            versionNameSuffix = "-SNAPSHOT"
         }
     }
 }
@@ -129,4 +135,27 @@ dependencies {
     implementation(libs.guava)
     implementation(libs.okhttp.base)
     implementation(libs.openid.appauth)
+}
+
+tasks.register<KompaktDeployTask>("uploadApkToNexus") {
+    appName = kompaktAppName
+    tagPrefix = (project.findProperty("tagPrefix") as String?) ?: "development"
+    versionName = android.defaultConfig.versionName ?: ""
+    nexusUrl = (project.findProperty("nexusUrl") as String?) ?: ""
+    nexusUsername = (project.findProperty("nexusUsername") as String?) ?: ""
+    nexusPassword = (project.findProperty("nexusPassword") as String?) ?: ""
+}
+
+tasks.register("checkVersion") {
+    doFirst {
+        val current = android.defaultConfig.versionName
+        val ref = System.getenv("GITHUB_REF") ?: throw GradleException("GITHUB_REF not set")
+        val match = Regex("(release|development|qa)\\.(\\d+\\.\\d+\\.\\d+(-\\w*)?)")
+            .find(ref.removePrefix("refs/tags/"))
+            ?: throw GradleException("The git tag does not follow the required 'type.x.y.z' pattern.")
+        val tagVersion = match.groupValues[2]
+        if (current != tagVersion) {
+            throw GradleException("Build version ($current) does not match tag version ($tagVersion).")
+        }
+    }
 }
