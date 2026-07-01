@@ -173,3 +173,55 @@ Alternatively, a **runtime‑registered** `BroadcastReceiver` on `at.bitfire.dav
   sync. For the absolute current state, always query the provider.
 - Same as `REQUEST_SYNC`: it **cannot** be tested from `adb` shell because of the signature permission;
   exercise it from a same‑signed app.
+
+## Requesting logout (account removal) from another app
+
+Another app on the device (e.g. the Mudita calendar app) can request that all linked accounts be removed
+from the device by sending a broadcast to the Kompakt app. This is the counterpart to the account‑linking
+onboarding flow: when the user cancels or logs out in the calling app, the same action should remove the
+linked DAVx5 account so calendars and events disappear from `CalendarContract`.
+
+### Contract
+
+- **Action:** `at.bitfire.davdroid.mudita.action.LOGOUT`
+- **Target package:** `at.bitfire.davdroid.mudita` (the broadcast must be explicit — set the package)
+- **Permission:** `at.bitfire.davdroid.mudita.permission.LOGOUT` — **`signature`** protection level
+
+### Conditions that must be met
+
+1. **Same signing key.** The permission is `protectionLevel="signature"`, so the calling app must be
+   signed with the **same certificate** as the Kompakt app (e.g. both platform‑signed on the Mudita
+   device). A differently‑signed app is rejected by the system.
+2. The caller must **declare** the permission with `<uses-permission>` (below).
+3. The broadcast must be **explicit** (target package `at.bitfire.davdroid`); implicit broadcasts for a
+   custom action won't be delivered on modern Android.
+
+### Caller — manifest
+
+```xml
+<uses-permission android:name="at.bitfire.davdroid.mudita.permission.LOGOUT" />
+```
+
+### Caller — code
+
+```kotlin
+val intent = Intent("at.bitfire.davdroid.mudita.action.LOGOUT")
+    .setPackage("at.bitfire.davdroid.mudita")
+context.sendBroadcast(intent)
+```
+
+### What happens
+
+`KompaktLogoutRequestReceiver` (in the Kompakt app) iterates over all accounts of type
+`at.bitfire.davdroid` and calls `AccountRepository.delete(accountName)` for each one.
+`delete()` calls `AccountManager.removeAccountExplicitly`, then removes any linked CardDAV address‑book
+accounts and deletes the account row from the local database. As a result, all calendars and events
+previously synced from the server disappear from `CalendarContract`.
+
+### Notes / limitations
+
+- It's a **fire‑and‑forget** broadcast: there is no result or callback. The calling app should observe
+  the effect via the absence of calendar data, not a return value.
+- If no account is linked, the broadcast is a no‑op.
+- Testing from `adb` shell is **not** possible because of the signature permission; it can only be
+  exercised from a same‑signed app.
