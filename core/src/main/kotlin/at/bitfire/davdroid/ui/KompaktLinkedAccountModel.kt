@@ -11,6 +11,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import android.text.format.DateFormat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -159,7 +160,10 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     private val dateTimeFormat: DateTimeFormatter =
-        DateTimeFormatter.ofPattern("dd.MM.yyyy · HH:mm").withZone(ZoneId.systemDefault())
+        lastSyncFormatter(
+            is24Hour = DateFormat.is24HourFormat(context),
+            zone = ZoneId.systemDefault()
+        )
 
     private fun formatLastSync(epochMillis: Long): String =
         dateTimeFormat.format(Instant.ofEpochMilli(epochMillis))
