@@ -33,7 +33,7 @@ object KompaktTypography900 {
     val labelMedium = TextStyle(
         fontFamily = LatoFontFamily,
         fontWeight = FontWeight.Black,
-        fontSize = 18.sp,
+        fontSize = 21.sp,
         lineHeight = 20.sp
     )
     val labelSmall = TextStyle(

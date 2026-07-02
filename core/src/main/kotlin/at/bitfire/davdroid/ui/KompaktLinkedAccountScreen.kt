@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,6 +60,8 @@ import com.mudita.mmd.components.buttons.OutlinedButtonMMD
 import com.mudita.mmd.components.progress_indicator.CircularProgressIndicatorMMD
 import com.mudita.mmd.components.switcher.SwitchMMD
 import com.mudita.mmd.components.text.TextMMD
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Stateful entry point for the Kompakt "Linked Account" detail screen: collects the view model state
@@ -215,7 +218,8 @@ fun KompaktLinkedAccountContent(
                         style = KompaktTypography500.bodyMedium,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .padding(horizontal = 16.dp)
+                            .padding(top = 8.dp, bottom = 16.dp)
                     )
 
                     // "Or" with dotted dividers
@@ -223,7 +227,6 @@ fun KompaktLinkedAccountContent(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
                         KompaktDottedDivider(modifier = Modifier.weight(1f))
                         TextMMD(
@@ -258,7 +261,7 @@ fun KompaktLinkedAccountContent(
                     KompaktDottedDivider(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
+                            .padding(top = 8.dp)
                     )
                     KompaktListCell(
                         icon = painterResource(R.drawable.ic_kompakt_success),
@@ -422,7 +425,11 @@ private fun SyncStatusBar(
                 )
             }
 
-        syncResult == SyncResult.Success ->
+        syncResult == SyncResult.Success -> {
+            LaunchedEffect(Unit) {
+                delay(SUCCESS_SNACKBAR_DURATION_MS.milliseconds)
+                onDismissSuccess()
+            }
             KompaktBottomBar(modifier = modifier) {
                 TextMMD(
                     text = stringResource(RFrontitude.string.calendar_accountsync_toast_datasynchroniszed),
@@ -438,8 +445,11 @@ private fun SyncStatusBar(
                     )
                 }
             }
+        }
     }
 }
+
+private const val SUCCESS_SNACKBAR_DURATION_MS = 3_000L
 
 
 // previews

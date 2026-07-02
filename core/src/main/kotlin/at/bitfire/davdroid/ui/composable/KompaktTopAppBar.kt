@@ -38,7 +38,7 @@ fun KompaktTopAppBar(
         )
         if (showDivider)
             HorizontalDivider(
-                thickness = 2.dp,
+                thickness = 3.dp,
                 color = MaterialTheme.colorScheme.outlineVariant
             )
     }
