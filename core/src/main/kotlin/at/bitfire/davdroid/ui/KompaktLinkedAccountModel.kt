@@ -7,10 +7,13 @@ package at.bitfire.davdroid.ui
 import android.accounts.Account
 import android.accounts.AccountManager
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import android.text.format.DateFormat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -24,6 +27,7 @@ import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.repository.DavCollectionRepository
 import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.repository.DavSyncStatsRepository
+import at.bitfire.davdroid.repository.KompaktTimeFormatRepository
 import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
 import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.sync.KompaktStorage
@@ -31,6 +35,7 @@ import at.bitfire.davdroid.sync.SyncConditions
 import at.bitfire.davdroid.sync.SyncDataType
 import at.bitfire.davdroid.sync.worker.OneTimeSyncWorker
 import at.bitfire.davdroid.sync.worker.SyncWorkerManager
+import at.bitfire.davdroid.util.broadcastReceiverFlow
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -61,7 +66,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Instant
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.time.Duration.Companion.milliseconds
@@ -85,6 +89,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     private val collectionRepository: DavCollectionRepository,
     private val serviceRepository: DavServiceRepository,
     private val syncStatsRepository: DavSyncStatsRepository,
+    private val timeFormatRepository: KompaktTimeFormatRepository,
     private val syncConditionsFactory: SyncConditions.Factory,
     private val syncWorkerManager: SyncWorkerManager,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
@@ -146,23 +151,27 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
                     .distinctUntilChanged()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    private val dateTimeFormat = combine(
+        timeFormatRepository.is24HourFormat,
+        broadcastReceiverFlow(context, IntentFilter(Intent.ACTION_LOCALE_CHANGED), immediate = true)
+    ) { _, _ ->
+        lastSyncFormatter(DateFormat.is24HourFormat(context), ZoneId.systemDefault())
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
-    val lastSyncFormatted: StateFlow<String?> = primaryCollectionId.flatMapLatest { id ->
-        if (id == null)
-            flowOf(null)
-        else
-            syncStatsRepository.getLastSyncedFlow(id).map { stats ->
-                stats.firstOrNull { it.dataType == SyncDataType.EVENTS.name }
-                    ?.lastSynced
-                    ?.let(::formatLastSync)
-            }
+    val lastSyncFormatted: StateFlow<String?> = combine(
+        primaryCollectionId.flatMapLatest { id ->
+            if (id == null)
+                flowOf(null)
+            else
+                syncStatsRepository.getLastSyncedFlow(id).map { stats ->
+                    stats.firstOrNull { it.dataType == SyncDataType.EVENTS.name }?.lastSynced
+                }
+        },
+        dateTimeFormat
+    ) { epochMillis, format ->
+        epochMillis?.let { format.format(Instant.ofEpochMilli(it)) }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-
-    private val dateTimeFormat: DateTimeFormatter =
-        DateTimeFormatter.ofPattern("dd.MM.yyyy · HH:mm").withZone(ZoneId.systemDefault())
-
-    private fun formatLastSync(epochMillis: Long): String =
-        dateTimeFormat.format(Instant.ofEpochMilli(epochMillis))
 
 
     // manual sync lifecycle (loading indicator / success snackbar / error dialog)
