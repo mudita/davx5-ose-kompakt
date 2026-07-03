@@ -1,0 +1,24 @@
+docs/superpowers/plans/2026-07-03-notify-observers-on-account-delete.md
+  3627c4341216e6eb 1-221
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "4f130c06c19573b52dd1777d01d314eabeeeac51",
+  "prompts": {
+    "3627c4341216e6eb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d08a253-55cf-4876-a2f6-7485826f5352",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 754,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/f407cbf9a44abbea31b03974ce25b69f52285d2960c21d626ee395a32cade38b"
+    }
+  }
+}
