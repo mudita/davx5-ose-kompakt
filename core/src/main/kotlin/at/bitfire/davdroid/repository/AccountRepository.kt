@@ -123,10 +123,10 @@ class AccountRepository @Inject constructor(
         return account
     }
 
-    suspend fun delete(accountName: String): Boolean {
+    suspend fun delete(accountName: String): Boolean = withContext(defaultDispatcher) {
         val account = fromName(accountName)
         // remove account directly (bypassing the authenticator, which is our own)
-        return try {
+        try {
             // Delete synced calendars through the provider *before* removing the account, so the
             // provider notifies content observers. Removing the account alone lets the platform
             // CalendarProvider cascade-purge the rows silently (no notifyChange).
