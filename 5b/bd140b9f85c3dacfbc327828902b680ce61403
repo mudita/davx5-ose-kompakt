@@ -1,0 +1,9 @@
+.github/workflows/kompakt-deployment-qa.yml
+  cafa2a41edc1a320 31-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "5bbd140b9f85c3dacfbc327828902b680ce61403",
+  "prompts": {}
+}

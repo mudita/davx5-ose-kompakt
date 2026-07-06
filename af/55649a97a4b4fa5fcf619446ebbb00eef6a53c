@@ -1,0 +1,24 @@
+core/src/main/kotlin/at/bitfire/davdroid/repository/AccountRepository.kt
+  c88f9d0ec4f45f7a 126,129
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "af55649a97a4b4fa5fcf619446ebbb00eef6a53c",
+  "prompts": {
+    "c88f9d0ec4f45f7a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ea32e00b-4378-4b5f-abeb-f0a6a3e8158e",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/59f7adfb15c94b9c34154b440350723ea6a562143435478f5edbe5cc4c55e1ce"
+    }
+  }
+}

@@ -1,0 +1,26 @@
+core/src/test/kotlin/at/bitfire/davdroid/ui/KompaktLastSyncFormatterTest.kt
+  1106c7e63e1e43f9 1-66
+core/src/main/kotlin/at/bitfire/davdroid/ui/KompaktLinkedAccountModel.kt
+  1106c7e63e1e43f9 534-550
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "6fb6bed2ac37fb9898df46e063d8feb94c48f25a",
+  "prompts": {
+    "1106c7e63e1e43f9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7bfeeb19-3733-4593-96d9-99132f72e72d",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 83,
+      "total_deletions": 0,
+      "accepted_lines": 31982,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/dc8a093e711832381079b2c70ff91122609bf62d3573df0cf00a4e53d294e999"
+    }
+  }
+}
