@@ -49,6 +49,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.Reader
 import java.io.StringReader
 import java.io.StringWriter
+import java.net.HttpURLConnection
 import java.time.Instant
 import java.time.ZonedDateTime
 import java.util.Optional
@@ -74,7 +75,10 @@ class CalendarSyncManager @AssistedInject constructor(
     syncResult,
     localCalendar,
     collection,
-    resync,
+    // Google doesn't advance a calendar's sync-token/CTag when a "this and following" split series (…_R… resource) is deleted,
+    // so an incremental sync sees "collection didn't change", never re-lists, and the orphaned events linger locally forever.
+    // Default every calendar sync to RESYNC_LIST so it always re-lists and reconciles server-deleted resources.
+    resync ?: ResyncType.RESYNC_LIST,
     syncDispatcher
 ) {
 
@@ -270,7 +274,21 @@ class CalendarSyncManager @AssistedInject constructor(
                      */
                     SyncException.wrapWithRemoteResource(response.href) wrapResource@{
                         if (!response.isSuccess()) {
-                            logger.warning("Ignoring non-successful multi-get response for ${response.href}")
+                            // Google keeps listing a deleted "this and following" split series (…_R… resource) in the calendar-query with a bumped ETag
+                            // - so it's marked FLAG_REMOTELY_PRESENT and deleteNotPresentRemotely won't remove it.
+                            // Returns 404/410 when the resource is actually fetched.
+                            // Delete the stale local copy on such a definitive "gone" status
+                            val code = response.status?.code
+                            if (code == HttpURLConnection.HTTP_NOT_FOUND || code == HttpURLConnection.HTTP_GONE) {
+                                val fileName = response.href.lastSegment
+                                localCollection.findByName(fileName)?.let { local ->
+                                    SyncException.wrapWithLocalResource(local) {
+                                        logger.info("$fileName is listed but no longer retrievable ($code), deleting locally")
+                                        local.deleteLocal()
+                                    }
+                                }
+                            } else
+                                logger.warning("Ignoring non-successful multi-get response ($code) for ${response.href}")
                             return@wrapResource
                         }
 

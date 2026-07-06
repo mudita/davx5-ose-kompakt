@@ -152,15 +152,18 @@ abstract class SyncManager<LocalType : LocalResource, out CollectionType : Local
             val modificationsPresent =
                 processLocallyDeleted() or uploadDirty()     // bitwise OR guarantees that both expressions are evaluated
 
-            if (resync == ResyncType.RESYNC_ENTRIES) {
-                logger.info("Forcing re-synchronization of all entries")
+            if (resync != null) {
+                logger.info("Forcing re-synchronization ($resync)")
 
-                // forget sync state of collection (→ initial sync in case of SyncAlgorithm.COLLECTION_SYNC)
+                // Re-list the whole collection regardless of its sync-token/CTag, so resources deleted
+                // on the server without a collection change-marker bump (e.g. Google "this and following"
+                // splits) are reconciled. Nulling the sync state makes this an initial sync in
+                // SyncAlgorithm.COLLECTION_SYNC, which runs deleteNotPresentRemotely().
                 localCollection.lastSyncState = null
                 remoteSyncState = null
 
-                // forget sync state of members (→ download all members again and update them locally)
-                localCollection.forgetETags()
+                if (resync == ResyncType.RESYNC_ENTRIES)
+                    localCollection.forgetETags()
             }
 
             if (modificationsPresent || syncRequired(remoteSyncState))
