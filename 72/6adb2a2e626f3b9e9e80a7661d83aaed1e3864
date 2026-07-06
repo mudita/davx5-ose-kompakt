@@ -1,0 +1,24 @@
+core/src/main/kotlin/at/bitfire/davdroid/sync/CalendarSyncManager.kt
+  b60e3ea2d400ed0d 52,268-270,276-286
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "726adb2a2e626f3b9e9e80a7661d83aaed1e3864",
+  "prompts": {
+    "b60e3ea2d400ed0d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4d0eb545-3292-4828-8481-da1f61187c51",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 32435,
+      "total_deletions": 7,
+      "accepted_lines": 15,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/2db79bf67493e4938f81e151e3af6a5e3d02048c283012c9cae926b2d37a7869"
+    }
+  }
+}
