@@ -49,6 +49,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.Reader
 import java.io.StringReader
 import java.io.StringWriter
+import java.net.HttpURLConnection
 import java.time.Instant
 import java.time.ZonedDateTime
 import java.util.Optional
@@ -264,13 +265,26 @@ class CalendarSyncManager @AssistedInject constructor(
                      *
                      * So we:
                      *
-                     * - ignore unsuccessful responses,
+                     * - on a definitive 404/410, unset the present flag so deleteNotPresentRemotely() removes it locally
+                     *   (Google keeps listing a deleted "this and following" split series with a bumped ETag, but 404s
+                     *   the multi-get); ignore other unsuccessful responses,
                      * - ignore responses without requested calendar data (should also ignore collections and hopefully unrelated resources), and
                      * - take the last segment of the href as the file name and assume that it's in the requested collection.
                      */
                     SyncException.wrapWithRemoteResource(response.href) wrapResource@{
                         if (!response.isSuccess()) {
-                            logger.warning("Ignoring non-successful multi-get response for ${response.href}")
+                            val code = response.status?.code
+                            if (code == HttpURLConnection.HTTP_NOT_FOUND || code == HttpURLConnection.HTTP_GONE) {
+                                val fileName = response.href.lastSegment
+                                localCollection.findByName(fileName)?.let { local ->
+                                    SyncException.wrapWithLocalResource(local) {
+                                        logger.info("$fileName is listed but no longer retrievable ($code), unflagging so it is deleted locally")
+                                        local.updateFlags(0)
+                                    }
+                                }
+                            } else {
+                                logger.warning("Ignoring non-successful multi-get response ($code) for ${response.href}")
+                            }
                             return@wrapResource
                         }
 

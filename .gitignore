@@ -90,3 +90,7 @@ gradle-app.setting
 
 # Javadoc
 javadoc/
+
+# Claude
+.claude/**/*
+!.claude/skills/**
