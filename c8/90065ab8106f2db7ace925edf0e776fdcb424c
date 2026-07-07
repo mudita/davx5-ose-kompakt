@@ -1,0 +1,30 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktReauthModel.kt
+  f657d792f6deedb1 13,23,29-30,32-36,43-44,49-67,74,76-77,80-84,90-120
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktReauthScreen.kt
+  f657d792f6deedb1 8,10-11,13,22,25,29-30,39,43-48,57-68,70-75,77,79-87,90,102-126,128-134,139-158
+core/src/androidTest/kotlin/at/bitfire/davdroid/ui/setup/KompaktReauthModelTest.kt
+  f657d792f6deedb1 1-164
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktAccountLinker.kt
+  f657d792f6deedb1 1-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "c890065ab8106f2db7ace925edf0e776fdcb424c",
+  "prompts": {
+    "f657d792f6deedb1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "75547f7a-3a87-4204-b904-1cfcc8427a6f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 409,
+      "total_deletions": 52,
+      "accepted_lines": 913,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/660105b047656874e79b3fcf8b7da21c9e631d37a4be974abddb7456c6aa52db"
+    }
+  }
+}
