@@ -69,10 +69,16 @@ class LoginScreenViewModel @AssistedInject constructor(
         AccountDetails
     }
 
-    private val startPage = if (skipLoginTypePage)
-        Page.LoginDetails
-    else
-        Page.LoginType
+    // If we already hold an OAuth token (e.g. the Kompakt re-auth account switch fed its credentials
+    // in), there is nothing to authenticate — start straight at resource detection, skipping the OAuth
+    // page. For every normal login this is false (no token yet), so the flow is unchanged.
+    private val startAuthenticated = skipLoginTypePage && initialLoginInfo.credentials?.authState != null
+
+    private val startPage = when {
+        startAuthenticated -> Page.DetectResources
+        skipLoginTypePage -> Page.LoginDetails
+        else -> Page.LoginType
+    }
 
     var page by mutableStateOf(startPage)
         private set
@@ -343,6 +349,13 @@ class LoginScreenViewModel @AssistedInject constructor(
                     )
             }
         }
+    }
+
+    init {
+        // A pre-authenticated start (see startAuthenticated) has no OAuth step; kick off resource
+        // detection immediately so the flow proceeds detect → create, like a normal login minus sign-in.
+        if (startAuthenticated)
+            detectResources()
     }
 
 }
