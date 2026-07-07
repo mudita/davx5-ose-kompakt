@@ -119,9 +119,9 @@ fun KompaktAccountsScreen(
                 },
                 // a re-auth that switched to a different account linked a new one → show "Account linked";
                 // remember the account being replaced so we don't render it while the flow still reports it
-                onAccountSwitched = {
+                onAccountSwitched = { oldAccountName ->
                     justLinked = true
-                    switchedFromAccount = account?.name
+                    switchedFromAccount = oldAccountName
                 }
             )
     }

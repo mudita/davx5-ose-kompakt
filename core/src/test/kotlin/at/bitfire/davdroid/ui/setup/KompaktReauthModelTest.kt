@@ -11,8 +11,6 @@ import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.settings.Credentials
 import at.bitfire.davdroid.sync.worker.SyncWorkerManager
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -25,28 +23,40 @@ import io.mockk.mockkStatic
 import io.mockk.runs
 import io.mockk.unmockkStatic
 import io.mockk.verify
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import net.openid.appauth.AuthState
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 import java.net.URI
 import java.util.logging.Logger
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@HiltAndroidTest
+@RunWith(RobolectricTestRunner::class)
 class KompaktReauthModelTest {
 
     @get:Rule
-    val hiltRule = HiltAndroidRule(this)
-
-    @get:Rule
     val mockkRule = MockKRule(this)
+
+    // KompaktReauthModel's viewModelScope dispatches on Dispatchers.Main; back it with a test
+    // dispatcher so the launched coroutines run under advanceUntilIdle() control.
+    @Before
+    fun setMainDispatcher() = Dispatchers.setMain(UnconfinedTestDispatcher())
+
+    @After
+    fun resetMainDispatcher() = Dispatchers.resetMain()
 
     @RelaxedMockK
     lateinit var context: Context
