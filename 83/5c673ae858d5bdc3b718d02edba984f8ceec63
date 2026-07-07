@@ -1,0 +1,22 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "835c673ae858d5bdc3b718d02edba984f8ceec63",
+  "prompts": {
+    "0d84cd6ed82e0a93": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5390055b-2794-45f3-9989-13542b4d734d",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 156,
+      "total_deletions": 167,
+      "accepted_lines": 156,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/52994bdc8b1719b5ff95039d97d042ce3004391ac6d67889182d86feeb588eee"
+    }
+  }
+}
