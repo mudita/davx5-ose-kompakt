@@ -60,8 +60,12 @@ class KompaktReauthModel @Inject constructor(
         /** The new account is linked; removing the old one. */
         data object RemovingOldAccount : ReauthState
 
-        /** Switch finished (old account removed); the screen may close. */
-        data object Done : ReauthState
+        /**
+         * Switch finished; the screen may close. [switched] is `true` only when the old account was
+         * actually removed (a clean switch → the caller reports success and shows "Account linked");
+         * `false` when its removal failed, so the caller must not report the switch as a success.
+         */
+        data class Done(val switched: Boolean) : ReauthState
     }
 
     private val _state = MutableStateFlow<ReauthState>(ReauthState.Authenticating)
@@ -108,9 +112,11 @@ class KompaktReauthModel @Inject constructor(
     fun completeSwitch(oldAccount: Account) {
         _state.value = ReauthState.RemovingOldAccount
         viewModelScope.launch(ioDispatcher) {
-            if (!accountRepository.delete(oldAccount.name))
-                logger.warning("Couldn't unlink old account ${oldAccount.name} after switch")
-            _state.value = ReauthState.Done
+            val removed = accountRepository.delete(oldAccount.name)
+            if (!removed)
+                // both accounts now remain; don't report a clean switch (see [ReauthState.Done.switched])
+                logger.severe("Couldn't unlink old account ${oldAccount.name} after switch; both accounts remain")
+            _state.value = ReauthState.Done(switched = removed)
         }
     }
 }

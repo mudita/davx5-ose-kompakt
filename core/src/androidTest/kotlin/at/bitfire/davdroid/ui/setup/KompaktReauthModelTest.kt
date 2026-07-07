@@ -132,13 +132,25 @@ class KompaktReauthModelTest {
     }
 
     @Test
-    fun completeSwitch_unlinksOldAccount_andReachesDone() = runModel { model ->
+    fun completeSwitch_unlinksOldAccount_andReachesDone_switched() = runModel { model ->
         coEvery { accountRepository.delete("a@gmail.com") } returns true
 
         model.completeSwitch(accountA)
         advanceUntilIdle()
 
         coVerify { accountRepository.delete("a@gmail.com") }
-        assertEquals(KompaktReauthModel.ReauthState.Done, model.state.value)
+        assertEquals(KompaktReauthModel.ReauthState.Done(switched = true), model.state.value)
+    }
+
+    @Test
+    fun completeSwitch_whenDeleteFails_reachesDone_notSwitched() = runModel { model ->
+        coEvery { accountRepository.delete("a@gmail.com") } returns false
+
+        model.completeSwitch(accountA)
+        advanceUntilIdle()
+
+        coVerify { accountRepository.delete("a@gmail.com") }
+        // delete failed → don't report a clean switch, so the caller won't show "Account linked"
+        assertEquals(KompaktReauthModel.ReauthState.Done(switched = false), model.state.value)
     }
 }

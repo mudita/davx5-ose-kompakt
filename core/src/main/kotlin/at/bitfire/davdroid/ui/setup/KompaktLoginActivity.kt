@@ -43,8 +43,11 @@ class KompaktLoginActivity @Inject constructor() : AppCompatActivity() {
                 KompaktReauthScreen(
                     account = account,
                     onNavUp = { onSupportNavigateUp() },
-                    onFinish = {
-                        setResult(RESULT_OK)
+                    onFinish = { switched ->
+                        // RESULT_OK only when a new account was linked (the switch), mirroring the
+                        // normal login flow; a same-account refresh leaves the default RESULT_CANCELED
+                        if (switched)
+                            setResult(RESULT_OK)
                         finish()
                     }
                 )

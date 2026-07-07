@@ -74,6 +74,11 @@ fun KompaktAccountsScreen(
     // the accounts flow catches up with the newly created account.
     var justLinked by rememberSaveable { mutableStateOf(false) }
 
+    // The account we just switched away from during a re-auth. Its removal has already completed, but the
+    // accounts flow can still report it for a frame or two; keep showing the loading state until it
+    // disappears, so the just-removed account never flashes under the "Account linked" dialog (SHP-555).
+    var switchedFromAccount by rememberSaveable { mutableStateOf<String?>(null) }
+
     val loginLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -85,8 +90,12 @@ fun KompaktAccountsScreen(
     }
 
     when {
-        // Still loading, or login just succeeded
-        accounts == null || (justLinked && account == null) ->
+        // Still loading, or a link/switch just succeeded and the accounts flow hasn't caught up yet:
+        //  - add-from-empty → wait for the new account to appear
+        //  - switch → wait for the just-removed account to disappear
+        accounts == null
+            || (justLinked && account == null)
+            || (switchedFromAccount != null && account?.name == switchedFromAccount) ->
             KompaktTheme {
                 Box(modifier = Modifier.fillMaxSize())
             }
@@ -104,7 +113,16 @@ fun KompaktAccountsScreen(
                 account = account,
                 onBack = onBack,
                 showAccountLinkedDialog = justLinked,
-                onAccountLinkedDialogDismiss = { justLinked = false }
+                onAccountLinkedDialogDismiss = {
+                    justLinked = false
+                    switchedFromAccount = null
+                },
+                // a re-auth that switched to a different account linked a new one → show "Account linked";
+                // remember the account being replaced so we don't render it while the flow still reports it
+                onAccountSwitched = {
+                    justLinked = true
+                    switchedFromAccount = account?.name
+                }
             )
     }
 }

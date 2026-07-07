@@ -46,7 +46,7 @@ import com.mudita.mmd.components.text.TextMMD
 fun KompaktReauthScreen(
     account: Account,
     onNavUp: () -> Unit,
-    onFinish: () -> Unit,
+    onFinish: (switched: Boolean) -> Unit,
     model: KompaktReauthModel = hiltViewModel()
 ) {
     when (val state = model.state.collectAsStateWithLifecycle().value) {
@@ -68,7 +68,7 @@ fun KompaktReauthScreen(
                     if (newAccount != null)
                         model.completeSwitch(account)   // new account linked → remove the old one
                     else
-                        onFinish()                      // backed out before linking → keep the old account
+                        onFinish(false)                 // backed out before linking → keep the old account
                 }
             )
 
@@ -77,9 +77,12 @@ fun KompaktReauthScreen(
                 KompaktSetupProgress(Modifier.fillMaxSize())
             }
 
-        KompaktReauthModel.ReauthState.Refreshed,
-        KompaktReauthModel.ReauthState.Done ->
-            LaunchedEffect(Unit) { onFinish() }
+        KompaktReauthModel.ReauthState.Refreshed ->
+            LaunchedEffect(Unit) { onFinish(false) }    // same account refreshed in place — nothing linked
+
+        is KompaktReauthModel.ReauthState.Done ->
+            // switched only if the old account was actually removed; otherwise finish without success
+            LaunchedEffect(Unit) { onFinish(state.switched) }
     }
 }
 
