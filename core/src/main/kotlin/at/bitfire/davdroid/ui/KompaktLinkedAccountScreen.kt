@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -394,6 +395,8 @@ private fun AccountHeader(email: String) {
             text = email,
             style = KompaktTypography900.labelMedium,
             textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -454,7 +457,7 @@ private const val SUCCESS_SNACKBAR_DURATION_MS = 3_000L
 
 // previews
 
-private const val PREVIEW_EMAIL = "mike.tyson@gmail.com"
+private const val PREVIEW_EMAIL = "very.long.mike.tyson@gmail.very.long.com"
 private const val PREVIEW_LAST_SYNC = "14.05.2026 · 11:30"
 
 @Preview
