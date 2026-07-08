@@ -5,6 +5,7 @@
 package at.bitfire.davdroid.ui
 
 import android.accounts.Account
+import android.app.Activity
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -74,6 +75,7 @@ fun KompaktLinkedAccountScreen(
     onBack: () -> Unit,
     showAccountLinkedDialog: Boolean = false,
     onAccountLinkedDialogDismiss: () -> Unit = {},
+    onAccountSwitched: (oldAccountName: String) -> Unit = {},
     model: KompaktLinkedAccountModel = hiltViewModel(
         // Key by account so switching the linked account (unlink A → link B) builds a fresh
         // ViewModel instead of reusing the cached one for the previous account (SHP-571).
@@ -102,9 +104,15 @@ fun KompaktLinkedAccountScreen(
     val context = LocalContext.current
     val reauthLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
-    ) {
+    ) { result ->
         // re-read the persisted flag: cleared if re-auth succeeded, still set if it was aborted/failed
         model.reloadNeedsReauth()
+        // RESULT_OK from the re-auth flow means a different account was linked (a switch) — surface the
+        // "Account linked" dialog, just like the normal add-account flow
+        if (result.resultCode == Activity.RESULT_OK)
+            // pass the re-auth target — the stable old account this screen owns — instead of letting
+            // the caller read it from the live accounts flow (which could already report the new one)
+            onAccountSwitched(account.name)
     }
     val onReauthorize = {
         reauthLauncher.launch(

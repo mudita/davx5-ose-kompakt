@@ -10,6 +10,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
+import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.sync.worker.SyncWorkerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,52 +25,98 @@ import java.util.logging.Logger
 import javax.inject.Inject
 
 /**
- * Applies a freshly obtained Google OAuth token to an EXISTING account, **in place**.
+ * Drives the Kompakt re-authorization flow for an existing account (the re-auth target) as an explicit
+ * [ReauthState] the hosting screen renders.
  *
- * Unlike deleting + re-creating the account, this preserves the account, its calendars and any local
- * changes that are still pending upload (dirty/deleted rows): only the stored OAuth [net.openid.appauth.AuthState]
- * is replaced (via [AccountSettings.updateAuthState]), then a sync is enqueued so the pending changes upload.
+ * After OAuth completes ([apply]):
+ *  - **Same account** — the fresh OAuth [net.openid.appauth.AuthState] is applied **in place** (via
+ *    [AccountSettings.updateAuthState]), preserving the account and its pending local changes, and a sync
+ *    is enqueued → [ReauthState.Refreshed]. The account is never unlinked on this path.
+ *  - **Different account** — this model creates nothing; it moves to [ReauthState.SwitchingToNewAccount]
+ *    so the screen can link the new account via the normal `KompaktLoginScreen` pipeline. Once that
+ *    succeeds the screen calls [completeSwitch], which removes the old account
+ *    ([ReauthState.RemovingOldAccount]) and finishes ([ReauthState.Done]).
  */
 @HiltViewModel
 class KompaktReauthModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val accountSettingsFactory: AccountSettings.Factory,
     private val syncWorkerManager: SyncWorkerManager,
+    private val accountRepository: AccountRepository,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     private val logger: Logger
 ) : ViewModel() {
 
-    private val _done = MutableStateFlow(false)
-    /** `true` once the re-auth result has been processed and the screen may finish. */
-    val done: StateFlow<Boolean> = _done.asStateFlow()
+    sealed interface ReauthState {
+        /** Running the Google OAuth flow — the initial state, before the result is known. */
+        data object Authenticating : ReauthState
+
+        /** Same account re-authorized: token refreshed in place; the screen may close. */
+        data object Refreshed : ReauthState
+
+        /** A different Google account was authorized: the screen links it via the normal pipeline. */
+        data class SwitchingToNewAccount(val loginInfo: LoginInfo) : ReauthState
+
+        /** The new account is linked; removing the old one. */
+        data object RemovingOldAccount : ReauthState
+
+        /**
+         * Switch finished; the screen may close. [switched] is `true` only when the old account was
+         * actually removed (a clean switch → the caller reports success and shows "Account linked");
+         * `false` when its removal failed, so the caller must not report the switch as a success.
+         */
+        data class Done(val switched: Boolean) : ReauthState
+    }
+
+    private val _state = MutableStateFlow<ReauthState>(ReauthState.Authenticating)
+    val state: StateFlow<ReauthState> = _state.asStateFlow()
 
     /**
-     * Persists the new credentials to [account] (if they belong to the same Google identity) and
-     * triggers a sync. Always sets [done] when finished so the hosting screen can close.
+     * Classifies the completed OAuth [loginInfo] against the re-auth target [account]: same identity →
+     * refresh in place ([ReauthState.Refreshed]); different identity → [ReauthState.SwitchingToNewAccount]
+     * (leaving [account] untouched here).
      */
     fun apply(account: Account, loginInfo: LoginInfo) {
         viewModelScope.launch(ioDispatcher) {
             val authState = loginInfo.credentials?.authState
             val email = loginInfo.suggestedAccountName
             when {
-                authState == null ->
+                authState == null -> {
                     logger.warning("Re-auth produced no auth state; not applying")
+                    _state.value = ReauthState.Refreshed
+                }
 
                 email != null && !email.equals(account.name, ignoreCase = true) ->
-                    // a token for a different Google account would break this account – ignore it
-                    logger.warning("Re-auth account mismatch ($email vs ${account.name}); not applying")
+                    _state.value = ReauthState.SwitchingToNewAccount(loginInfo)
 
-                else -> try {
-                    accountSettingsFactory.create(account).updateAuthState(authState)
-                    // token is valid again: clear the persistent "needs re-auth" flag
-                    AccountManager.get(context).setUserData(account, AccountSettings.KEY_NEEDS_REAUTH, null)
-                    syncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)
-                } catch (e: Exception) {
-                    logger.log(Level.WARNING, "Couldn't store re-authorized credentials for $account", e)
+                else -> {
+                    try {
+                        accountSettingsFactory.create(account).updateAuthState(authState)
+                        // token is valid again: clear the persistent "needs re-auth" flag
+                        AccountManager.get(context).setUserData(account, AccountSettings.KEY_NEEDS_REAUTH, null)
+                        syncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)
+                    } catch (e: Exception) {
+                        logger.log(Level.WARNING, "Couldn't store re-authorized credentials for $account", e)
+                    }
+                    _state.value = ReauthState.Refreshed
                 }
             }
-            _done.value = true
         }
     }
 
+    /**
+     * Removes the old [oldAccount] once the new account is linked, then moves to [ReauthState.Done].
+     * Runs the delete in [viewModelScope] (not the caller's composition scope) so it isn't cancelled if
+     * the screen leaves composition mid-delete.
+     */
+    fun completeSwitch(oldAccount: Account) {
+        _state.value = ReauthState.RemovingOldAccount
+        viewModelScope.launch(ioDispatcher) {
+            val removed = accountRepository.delete(oldAccount.name)
+            if (!removed)
+                // both accounts now remain; don't report a clean switch (see [ReauthState.Done.switched])
+                logger.severe("Couldn't unlink old account ${oldAccount.name} after switch; both accounts remain")
+            _state.value = ReauthState.Done(switched = removed)
+        }
+    }
 }
