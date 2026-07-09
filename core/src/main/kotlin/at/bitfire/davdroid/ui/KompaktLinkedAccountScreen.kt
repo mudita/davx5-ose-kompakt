@@ -358,12 +358,12 @@ fun KompaktLinkedAccountContent(
         // (in place, keeping local data), or unlink and go back to the home screen.
         KompaktModalSheet(
             onDismissRequest = onUnlink,
-            title = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_h1_accountnotlinked),
-            text = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_body_thetokenexpiredso),
+            title = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_h1_accountlinkerror),
+            text = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_body_linkyouraccountagaintocontinue),
             icon = painterResource(R.drawable.ic_kompakt_alert),
             confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_linkaccount),
             onConfirm = onReauthorize,      // flag stays set; cleared on successful re-auth + reload
-            dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
+            dismissLabel = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_button_removeaccount),
             shouldDismissOnBackPress = false,
             shouldDismissOnClickOutside = false,
             onDismiss = onUnlink
