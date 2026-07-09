@@ -357,7 +357,7 @@ fun KompaktLinkedAccountContent(
         // token expired / access revoked: persistent until re-auth succeeds. Offer re-linking
         // (in place, keeping local data), or unlink and go back to the home screen.
         KompaktModalSheet(
-            onDismissRequest = onUnlink,
+            onDismissRequest = {}, // unreachable by design — all dismiss paths locked
             title = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_h1_accountlinkerror),
             text = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_body_linkyouraccountagaintocontinue),
             icon = painterResource(R.drawable.ic_kompakt_alert),

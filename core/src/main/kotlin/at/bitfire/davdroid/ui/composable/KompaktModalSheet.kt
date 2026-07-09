@@ -42,14 +42,14 @@ import com.mudita.mmd.components.text.TextMMD
  * Backed by MMD's [ModalBottomSheetMMD] (square top, transparent scrim, default 3dp drag handle). The
  * content is wrapped in [ThemeMMD] so colors resolve to the e-ink scheme regardless of caller scope.
  *
- * @param onDismissRequest   called on swipe-down / tap-outside (only when [shouldDismissOnClickOutside] is true)
+ * @param onDismissRequest   tap-outside (only when [shouldDismissOnClickOutside] is true)
  * @param title              centered title ((NEW) Title/Medium/900)
  * @param text               centered body ((NEW) Body/Medium/500)
  * @param confirmLabel       label of the high-emphasis (filled) action
  * @param onConfirm          confirm action
  * @param icon               optional leading icon shown above the title
  * @param dismissLabel       optional label of the secondary (outlined) action; usually "Cancel"
- * @param shouldDismissOnBackPress tapping virtual/physical back button is disabled then true
+ * @param shouldDismissOnBackPress tapping virtual/physical back button is disabled when false
  * @param shouldDismissOnClickOutside  when false, tapping background above the sheet no longer dismisses it, so it can
  *                           only be closed via its buttons (or back press, if [shouldDismissOnBackPress]).
  * @param onDismiss          optional secondary action; required for [dismissLabel] to render
