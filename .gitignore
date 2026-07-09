@@ -94,3 +94,4 @@ javadoc/
 # Claude
 .claude/**/*
 !.claude/skills/**
+.tokensave

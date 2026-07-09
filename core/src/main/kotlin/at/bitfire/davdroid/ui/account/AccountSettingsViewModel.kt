@@ -20,6 +20,7 @@ import at.bitfire.davdroid.sync.ResyncType
 import at.bitfire.davdroid.sync.SyncDataType
 import at.bitfire.davdroid.sync.TasksAppManager
 import at.bitfire.davdroid.sync.worker.SyncWorkerManager
+import at.bitfire.davdroid.ui.setup.KompaktOAuthWebViewActivity
 import at.bitfire.synctools.vcard.GroupMethod
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -184,7 +185,10 @@ class AccountSettingsViewModel @AssistedInject constructor(
     }
 
 
-    fun authorizationContract() = OAuthIntegration.AuthorizationContract(authService)
+    // Kompakt: authorize in the embedded WebView (no Chrome/Custom Tabs on the e-ink device) instead of
+    // OAuthIntegration.AuthorizationContract. Drop-in — same ActivityResultContract<AuthorizationRequest, AuthorizationResponse?>.
+    // authService is still used by authenticate() below for the token exchange.
+    fun authorizationContract() = KompaktOAuthWebViewActivity.Contract()
 
     fun newAuthorizationRequest(): AuthorizationRequest? =
         accountSettings.credentials().authState?.lastAuthorizationResponse?.request

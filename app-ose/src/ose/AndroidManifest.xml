@@ -7,20 +7,13 @@
 
     <application>
 
-        <!-- AppAuth login flow redirect -->
-        <activity
-            android:name="net.openid.appauth.RedirectUriReceiverActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data
-                    tools:ignore="AppLinkUrlError"
-                        android:scheme="${applicationId}"
-                    android:path="/oauth2/redirect"/>
-            </intent-filter>
-        </activity>
+        <!--
+          Kompakt runs the whole OAuth flow in an embedded WebView (KompaktOAuthWebViewActivity),
+          which captures the redirect in-process. The Custom Tabs / AppAuth custom-scheme redirect is
+          never dispatched to the OS, so the exported RedirectUriReceiverActivity is not needed and is
+          intentionally omitted (removing it also drops the exported custom-scheme attack surface).
+          core/src/main/AndroidManifest.xml already strips AppAuth's own injected copy via tools:node="remove".
+        -->
 
     </application>
 

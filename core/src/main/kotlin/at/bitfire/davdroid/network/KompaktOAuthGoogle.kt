@@ -4,15 +4,20 @@
 
 package at.bitfire.davdroid.network
 
+import android.content.Context
 import androidx.core.net.toUri
+import dagger.hilt.android.qualifiers.ApplicationContext
 import net.openid.appauth.AuthorizationRequest
 import net.openid.appauth.AuthorizationServiceConfiguration
 import net.openid.appauth.ResponseTypeValues
 import java.net.URI
+import java.util.logging.Logger
 import javax.inject.Inject
 
 class KompaktOAuthGoogle @Inject constructor(
-    private val oAuthIntegration: OAuthIntegration
+    @ApplicationContext private val context: Context,
+    private val oAuthIntegration: OAuthIntegration,
+    private val logger: Logger
 ) {
 
     private val SCOPES = arrayOf(
@@ -29,19 +34,17 @@ class KompaktOAuthGoogle @Inject constructor(
         "https://oauth2.googleapis.com/token".toUri()
     )
 
-    fun signIn(email: String?, customClientId: String?): AuthorizationRequest =
-        AuthorizationRequest.Builder(
+    fun signIn(email: String?, customClientId: String?): AuthorizationRequest {
+        logger.info("Google OAuth signing-key index: ${KompaktGoogleOAuthClients.clientIndex(context)}")
+        return AuthorizationRequest.Builder(
             serviceConfig,
-            customClientId ?: CLIENT_ID,
+            customClientId ?: KompaktGoogleOAuthClients.clientId(context),
             ResponseTypeValues.CODE,
             oAuthIntegration.redirectUri
         )
             .setScopes(*SCOPES)
             .setLoginHint(email)
             .build()
-
-    companion object {
-        private const val CLIENT_ID = "1044477190035-8pja9fc38b3tq57ipqqqckpka61f0blr.apps.googleusercontent.com"
     }
 
 }
