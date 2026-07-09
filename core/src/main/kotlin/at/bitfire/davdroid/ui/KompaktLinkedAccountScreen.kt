@@ -364,6 +364,8 @@ fun KompaktLinkedAccountContent(
             confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_linkaccount),
             onConfirm = onReauthorize,      // flag stays set; cleared on successful re-auth + reload
             dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
+            shouldDismissOnBackPress = false,
+            shouldDismissOnClickOutside = false,
             onDismiss = onUnlink
         )
     }
