@@ -4,6 +4,7 @@
 
 package at.bitfire.davdroid.ui.composable
 
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,12 +20,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import at.bitfire.davdroid.ui.KompaktTypography500
 import at.bitfire.davdroid.ui.KompaktTypography900
 import com.mudita.mmd.ThemeMMD
+import com.mudita.mmd.components.bottom_sheet.BottomSheetDefaultsMMD
 import com.mudita.mmd.components.bottom_sheet.ModalBottomSheetMMD
+import com.mudita.mmd.components.bottom_sheet.ModalBottomSheetPropertiesMMD
+import com.mudita.mmd.components.bottom_sheet.SheetValueMMD
 import com.mudita.mmd.components.bottom_sheet.rememberModalBottomSheetMMDState
 import com.mudita.mmd.components.buttons.ButtonMMD
 import com.mudita.mmd.components.buttons.OutlinedButtonMMD
@@ -37,13 +42,16 @@ import com.mudita.mmd.components.text.TextMMD
  * Backed by MMD's [ModalBottomSheetMMD] (square top, transparent scrim, default 3dp drag handle). The
  * content is wrapped in [ThemeMMD] so colors resolve to the e-ink scheme regardless of caller scope.
  *
- * @param onDismissRequest   called on swipe-down / tap-outside
+ * @param onDismissRequest   tap-outside (only when [shouldDismissOnClickOutside] is true)
  * @param title              centered title ((NEW) Title/Medium/900)
  * @param text               centered body ((NEW) Body/Medium/500)
  * @param confirmLabel       label of the high-emphasis (filled) action
  * @param onConfirm          confirm action
  * @param icon               optional leading icon shown above the title
  * @param dismissLabel       optional label of the secondary (outlined) action; usually "Cancel"
+ * @param shouldDismissOnBackPress tapping virtual/physical back button is disabled when false
+ * @param shouldDismissOnClickOutside  when false, tapping background above the sheet no longer dismisses it, so it can
+ *                           only be closed via its buttons (or back press, if [shouldDismissOnBackPress]).
  * @param onDismiss          optional secondary action; required for [dismissLabel] to render
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,19 +64,37 @@ fun KompaktModalSheet(
     onConfirm: () -> Unit,
     icon: Painter? = null,
     dismissLabel: String? = null,
+    shouldDismissOnBackPress: Boolean = true,
+    shouldDismissOnClickOutside: Boolean = true,
     onDismiss: (() -> Unit)? = null
 ) {
     ThemeMMD {
         ModalBottomSheetMMD(
             onDismissRequest = onDismissRequest,
-            sheetState = rememberModalBottomSheetMMDState(skipPartiallyExpanded = true),
-            containerColor = MaterialTheme.colorScheme.background
+            properties = ModalBottomSheetPropertiesMMD(shouldDismissOnBackPress = shouldDismissOnBackPress),
+            sheetState = rememberModalBottomSheetMMDState(
+                skipPartiallyExpanded = true,
+                confirmValueChange = { target ->
+                    shouldDismissOnClickOutside || target != SheetValueMMD.Hidden
+                }
+            ),
+            containerColor = MaterialTheme.colorScheme.background,
+            dragHandle = {
+                BottomSheetDefaultsMMD.DragHandle(
+                    modifier = Modifier.pointerInput(Unit) {
+                        detectVerticalDragGestures { change, _ -> change.consume() }
+                    }
+                )
+            }
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(24.dp),
                 modifier = Modifier
                     .fillMaxWidth()
+                    .pointerInput(Unit) {
+                        detectVerticalDragGestures { change, _ -> change.consume() }
+                    }
                     .padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 12.dp)
             ) {
                 // icon + texts
