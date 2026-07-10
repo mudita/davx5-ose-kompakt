@@ -228,7 +228,7 @@ fun KompaktLinkedAccountContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp)
-                            .padding(top = 8.dp, bottom = 16.dp)
+                            .padding(bottom = 16.dp)
                     )
 
                     // "Or" with dotted dividers
@@ -398,7 +398,8 @@ private fun AccountHeader(email: String) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(top = 24.dp, bottom = 16.dp)
+            .padding(horizontal = 16.dp)
     ) {
         KompaktFramedIcon(painter = painterResource(R.drawable.ic_google_g))
         TextMMD(

@@ -17,7 +17,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import at.bitfire.davdroid.R
 import at.bitfire.davdroid.ui.KompaktTypography500
 import at.bitfire.davdroid.ui.KompaktTypography900
 import com.mudita.mmd.components.text.TextMMD
@@ -49,11 +52,21 @@ fun KompaktListCell(
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
             TextMMD(text = title, style = KompaktTypography900.labelSmall)
-            TextMMD(text = subtitle, style = KompaktTypography500.bodyMedium)
+            TextMMD(text = subtitle, style = KompaktTypography500.labelMedium)
         }
         if (trailing != null) {
             Spacer(modifier = Modifier.width(16.dp))
             trailing()
         }
     }
+}
+
+@Preview
+@Composable
+private fun KompaktListCell_Preview() {
+    KompaktListCell(
+        icon = painterResource(R.drawable.ic_kompakt_calendar),
+        title = "Calendar",
+        subtitle = "Auto synchronization",
+    )
 }
