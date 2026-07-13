@@ -1,0 +1,49 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktLoginActivity.kt
+  f657d792f6deedb1 46-50
+core/src/main/kotlin/at/bitfire/davdroid/ui/KompaktAccountsScreen.kt
+  a0976e769aa5b47e 77-81,93-98,116-125
+core/src/androidTest/kotlin/at/bitfire/davdroid/ui/setup/KompaktReauthModelTest.kt
+  a0976e769aa5b47e 135,142-154
+core/src/main/kotlin/at/bitfire/davdroid/ui/KompaktLinkedAccountScreen.kt
+  f657d792f6deedb1 8,77,106,109-112
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktReauthModel.kt
+  a0976e769aa5b47e 63-68,115-119
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktReauthScreen.kt
+  f657d792f6deedb1 49,71,80-82
+  a0976e769aa5b47e 83-85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "c3732a6584547a0a7041e6d7b1ae019c57227c42",
+  "prompts": {
+    "a0976e769aa5b47e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7a993521-d22b-4efd-8a33-1d862cc3e75b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 51,
+      "total_deletions": 16,
+      "accepted_lines": 49,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/73bbbec5934915e7fe4373680cce0a6866438df7dec09f228aa36b6881566b52"
+    },
+    "f657d792f6deedb1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "75547f7a-3a87-4204-b904-1cfcc8427a6f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 21,
+      "total_deletions": 8,
+      "accepted_lines": 521,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/c1a4108e309cf5d688c41c6023cadcd0ec0edd76361f088ec8a4bc59bb9c7b5f"
+    }
+  }
+}
