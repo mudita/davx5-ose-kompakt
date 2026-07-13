@@ -273,7 +273,10 @@ fun KompaktLinkedAccountContent(
                             .padding(top = 8.dp)
                     )
                     KompaktListCell(
-                        icon = painterResource(R.drawable.ic_kompakt_success),
+                        icon = painterResource(
+                            if (lastSync == null) R.drawable.ic_kompakt_alert
+                            else R.drawable.ic_kompakt_success
+                        ),
                         title = stringResource(RFrontitude.string.calendar_accountsync_label_lastsynchronization),
                         subtitle = lastSync ?: stringResource(RFrontitude.string.calendar_accountsync_status_notsyncedyet)
                     )
@@ -470,6 +473,31 @@ private const val SUCCESS_SNACKBAR_DURATION_MS = 3_000L
 
 private const val PREVIEW_EMAIL = "very.long.mike.tyson@gmail.very.long.com"
 private const val PREVIEW_LAST_SYNC = "14.05.2026 · 11:30"
+
+@Preview
+@Composable
+private fun KompaktLinkedAccountContent_NotSynced_Preview() {
+    KompaktLinkedAccountContent(
+        email = PREVIEW_EMAIL,
+        autoSyncEnabled = true,
+        lastSync = null,
+        syncing = false,
+        syncResult = null,
+        showNoInternet = false,
+        showOutOfStorage = false,
+        showAuthError = false,
+        showAccountLinkedDialog = false,
+        onBack = {},
+        onToggleAutoSync = {},
+        onSyncNow = {},
+        onUnlink = {},
+        onConsumeSyncResult = {},
+        onDismissNoInternet = {},
+        onDismissOutOfStorage = {},
+        onAccountLinkedDialogDismiss = {},
+        onReauthorize = {}
+    )
+}
 
 @Preview
 @Composable
