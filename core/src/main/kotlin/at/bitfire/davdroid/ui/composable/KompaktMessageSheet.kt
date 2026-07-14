@@ -4,6 +4,7 @@
 
 package at.bitfire.davdroid.ui.composable
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,7 +33,6 @@ import at.bitfire.davdroid.R
 import at.bitfire.davdroid.ui.KompaktTypography500
 import at.bitfire.davdroid.ui.KompaktTypography900
 import com.mudita.mmd.ThemeMMD
-import com.mudita.mmd.components.bottom_sheet.BottomSheetDefaultsMMD
 import com.mudita.mmd.components.bottom_sheet.ModalBottomSheetMMD
 import com.mudita.mmd.components.bottom_sheet.rememberModalBottomSheetMMDState
 import com.mudita.mmd.components.buttons.OutlinedButtonMMD
@@ -77,11 +77,27 @@ fun KompaktMessageSheet(
             sheetState = rememberModalBottomSheetMMDState(skipPartiallyExpanded = true),
             containerColor = MaterialTheme.colorScheme.background,
             dragHandle = {
-                BottomSheetDefaultsMMD.DragHandle(
-                    modifier = Modifier.pointerInput(Unit) {
-                        detectVerticalDragGestures { change, _ -> change.consume() }
-                    }
-                )
+                // DragHandle draws top divider of the bottom sheet so here's the custom one, without drag gesture dismiss
+                Column(
+                    Modifier
+                        .pointerInput(Unit) {
+                            detectVerticalDragGestures { change, _ -> change.consume() }
+                        }
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(2.dp)
+                            .background(MaterialTheme.colorScheme.background)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(3.dp)
+                            .background(MaterialTheme.colorScheme.onBackground)
+
+                    )
+                }
             }
         ) {
             if (buttonLabel != null) {
