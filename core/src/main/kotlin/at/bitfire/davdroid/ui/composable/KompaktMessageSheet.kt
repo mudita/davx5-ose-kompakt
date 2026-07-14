@@ -4,6 +4,7 @@
 
 package at.bitfire.davdroid.ui.composable
 
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,20 +22,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import at.bitfire.davdroid.R
-import com.mudita.frontitude.R as RFrontitude
 import at.bitfire.davdroid.ui.KompaktTypography500
 import at.bitfire.davdroid.ui.KompaktTypography900
 import com.mudita.mmd.ThemeMMD
+import com.mudita.mmd.components.bottom_sheet.BottomSheetDefaultsMMD
 import com.mudita.mmd.components.bottom_sheet.ModalBottomSheetMMD
 import com.mudita.mmd.components.bottom_sheet.rememberModalBottomSheetMMDState
 import com.mudita.mmd.components.buttons.OutlinedButtonMMD
 import com.mudita.mmd.components.text.TextMMD
+import com.mudita.frontitude.R as RFrontitude
 
 /**
  * Bottom-anchored informational sheet, no high-emphasis action: an optional leading icon, a centered
@@ -47,9 +50,10 @@ import com.mudita.mmd.components.text.TextMMD
  * Unlike [KompaktModalSheet] there is no filled/confirm action — the button only dismisses.
  *
  * Backed by MMD's [ModalBottomSheetMMD] and wrapped in [ThemeMMD] so colors resolve to the e-ink
- * scheme regardless of caller scope.
+ * scheme regardless of caller scope. Swipe-down, tap-outside and back-press are all blocked (matching
+ * the "one way to dismiss" contract), so the sheet can only be closed via its close (X) icon or button.
  *
- * @param onDismissRequest   called on close-icon tap, swipe-down or tap-outside
+ * @param onDismissRequest   called only via the close (X) icon; swipe-down / tap-outside / back are blocked
  * @param title              centered title ((NEW) Title/Medium/900)
  * @param text               centered body ((NEW) Body/Medium/500)
  * @param icon               optional leading icon shown above the title
@@ -71,7 +75,14 @@ fun KompaktMessageSheet(
         ModalBottomSheetMMD(
             onDismissRequest = onDismissRequest,
             sheetState = rememberModalBottomSheetMMDState(skipPartiallyExpanded = true),
-            containerColor = MaterialTheme.colorScheme.background
+            containerColor = MaterialTheme.colorScheme.background,
+            dragHandle = {
+                BottomSheetDefaultsMMD.DragHandle(
+                    modifier = Modifier.pointerInput(Unit) {
+                        detectVerticalDragGestures { change, _ -> change.consume() }
+                    }
+                )
+            }
         ) {
             if (buttonLabel != null) {
                 // Bottom-button variant (Figma "(NEW) Dialog"): icon + texts, then a full-width outlined
@@ -81,6 +92,9 @@ fun KompaktMessageSheet(
                     verticalArrangement = Arrangement.spacedBy(24.dp),
                     modifier = Modifier
                         .fillMaxWidth()
+                        .pointerInput(Unit) {
+                            detectVerticalDragGestures { change, _ -> change.consume() }
+                        }
                         .padding(12.dp)
                 ) {
                     MessageContent(icon, title, text, Modifier.padding(bottom = 2.dp))
@@ -100,7 +114,13 @@ fun KompaktMessageSheet(
                 }
             } else {
                 // Dismiss-only variant: close (X) in the top-right corner, no bottom button.
-                Box(modifier = Modifier.fillMaxWidth()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .pointerInput(Unit) {
+                            detectVerticalDragGestures { change, _ -> change.consume() }
+                        }
+                ) {
                     MessageContent(
                         icon, title, text,
                         Modifier.padding(start = 12.dp, end = 12.dp, top = 24.dp, bottom = 24.dp)
