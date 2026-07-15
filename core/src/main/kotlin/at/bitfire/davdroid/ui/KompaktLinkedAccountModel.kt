@@ -83,6 +83,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @HiltViewModel(assistedFactory = KompaktLinkedAccountModel.Factory::class)
 class KompaktLinkedAccountModel @AssistedInject constructor(
     @Assisted val account: Account,
+    @Assisted private val initialReauth: Boolean,
     @ApplicationContext private val context: Context,
     private val accountRepository: AccountRepository,
     private val accountSettingsFactory: AccountSettings.Factory,
@@ -98,7 +99,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(account: Account): KompaktLinkedAccountModel
+        fun create(account: Account, initialReauth: Boolean): KompaktLinkedAccountModel
     }
 
     companion object {
@@ -271,6 +272,27 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     /** Re-read the persisted re-auth flag (call after returning from the re-auth flow). */
     fun reloadNeedsReauth() {
         _needsReauth.value = readNeedsReauth()
+    }
+
+    // Blank the screen while redirecting into the OAuth flow so it and the "Account not linked" dialog
+    // don't flash. Released on the re-auth result — not when needsReauth clears — so a cancelled re-auth
+    // returns to content instead of a permanent blank.
+    enum class ReauthPhase { SHOW_CONTENT, PENDING_LAUNCH, AWAITING_RESULT }
+
+    private val _reauthPhase = MutableStateFlow(
+        if (initialReauth && _needsReauth.value) ReauthPhase.PENDING_LAUNCH else ReauthPhase.SHOW_CONTENT
+    )
+    val reauthPhase: StateFlow<ReauthPhase> = _reauthPhase.asStateFlow()
+
+    fun onReauthLaunchStarted() {
+        if (_reauthPhase.value == ReauthPhase.PENDING_LAUNCH) {
+            _reauthPhase.value = ReauthPhase.AWAITING_RESULT
+        }
+    }
+
+    fun onReauthResult() {
+        reloadNeedsReauth()
+        _reauthPhase.value = ReauthPhase.SHOW_CONTENT
     }
 
     /** Emits whether a usable (validated) network connection is currently available. */
