@@ -1,0 +1,44 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/composable/KompaktMessageSheet.kt
+  ea8f092803c49bd1 7,93-94
+  h_5d20f254a151a7 80-92,95-98,100
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "d43fb35f42c7a27e9a351445b5b8fd9e8c991b08",
+  "prompts": {
+    "91fb36b85bad6004": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a3836c90-88a7-4d8b-92e5-9c92c7d29ac5",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "piotriwaniec",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/500d2c5b19708266ac2b59e4c68444678e00ad945b53f84d13b25de24d0d3397"
+    },
+    "ea8f092803c49bd1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b80f1b1c-5f7b-4e4b-952b-966da99a9685",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "piotriwaniec",
+      "messages": [],
+      "total_additions": 18,
+      "total_deletions": 7,
+      "accepted_lines": 4,
+      "overriden_lines": 2,
+      "messages_url": "https://gitai.miquido.dev/cas/315cf17823d93c6fea384544a323b14db4046c5d7b6c76183de9f0a63077fb62"
+    }
+  },
+  "humans": {
+    "h_5d20f254a151a7": {
+      "author": "piotriwaniec"
+    }
+  }
+}

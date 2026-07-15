@@ -1,0 +1,14 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/composable/KompaktMessageSheet.kt
+  h_5d20f254a151a7 7,25,35,40,53-54,56,78-85,95-97,120-122
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "d8971c7cd8c79a0080dfb1ca7c9f10d7353a9fb7",
+  "prompts": {},
+  "humans": {
+    "h_5d20f254a151a7": {
+      "author": "piotriwaniec"
+    }
+  }
+}
