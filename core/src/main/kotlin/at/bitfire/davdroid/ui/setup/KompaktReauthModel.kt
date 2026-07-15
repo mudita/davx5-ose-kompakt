@@ -10,6 +10,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
+import at.bitfire.davdroid.network.KompaktOAuthGoogle
 import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.sync.worker.SyncWorkerManager
@@ -31,7 +32,9 @@ import javax.inject.Inject
  * After OAuth completes ([apply]):
  *  - **Same account** — the fresh OAuth [net.openid.appauth.AuthState] is applied **in place** (via
  *    [AccountSettings.updateAuthState]), preserving the account and its pending local changes, and a sync
- *    is enqueued → [ReauthState.Refreshed]. The account is never unlinked on this path.
+ *    is enqueued → [ReauthState.Refreshed]. The account is never unlinked on this path. If the
+ *    re-authorization did not grant the Calendar scope, the token is **not** applied and the flow reports
+ *    [ReauthState.Failed] instead.
  *  - **Different account** — this model creates nothing; it moves to [ReauthState.SwitchingToNewAccount]
  *    so the screen can link the new account via the normal `KompaktLoginScreen` pipeline. Once that
  *    succeeds the screen calls [completeSwitch], which removes the old account
@@ -53,6 +56,12 @@ class KompaktReauthModel @Inject constructor(
 
         /** Same account re-authorized: token refreshed in place; the screen may close. */
         data object Refreshed : ReauthState
+
+        /**
+         * Re-authorization completed, but the granted authorization is missing the Calendar scope (the
+         * user continued without granting Calendar access), so the account still can't sync.
+         */
+        data object Failed : ReauthState
 
         /** A different Google account was authorized: the screen links it via the normal pipeline. */
         data class SwitchingToNewAccount(val loginInfo: LoginInfo) : ReauthState
@@ -89,6 +98,11 @@ class KompaktReauthModel @Inject constructor(
                 email != null && !email.equals(account.name, ignoreCase = true) ->
                     _state.value = ReauthState.SwitchingToNewAccount(loginInfo)
 
+                authState.scopeSet?.contains(KompaktOAuthGoogle.SCOPE_CALENDAR) != true -> {
+                    logger.warning("Re-authorization did not grant the Calendar scope; not applying")
+                    _state.value = ReauthState.Failed
+                }
+
                 else -> {
                     try {
                         accountSettingsFactory.create(account).updateAuthState(authState)
@@ -102,6 +116,13 @@ class KompaktReauthModel @Inject constructor(
                 }
             }
         }
+    }
+
+    /**
+     * Retries after a [ReauthState.Failed] result: restarts the OAuth step so the user can re-login/grant necessary scopes
+     */
+    fun retry() {
+        _state.value = ReauthState.Authenticating
     }
 
     /**
