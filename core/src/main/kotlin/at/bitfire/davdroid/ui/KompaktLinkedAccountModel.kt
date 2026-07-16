@@ -9,6 +9,7 @@ import android.accounts.AccountManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.database.ContentObserver
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
@@ -54,6 +55,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.stateIn
@@ -244,14 +248,26 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         _showOutOfStorage.value = KompaktStorage.isStorageLow(context)
     }
 
-    /**
-     * `true` when the account's OAuth token is invalid and needs re-authorization. This is a
-     * *persistent* condition (stored in [AccountSettings.KEY_NEEDS_REAUTH]) so the "Account not linked" dialog
-     * keeps showing across screen re-entries, aborted re-auth attempts and app restarts, until
-     * re-auth (or a successful sync) clears it.
-     */
-    private val _needsReauth = MutableStateFlow(readNeedsReauth())
-    val needsReauth: StateFlow<Boolean> = _needsReauth.asStateFlow()
+    // needsReauth (persistent, account-global; KEY_NEEDS_REAUTH) is written only by the sync worker
+    // (HTTP 401 / clean sync) and the re-auth flow — this ViewModel only reads it, re-reading via a
+    // ContentObserver for worker-driven transitions (incl. background/periodic), refreshNeedsReauth
+    // (resume / re-auth result), and (re)subscription.
+    private val reauthRefresh = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    private val authStateChanges = callbackFlow {
+        val observer = object : ContentObserver(null) {
+            override fun onChange(selfChange: Boolean) { trySend(Unit) }
+        }
+        context.contentResolver.registerContentObserver(KompaktAuthState.CONTENT_URI, true, observer)
+        awaitClose { context.contentResolver.unregisterContentObserver(observer) }
+    }
+
+    val needsReauth: StateFlow<Boolean> =
+        merge(authStateChanges, reauthRefresh)
+            .onStart { emit(Unit) }
+            .map { withContext(ioDispatcher) { readNeedsReauth() } }
+            .distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), readNeedsReauth())
 
     private fun readNeedsReauth(): Boolean =
         try {
@@ -260,18 +276,9 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             false
         }
 
-    private fun setNeedsReauthState(value: Boolean) {
-        _needsReauth.value = value
-        try {
-            AccountManager.get(context).setUserData(account, AccountSettings.KEY_NEEDS_REAUTH, if (value) "1" else null)
-        } catch (e: Exception) {
-            logger.log(Level.WARNING, "Couldn't persist needsReauth for $account", e)
-        }
-    }
-
-    /** Re-read the persisted re-auth flag (call after returning from the re-auth flow). */
-    fun reloadNeedsReauth() {
-        _needsReauth.value = readNeedsReauth()
+    /** Force an immediate re-read of the persisted flag (call on resume / after the re-auth flow). */
+    fun refreshNeedsReauth() {
+        reauthRefresh.tryEmit(Unit)
     }
 
     // Blank the screen while redirecting into the OAuth flow so it and the "Account not linked" dialog
@@ -280,7 +287,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     enum class ReauthPhase { SHOW_CONTENT, PENDING_LAUNCH, AWAITING_RESULT }
 
     private val _reauthPhase = MutableStateFlow(
-        if (initialReauth && _needsReauth.value) ReauthPhase.PENDING_LAUNCH else ReauthPhase.SHOW_CONTENT
+        if (initialReauth && needsReauth.value) ReauthPhase.PENDING_LAUNCH else ReauthPhase.SHOW_CONTENT
     )
     val reauthPhase: StateFlow<ReauthPhase> = _reauthPhase.asStateFlow()
 
@@ -291,7 +298,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }
 
     fun onReauthResult() {
-        reloadNeedsReauth()
+        refreshNeedsReauth()
         _reauthPhase.value = ReauthPhase.SHOW_CONTENT
     }
 
@@ -312,10 +319,9 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }
 
     init {
-        // Watch the EVENTS worker lifecycle. The persistent "needs re-auth" flag is updated on every
-        // observed sync (so background/auto syncs count too); the transient Success/Failure result is
-        // only surfaced for syncs the user started via syncNow() (armed). The flow also contains the
-        // previous finished sync's WorkInfo, so we only react after seeing the sync go active first.
+        // Watch the EVENTS worker lifecycle to surface the transient Success/Failure result, only for syncs
+        // the user started via syncNow() (armed). The flow also contains the previous finished sync's
+        // WorkInfo, so we only react after seeing the sync go active first.
         viewModelScope.launch {
             var sawActive = false
             eventsSyncWorkInfos.collect { infos ->
@@ -330,12 +336,6 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
                 val failed = infos.filter { it.state == WorkInfo.State.FAILED }
                 val authError = failed.any { it.hadAuthError() }
                 val succeeded = infos.any { it.state == WorkInfo.State.SUCCEEDED }
-
-                // persistent: token bad / good again (a canceled worker is neither)
-                if (authError)
-                    setNeedsReauthState(true)
-                else if (succeeded)
-                    setNeedsReauthState(false)
 
                 // transient user-facing result (auth errors are shown via their own message)
                 if (armed) {

@@ -99,7 +99,7 @@ fun KompaktLinkedAccountScreen(
     // re-read the persisted re-auth flag and re-check free storage whenever the screen comes to the
     // foreground, so a background auth failure or a low-storage condition surfaces its message immediately
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        model.reloadNeedsReauth()
+        model.refreshNeedsReauth()
         model.refreshStorageState()
     }
 
