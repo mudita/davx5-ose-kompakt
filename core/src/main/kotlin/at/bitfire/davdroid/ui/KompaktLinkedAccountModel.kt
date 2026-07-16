@@ -66,6 +66,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Instant
 import java.time.ZoneId
+import java.util.UUID
 import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.time.Duration.Companion.milliseconds
@@ -184,11 +185,12 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             OneTimeSyncWorker.workerName(account, SyncDataType.EVENTS)
         )
 
-    private fun List<WorkInfo>.isSyncActive() = any { workInfo ->
-        workInfo.state == WorkInfo.State.RUNNING ||
-            workInfo.state == WorkInfo.State.ENQUEUED ||
-            workInfo.state == WorkInfo.State.BLOCKED
-    }
+    private fun WorkInfo.isActive() =
+        state == WorkInfo.State.RUNNING ||
+            state == WorkInfo.State.ENQUEUED ||
+            state == WorkInfo.State.BLOCKED
+
+    private fun List<WorkInfo>.isSyncActive() = any { it.isActive() }
 
     /**
      * `true` if this finished sync recorded an authentication error (HTTP 401 / token revoked).
@@ -296,18 +298,28 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         // previous finished sync's WorkInfo, so we only react after seeing the sync go active first.
         viewModelScope.launch {
             var sawActive = false
+            // IDs of the sync generation we're currently tracking. getWorkInfosForUniqueWorkFlow can also
+            // return *stale* WorkInfos from earlier generations: the enqueue policy is APPEND_OR_REPLACE, which
+            // appends a new sync onto a still-SUCCEEDED sequence, so a previous session's SUCCEEDED WorkInfo
+            // lingers next to the new one. Judging the result over all of them would report that stale SUCCEEDED
+            // as "success" even though the current sync failed — so we remember the work that actually went
+            // active and evaluate only that generation.
+            var trackedIds: Set<UUID> = emptySet()
             eventsSyncWorkInfos.collect { infos ->
-                if (infos.isSyncActive()) {
+                val active = infos.filter { it.isActive() }
+                if (active.isNotEmpty()) {
                     sawActive = true
+                    trackedIds = active.map { it.id }.toSet()
                     return@collect
                 }
                 if (!sawActive)
                     return@collect
                 sawActive = false
 
-                val failed = infos.filter { it.state == WorkInfo.State.FAILED }
+                val current = infos.filter { it.id in trackedIds }
+                val failed = current.filter { it.state == WorkInfo.State.FAILED }
                 val authError = failed.any { it.hadAuthError() }
-                val succeeded = infos.any { it.state == WorkInfo.State.SUCCEEDED }
+                val succeeded = current.any { it.state == WorkInfo.State.SUCCEEDED }
 
                 // persistent: token bad / good again (a canceled worker is neither)
                 if (authError)
