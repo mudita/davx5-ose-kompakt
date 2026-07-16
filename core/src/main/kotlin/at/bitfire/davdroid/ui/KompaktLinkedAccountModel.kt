@@ -337,14 +337,14 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
                 when (info?.state) {
                     WorkInfo.State.SUCCEEDED -> {
                         _syncResult.value = SyncResult.Success
-                        _trackedSync.value = null
+                        _trackedSync.compareAndSet(info.id, null)
                     }
                     WorkInfo.State.FAILED -> {
                         _syncResult.value = if (info.hadAuthError()) null else SyncResult.Failure
-                        _trackedSync.value = null
+                        _trackedSync.compareAndSet(info.id, null)
                     }
                     WorkInfo.State.CANCELLED ->
-                        _trackedSync.value = null
+                        _trackedSync.compareAndSet(info.id, null)
                     else -> { /* null / ENQUEUED / RUNNING / BLOCKED: still in progress */ }
                 }
             }
