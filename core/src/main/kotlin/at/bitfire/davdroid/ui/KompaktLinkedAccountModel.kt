@@ -44,6 +44,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -70,6 +71,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Instant
 import java.time.ZoneId
+import java.util.UUID
 import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.time.Duration.Companion.milliseconds
@@ -215,8 +217,17 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     /** Result of the latest *user-initiated* sync, or `null` once consumed by the UI. */
     val syncResult: StateFlow<SyncResult?> = _syncResult.asStateFlow()
 
-    /** Only watch for a result after the user explicitly triggered a sync (not background syncs). */
-    private var armed = false
+    // Id of the specific EVENTS run the user triggered via syncNow() (or the pending run it coalesced into).
+    // The result is read from this one run — not the aggregate unique-work list, which retains prior finished
+    // runs (APPEND_OR_REPLACE) and would misreport a stale SUCCEEDED as the current result.
+    private val _trackedSync = MutableStateFlow<UUID?>(null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val trackedSyncInfo: Flow<WorkInfo?> =
+        _trackedSync.flatMapLatest { id ->
+            if (id == null) flowOf(null)
+            else WorkManager.getInstance(context).getWorkInfoByIdFlow(id)
+        }
 
     fun consumeSyncResult() {
         _syncResult.value = null
@@ -319,33 +330,22 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }
 
     init {
-        // Watch the EVENTS worker lifecycle to surface the transient Success/Failure result, only for syncs
-        // the user started via syncNow() (armed). The flow also contains the previous finished sync's
-        // WorkInfo, so we only react after seeing the sync go active first.
+        // Surface the transient Success/Failure result for the exact run the user triggered via syncNow(),
+        // observed by its work id. Auth failures surface via the re-auth dialog, so they show no toast here.
         viewModelScope.launch {
-            var sawActive = false
-            eventsSyncWorkInfos.collect { infos ->
-                if (infos.isSyncActive()) {
-                    sawActive = true
-                    return@collect
-                }
-                if (!sawActive)
-                    return@collect
-                sawActive = false
-
-                val failed = infos.filter { it.state == WorkInfo.State.FAILED }
-                val authError = failed.any { it.hadAuthError() }
-                val succeeded = infos.any { it.state == WorkInfo.State.SUCCEEDED }
-
-                // transient user-facing result (auth errors are shown via their own message)
-                if (armed) {
-                    _syncResult.value = when {
-                        succeeded -> SyncResult.Success
-                        authError -> null               // → "Account not linked"
-                        failed.isNotEmpty() -> SyncResult.Failure
-                        else -> null    // e.g. cancelled because connectivity was lost mid-sync
+            trackedSyncInfo.collect { info ->
+                when (info?.state) {
+                    WorkInfo.State.SUCCEEDED -> {
+                        _syncResult.value = SyncResult.Success
+                        _trackedSync.value = null
                     }
-                    armed = false
+                    WorkInfo.State.FAILED -> {
+                        _syncResult.value = if (info.hadAuthError()) null else SyncResult.Failure
+                        _trackedSync.value = null
+                    }
+                    WorkInfo.State.CANCELLED ->
+                        _trackedSync.value = null
+                    else -> { /* null / ENQUEUED / RUNNING / BLOCKED: still in progress */ }
                 }
             }
         }
@@ -357,10 +357,10 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             combine(syncing, networkAvailable) { active, online -> active && !online }
                 .distinctUntilChanged()
                 .collectLatest { offlineWhileSyncing ->
-                    if (!offlineWhileSyncing || !armed)
+                    if (!offlineWhileSyncing || _trackedSync.value == null)
                         return@collectLatest
                     delay(OFFLINE_GRACE_MS.milliseconds)     // let a short network blip recover on its own
-                    armed = false               // disarm first so the cancel isn't reported as a result
+                    _trackedSync.value = null   // stop tracking first so the cancel isn't reported as a result
                     WorkManager.getInstance(context)
                         .cancelUniqueWork(OneTimeSyncWorker.workerName(account, SyncDataType.EVENTS))
                     _showNoInternet.value = true
@@ -529,8 +529,8 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
                 _showNoInternet.value = true
                 return@launch
             }
-            armed = true            // watch the resulting sync for success/failure feedback
-            syncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)
+            // track the specific EVENTS run this triggers, so its result is reported for this sync alone
+            _trackedSync.value = syncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)[SyncDataType.EVENTS]
         }
     }
 
