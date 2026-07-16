@@ -21,6 +21,7 @@ class KompaktAccountsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         val syncAccounts = intent.action == Intent.ACTION_SYNC
+        val reauth = savedInstanceState == null && intent.action == ACTION_REAUTH
         // Launched from another app (e.g. the calendar) to onboard the user. When no account exists
         // yet, the link screen shows a "Skip" button instead of the usual title + back arrow.
         val onboarding = intent.action == ACTION_ONBOARDING
@@ -28,8 +29,9 @@ class KompaktAccountsActivity : AppCompatActivity() {
         setContent {
             KompaktAccountsScreen(
                 initialSyncAccounts = syncAccounts,
-                onboarding = onboarding,
+                initialReauth = reauth,
                 onBack = ::finish,
+                onboarding = onboarding,
                 onSkip = {
                     setResult(RESULT_CANCELED)
                     finish()
@@ -41,6 +43,8 @@ class KompaktAccountsActivity : AppCompatActivity() {
     companion object {
         /** Intent action used by other apps to launch the account screen in onboarding mode. */
         const val ACTION_ONBOARDING = "at.bitfire.davdroid.mudita.action.ONBOARDING"
+
+        const val ACTION_REAUTH = "at.bitfire.davdroid.mudita.action.REAUTH"
     }
 
 }

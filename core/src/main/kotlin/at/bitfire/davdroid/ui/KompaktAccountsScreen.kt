@@ -56,6 +56,7 @@ import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
 @Composable
 fun KompaktAccountsScreen(
     initialSyncAccounts: Boolean,
+    initialReauth: Boolean = false,
     onBack: () -> Unit,
     onboarding: Boolean = false,
     onSkip: () -> Unit = onBack,
@@ -113,6 +114,7 @@ fun KompaktAccountsScreen(
                 account = account,
                 onBack = onBack,
                 showAccountLinkedDialog = justLinked,
+                initialReauth = initialReauth,
                 onAccountLinkedDialogDismiss = {
                     justLinked = false
                     switchedFromAccount = null
