@@ -16,6 +16,7 @@ data class SyncResult(
 
     // hard errors by SyncManager
     var numAuthExceptions: Long = 0,
+    var numClockSkewErrors: Long = 0,
     var numHttpExceptions: Long = 0,
     var numUnclassifiedErrors: Long = 0,
 
@@ -35,6 +36,7 @@ data class SyncResult(
         contentProviderError
             || localStorageError
             || numAuthExceptions > 0
+            || numClockSkewErrors > 0
             || numHttpExceptions > 0
             || numUnclassifiedErrors > 0
 

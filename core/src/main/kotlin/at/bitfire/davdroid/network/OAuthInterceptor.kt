@@ -97,6 +97,9 @@ class OAuthInterceptor @AssistedInject constructor(
             accessTokenFuture.join()
         } catch (e: CompletionException) {
             logger.log(Level.SEVERE, "Couldn't obtain access token", e.cause)
+            if (KompaktClockSkewException.isClockSkew(e.cause))
+                logger.log(Level.SEVERE, "Couldn't obtain access token - clock is skewed", e.cause)
+                throw KompaktClockSkewException(e.cause)
             null
         } finally {
             authService.dispose()
