@@ -54,7 +54,22 @@ class OAuthInterceptor @AssistedInject constructor(
         else
             logger.severe("No access token available, won't authenticate")
 
-        return chain.proceed(rq.build())
+        val response = chain.proceed(rq.build())
+
+        if (response.code == 401) {
+            val serverDate = response.headers.getDate("Date")
+            val deviceNow = System.currentTimeMillis()
+            if (serverDate != null && KompaktClockSkewException.isClockSkewed(deviceNow, serverDate.time)) {
+                // a 401 while the device clock is far from the server clock means the device time is wrong —
+                // that skew is exactly what makes AppAuth reject the refreshed Google ID token locally, leaving the
+                // request unauthenticated.
+                logger.warning("HTTP 401 with device/server clock skew (device=$deviceNow, server=${serverDate.time}) — treating as clock-skew failure")
+                response.close()
+                throw KompaktClockSkewException("HTTP 401 with device/server clock skew")
+            }
+        }
+
+        return response
     }
 
     /**
@@ -97,9 +112,6 @@ class OAuthInterceptor @AssistedInject constructor(
             accessTokenFuture.join()
         } catch (e: CompletionException) {
             logger.log(Level.SEVERE, "Couldn't obtain access token", e.cause)
-            if (KompaktClockSkewException.isClockSkew(e.cause))
-                logger.log(Level.SEVERE, "Couldn't obtain access token - clock is skewed", e.cause)
-                throw KompaktClockSkewException(e.cause)
             null
         } finally {
             authService.dispose()
