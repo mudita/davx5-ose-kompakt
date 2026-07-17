@@ -39,6 +39,7 @@ import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 import javax.inject.Inject
@@ -140,11 +141,25 @@ class SyncWorkerManager @Inject constructor(
         fromUpload: Boolean = false,
         fromPush: Boolean = false
     ): String {
+        enqueueOneTimeReturningId(account, dataType, manual, resync, fromUpload, fromPush)
+        return OneTimeSyncWorker.workerName(account, dataType)
+    }
+
+    /**
+     * Like [enqueueOneTime], but returns the id of the run that will execute — the freshly enqueued
+     * request, or an already-pending one — so a caller can observe that specific run.
+     */
+    private fun enqueueOneTimeReturningId(
+        account: Account,
+        dataType: SyncDataType,
+        manual: Boolean = false,
+        resync: ResyncType? = null,
+        fromUpload: Boolean = false,
+        fromPush: Boolean = false
+    ): UUID? {
         logger.info("Enqueueing unique worker for account=$account, dataType=$dataType, manual=$manual, resync=$resync, fromUpload=$fromUpload, fromPush=$fromPush")
 
-        // enqueue and start syncing
         val name = OneTimeSyncWorker.workerName(account, dataType)
-
         val request = buildOneTime(
             account = account,
             dataType = dataType,
@@ -156,25 +171,22 @@ class SyncWorkerManager @Inject constructor(
         if (fromPush)
             pushNotificationManager.get().notify(account, dataType)
 
-        /* We want to append only one work request, regardless of how many sync requests came in.
-        So we have to append the work one time, and as soon as there is already a pending
-        appended work, stop adding more work. */
-
+        // Append at most one further run: if one is already pending, track it instead of adding more.
         val workManager = WorkManager.getInstance(context)
         synchronized(SyncWorkerManager::class.java) {
             val currentWork = workManager.getWorkInfosForUniqueWork(name).get()
-            val alreadyAppended = currentWork.any {
+            val pending = currentWork.firstOrNull {
                 it.state in setOf(WorkInfo.State.BLOCKED, WorkInfo.State.ENQUEUED)
             }
-            if (!alreadyAppended) {
+            return if (pending == null) {
                 val op = workManager.enqueueUniqueWork(name, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
-                // for synchronization: wait until work is actually enqueued
-                op.result
-            } else
+                op.result   // for synchronization: wait until work is actually enqueued
+                request.id
+            } else {
                 logger.fine("Another one-time sync already waiting, not adding more of $name")
+                pending.id
+            }
         }
-
-        return name
     }
 
     /**
@@ -182,6 +194,8 @@ class SyncWorkerManager @Inject constructor(
      * authorities (contacts, calendars, …).
      *
      * Arguments: see [enqueueOneTime]
+     *
+     * @return the id of each authority's run that will execute, so a caller can observe a specific run
      */
     fun enqueueOneTimeAllAuthorities(
         account: Account,
@@ -189,17 +203,10 @@ class SyncWorkerManager @Inject constructor(
         resync: ResyncType? = null,
         fromUpload: Boolean = false,
         fromPush: Boolean = false
-    ) {
-        for (dataType in SyncDataType.entries)
-            enqueueOneTime(
-                account = account,
-                dataType = dataType,
-                manual = manual,
-                resync = resync,
-                fromUpload = fromUpload,
-                fromPush = fromPush
-            )
-    }
+    ): Map<SyncDataType, UUID?> =
+        SyncDataType.entries.associateWith { dataType ->
+            enqueueOneTimeReturningId(account, dataType, manual, resync, fromUpload, fromPush)
+        }
 
 
     // periodic sync workers

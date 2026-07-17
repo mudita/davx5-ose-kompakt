@@ -9,6 +9,7 @@ import android.accounts.AccountManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.database.ContentObserver
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
@@ -43,6 +44,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -54,6 +56,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.stateIn
@@ -66,6 +71,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Instant
 import java.time.ZoneId
+import java.util.UUID
 import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.time.Duration.Companion.milliseconds
@@ -211,8 +217,17 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     /** Result of the latest *user-initiated* sync, or `null` once consumed by the UI. */
     val syncResult: StateFlow<SyncResult?> = _syncResult.asStateFlow()
 
-    /** Only watch for a result after the user explicitly triggered a sync (not background syncs). */
-    private var armed = false
+    // Id of the specific EVENTS run the user triggered via syncNow() (or the pending run it coalesced into).
+    // The result is read from this one run — not the aggregate unique-work list, which retains prior finished
+    // runs (APPEND_OR_REPLACE) and would misreport a stale SUCCEEDED as the current result.
+    private val _trackedSync = MutableStateFlow<UUID?>(null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val trackedSyncInfo: Flow<WorkInfo?> =
+        _trackedSync.flatMapLatest { id ->
+            if (id == null) flowOf(null)
+            else WorkManager.getInstance(context).getWorkInfoByIdFlow(id)
+        }
 
     fun consumeSyncResult() {
         _syncResult.value = null
@@ -244,14 +259,26 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         _showOutOfStorage.value = KompaktStorage.isStorageLow(context)
     }
 
-    /**
-     * `true` when the account's OAuth token is invalid and needs re-authorization. This is a
-     * *persistent* condition (stored in [AccountSettings.KEY_NEEDS_REAUTH]) so the "Account not linked" dialog
-     * keeps showing across screen re-entries, aborted re-auth attempts and app restarts, until
-     * re-auth (or a successful sync) clears it.
-     */
-    private val _needsReauth = MutableStateFlow(readNeedsReauth())
-    val needsReauth: StateFlow<Boolean> = _needsReauth.asStateFlow()
+    // needsReauth (persistent, account-global; KEY_NEEDS_REAUTH) is written only by the sync worker
+    // (HTTP 401 / clean sync) and the re-auth flow — this ViewModel only reads it, re-reading via a
+    // ContentObserver for worker-driven transitions (incl. background/periodic), refreshNeedsReauth
+    // (resume / re-auth result), and (re)subscription.
+    private val reauthRefresh = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    private val authStateChanges = callbackFlow {
+        val observer = object : ContentObserver(null) {
+            override fun onChange(selfChange: Boolean) { trySend(Unit) }
+        }
+        context.contentResolver.registerContentObserver(KompaktAuthState.CONTENT_URI, true, observer)
+        awaitClose { context.contentResolver.unregisterContentObserver(observer) }
+    }
+
+    val needsReauth: StateFlow<Boolean> =
+        merge(authStateChanges, reauthRefresh)
+            .onStart { emit(Unit) }
+            .map { withContext(ioDispatcher) { readNeedsReauth() } }
+            .distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), readNeedsReauth())
 
     private fun readNeedsReauth(): Boolean =
         try {
@@ -260,18 +287,9 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             false
         }
 
-    private fun setNeedsReauthState(value: Boolean) {
-        _needsReauth.value = value
-        try {
-            AccountManager.get(context).setUserData(account, AccountSettings.KEY_NEEDS_REAUTH, if (value) "1" else null)
-        } catch (e: Exception) {
-            logger.log(Level.WARNING, "Couldn't persist needsReauth for $account", e)
-        }
-    }
-
-    /** Re-read the persisted re-auth flag (call after returning from the re-auth flow). */
-    fun reloadNeedsReauth() {
-        _needsReauth.value = readNeedsReauth()
+    /** Force an immediate re-read of the persisted flag (call on resume / after the re-auth flow). */
+    fun refreshNeedsReauth() {
+        reauthRefresh.tryEmit(Unit)
     }
 
     // Blank the screen while redirecting into the OAuth flow so it and the "Account not linked" dialog
@@ -280,7 +298,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     enum class ReauthPhase { SHOW_CONTENT, PENDING_LAUNCH, AWAITING_RESULT }
 
     private val _reauthPhase = MutableStateFlow(
-        if (initialReauth && _needsReauth.value) ReauthPhase.PENDING_LAUNCH else ReauthPhase.SHOW_CONTENT
+        if (initialReauth && needsReauth.value) ReauthPhase.PENDING_LAUNCH else ReauthPhase.SHOW_CONTENT
     )
     val reauthPhase: StateFlow<ReauthPhase> = _reauthPhase.asStateFlow()
 
@@ -291,7 +309,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }
 
     fun onReauthResult() {
-        reloadNeedsReauth()
+        refreshNeedsReauth()
         _reauthPhase.value = ReauthPhase.SHOW_CONTENT
     }
 
@@ -312,40 +330,22 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }
 
     init {
-        // Watch the EVENTS worker lifecycle. The persistent "needs re-auth" flag is updated on every
-        // observed sync (so background/auto syncs count too); the transient Success/Failure result is
-        // only surfaced for syncs the user started via syncNow() (armed). The flow also contains the
-        // previous finished sync's WorkInfo, so we only react after seeing the sync go active first.
+        // Surface the transient Success/Failure result for the exact run the user triggered via syncNow(),
+        // observed by its work id. Auth failures surface via the re-auth dialog, so they show no toast here.
         viewModelScope.launch {
-            var sawActive = false
-            eventsSyncWorkInfos.collect { infos ->
-                if (infos.isSyncActive()) {
-                    sawActive = true
-                    return@collect
-                }
-                if (!sawActive)
-                    return@collect
-                sawActive = false
-
-                val failed = infos.filter { it.state == WorkInfo.State.FAILED }
-                val authError = failed.any { it.hadAuthError() }
-                val succeeded = infos.any { it.state == WorkInfo.State.SUCCEEDED }
-
-                // persistent: token bad / good again (a canceled worker is neither)
-                if (authError)
-                    setNeedsReauthState(true)
-                else if (succeeded)
-                    setNeedsReauthState(false)
-
-                // transient user-facing result (auth errors are shown via their own message)
-                if (armed) {
-                    _syncResult.value = when {
-                        succeeded -> SyncResult.Success
-                        authError -> null               // → "Account not linked"
-                        failed.isNotEmpty() -> SyncResult.Failure
-                        else -> null    // e.g. cancelled because connectivity was lost mid-sync
+            trackedSyncInfo.collect { info ->
+                when (info?.state) {
+                    WorkInfo.State.SUCCEEDED -> {
+                        _syncResult.value = SyncResult.Success
+                        _trackedSync.compareAndSet(info.id, null)
                     }
-                    armed = false
+                    WorkInfo.State.FAILED -> {
+                        _syncResult.value = if (info.hadAuthError()) null else SyncResult.Failure
+                        _trackedSync.compareAndSet(info.id, null)
+                    }
+                    WorkInfo.State.CANCELLED ->
+                        _trackedSync.compareAndSet(info.id, null)
+                    else -> { /* null / ENQUEUED / RUNNING / BLOCKED: still in progress */ }
                 }
             }
         }
@@ -357,10 +357,10 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             combine(syncing, networkAvailable) { active, online -> active && !online }
                 .distinctUntilChanged()
                 .collectLatest { offlineWhileSyncing ->
-                    if (!offlineWhileSyncing || !armed)
+                    if (!offlineWhileSyncing || _trackedSync.value == null)
                         return@collectLatest
                     delay(OFFLINE_GRACE_MS.milliseconds)     // let a short network blip recover on its own
-                    armed = false               // disarm first so the cancel isn't reported as a result
+                    _trackedSync.value = null   // stop tracking first so the cancel isn't reported as a result
                     WorkManager.getInstance(context)
                         .cancelUniqueWork(OneTimeSyncWorker.workerName(account, SyncDataType.EVENTS))
                     _showNoInternet.value = true
@@ -529,8 +529,8 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
                 _showNoInternet.value = true
                 return@launch
             }
-            armed = true            // watch the resulting sync for success/failure feedback
-            syncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)
+            // track the specific EVENTS run this triggers, so its result is reported for this sync alone
+            _trackedSync.value = syncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)[SyncDataType.EVENTS]
         }
     }
 

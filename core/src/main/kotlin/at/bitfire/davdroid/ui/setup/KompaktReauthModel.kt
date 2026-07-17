@@ -14,6 +14,7 @@ import at.bitfire.davdroid.network.KompaktOAuthGoogle
 import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.sync.worker.SyncWorkerManager
+import at.bitfire.davdroid.ui.KompaktAuthStateBroadcaster
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
@@ -106,8 +107,12 @@ class KompaktReauthModel @Inject constructor(
                 else -> {
                     try {
                         accountSettingsFactory.create(account).updateAuthState(authState)
-                        // token is valid again: clear the persistent "needs re-auth" flag
-                        AccountManager.get(context).setUserData(account, AccountSettings.KEY_NEEDS_REAUTH, null)
+                        // token valid again: clear the flag and notify content observers of the transition
+                        val accountManager = AccountManager.get(context)
+                        val wasNeedingReauth = accountManager.getUserData(account, AccountSettings.KEY_NEEDS_REAUTH) == "1"
+                        accountManager.setUserData(account, AccountSettings.KEY_NEEDS_REAUTH, null)
+                        if (wasNeedingReauth)
+                            KompaktAuthStateBroadcaster.notifyAuthStateChanged(context, account, needsReauth = false)
                         syncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)
                     } catch (e: Exception) {
                         logger.log(Level.WARNING, "Couldn't store re-authorized credentials for $account", e)
