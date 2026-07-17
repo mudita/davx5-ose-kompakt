@@ -82,10 +82,6 @@ fun KompaktAccountsScreen(
     // disappears, so the just-removed account never flashes under the "Account linked" dialog (SHP-555).
     var switchedFromAccount by rememberSaveable { mutableStateOf<String?>(null) }
 
-    // Leaving the screen while the "Account linked" dialog is open counts as choosing "Later":
-    // clear the flag when the activity stops, so the dialog is not restored when the user returns.
-    // A dialog restored after an activity recreation (e.g. a system language change) mishandled
-    // background taps, triggering a sync instead of dismissing (SHP-1060).
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
         justLinked = false
         switchedFromAccount = null
