@@ -36,6 +36,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
 import com.mudita.frontitude.R as RFrontitude
@@ -79,6 +81,15 @@ fun KompaktAccountsScreen(
     // accounts flow can still report it for a frame or two; keep showing the loading state until it
     // disappears, so the just-removed account never flashes under the "Account linked" dialog (SHP-555).
     var switchedFromAccount by rememberSaveable { mutableStateOf<String?>(null) }
+
+    // Leaving the screen while the "Account linked" dialog is open counts as choosing "Later":
+    // clear the flag when the activity stops, so the dialog is not restored when the user returns.
+    // A dialog restored after an activity recreation (e.g. a system language change) mishandled
+    // background taps, triggering a sync instead of dismissing (SHP-1060).
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
+        justLinked = false
+        switchedFromAccount = null
+    }
 
     val loginLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
