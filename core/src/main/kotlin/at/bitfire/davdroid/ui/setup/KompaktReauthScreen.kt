@@ -40,6 +40,8 @@ import com.mudita.mmd.components.text.TextMMD
  *    remove the old account once the new one is fully set up. [account] is never unlinked on the
  *    same-account path, nor if the user backs out before the new account is linked.
  *  - **RemovingOldAccount** → brief progress while the old account is deleted.
+ *  - **Failed** → the re-authorization didn't grant the Calendar scope; show the "Couldn't set up your
+ *    account" error with a "Try again" that restarts the OAuth step.
  *  - **Refreshed / Done** → finish.
  */
 @Composable
@@ -75,6 +77,14 @@ fun KompaktReauthScreen(
         KompaktReauthModel.ReauthState.RemovingOldAccount ->
             KompaktTheme {
                 KompaktSetupProgress(Modifier.fillMaxSize())
+            }
+
+        KompaktReauthModel.ReauthState.Failed ->
+            KompaktTheme {
+                KompaktDetectResourcesPageContent(
+                    failed = true,
+                    onRetry = model::retry
+                )
             }
 
         KompaktReauthModel.ReauthState.Refreshed ->

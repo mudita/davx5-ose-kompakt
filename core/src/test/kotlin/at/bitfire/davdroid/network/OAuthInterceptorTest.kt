@@ -25,12 +25,6 @@ import java.util.TimeZone
 import java.util.logging.Logger
 import javax.inject.Provider
 
-/**
- * Verifies the clock-skew detection in [OAuthInterceptor]: a sync request that comes back HTTP 401 while the
- * device clock is far from the server clock (from the response `Date` header) is turned into a
- * [KompaktClockSkewException]; a 401 with a correct clock (a genuine auth failure) and any non-401 response
- * pass through unchanged.
- */
 class OAuthInterceptorTest {
 
     private lateinit var server: MockWebServer

@@ -48,6 +48,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
 import com.mudita.frontitude.R as RFrontitude
+import at.bitfire.davdroid.ui.KompaktLinkedAccountModel.ReauthPhase
 import at.bitfire.davdroid.ui.KompaktLinkedAccountModel.SyncResult
 import at.bitfire.davdroid.ui.setup.KompaktLoginActivity
 import at.bitfire.davdroid.ui.composable.KompaktBottomBar
@@ -76,12 +77,13 @@ fun KompaktLinkedAccountScreen(
     showAccountLinkedDialog: Boolean = false,
     onAccountLinkedDialogDismiss: () -> Unit = {},
     onAccountSwitched: (oldAccountName: String) -> Unit = {},
+    initialReauth: Boolean = false,
     model: KompaktLinkedAccountModel = hiltViewModel(
         // Key by account so switching the linked account (unlink A → link B) builds a fresh
         // ViewModel instead of reusing the cached one for the previous account (SHP-571).
         key = account.name,
         creationCallback = { factory: KompaktLinkedAccountModel.Factory ->
-            factory.create(account)
+            factory.create(account, initialReauth)
         }
     )
 ) {
@@ -92,11 +94,12 @@ fun KompaktLinkedAccountScreen(
     val showNoInternet by model.showNoInternet.collectAsStateWithLifecycle()
     val showOutOfStorage by model.showOutOfStorage.collectAsStateWithLifecycle()
     val needsReauth by model.needsReauth.collectAsStateWithLifecycle()
+    val reauthPhase by model.reauthPhase.collectAsStateWithLifecycle()
 
     // re-read the persisted re-auth flag and re-check free storage whenever the screen comes to the
     // foreground, so a background auth failure or a low-storage condition surfaces its message immediately
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        model.reloadNeedsReauth()
+        model.refreshNeedsReauth()
         model.refreshStorageState()
     }
 
@@ -106,7 +109,7 @@ fun KompaktLinkedAccountScreen(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         // re-read the persisted flag: cleared if re-auth succeeded, still set if it was aborted/failed
-        model.reloadNeedsReauth()
+        model.onReauthResult()
         // RESULT_OK from the re-auth flow means a different account was linked (a switch) — surface the
         // "Account linked" dialog, just like the normal add-account flow
         if (result.resultCode == Activity.RESULT_OK)
@@ -121,26 +124,39 @@ fun KompaktLinkedAccountScreen(
         )
     }
 
-    KompaktLinkedAccountContent(
-        email = model.email,
-        autoSyncEnabled = autoSyncEnabled,
-        lastSync = lastSync,
-        syncing = syncing,
-        syncResult = syncResult,
-        showNoInternet = showNoInternet,
-        showOutOfStorage = showOutOfStorage,
-        showAuthError = needsReauth,
-        showAccountLinkedDialog = showAccountLinkedDialog,
-        onBack = onBack,
-        onToggleAutoSync = model::setAutoSync,
-        onSyncNow = model::syncNow,
-        onUnlink = model::unlink,
-        onConsumeSyncResult = model::consumeSyncResult,
-        onDismissNoInternet = model::consumeNoInternet,
-        onDismissOutOfStorage = model::consumeOutOfStorage,
-        onAccountLinkedDialogDismiss = onAccountLinkedDialogDismiss,
-        onReauthorize = onReauthorize
-    )
+    LaunchedEffect(reauthPhase) {
+        if (reauthPhase == ReauthPhase.PENDING_LAUNCH) {
+            model.onReauthLaunchStarted()
+            onReauthorize()
+        }
+    }
+
+    if (reauthPhase == ReauthPhase.SHOW_CONTENT) {
+        KompaktLinkedAccountContent(
+            email = model.email,
+            autoSyncEnabled = autoSyncEnabled,
+            lastSync = lastSync,
+            syncing = syncing,
+            syncResult = syncResult,
+            showNoInternet = showNoInternet,
+            showOutOfStorage = showOutOfStorage,
+            showAuthError = needsReauth,
+            showAccountLinkedDialog = showAccountLinkedDialog,
+            onBack = onBack,
+            onToggleAutoSync = model::setAutoSync,
+            onSyncNow = model::syncNow,
+            onUnlink = model::unlink,
+            onConsumeSyncResult = model::consumeSyncResult,
+            onDismissNoInternet = model::consumeNoInternet,
+            onDismissOutOfStorage = model::consumeOutOfStorage,
+            onAccountLinkedDialogDismiss = onAccountLinkedDialogDismiss,
+            onReauthorize = onReauthorize
+        )
+    } else {
+        KompaktTheme {
+            Box(modifier = Modifier.fillMaxSize())
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
