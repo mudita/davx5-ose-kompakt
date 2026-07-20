@@ -37,7 +37,7 @@ fun KompaktLinkAccountScaffold(
                 KompaktTopAppBar(
                     title = {
                         TextMMD(
-                            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_linkaccount),
+                            text = stringResource(RFrontitude.string.common_label_linkedaccount),
                             style = KompaktTypography900.titleMedium
                         )
                     },
