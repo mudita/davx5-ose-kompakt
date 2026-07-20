@@ -33,6 +33,7 @@ import at.bitfire.dav4jvm.property.webdav.SyncToken
 import at.bitfire.dav4jvm.property.webdav.WebDAV
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.db.Collection
+import at.bitfire.davdroid.network.KompaktClockSkewException
 import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.repository.DavCollectionRepository
 import at.bitfire.davdroid.repository.DavServiceRepository
@@ -768,6 +769,12 @@ abstract class SyncManager<LocalType : LocalResource, out CollectionType : Local
     private fun handleException(e: Throwable, local: LocalResource?, remote: HttpUrl?) {
         var message: String
         when (e) {
+            is KompaktClockSkewException -> {
+                logger.log(Level.WARNING, "Sync failed due to device clock skew", e)
+                syncResult.numClockSkewErrors++
+                message = context.getString(R.string.sync_error_io, e.localizedMessage)
+            }
+
             is IOException -> {
                 logger.log(Level.WARNING, "I/O error", e)
                 syncResult.numIoExceptions++
