@@ -20,20 +20,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.os.ConfigurationCompat
-import at.bitfire.davdroid.R
-import com.mudita.frontitude.R as RFrontitude
-import at.bitfire.davdroid.ui.KompaktTypography900
-import at.bitfire.davdroid.ui.composable.KompaktTheme
-import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
-import com.mudita.mmd.components.text.TextMMD
 import net.openid.appauth.AuthorizationRequest
 import net.openid.appauth.AuthorizationResponse
 
@@ -95,39 +84,20 @@ class KompaktOAuthWebViewActivity : ComponentActivity() {
         })
 
         setContent {
-            KompaktTheme {
-                Scaffold(
-                    topBar = {
-                        KompaktTopAppBar(
-                            title = {
-                                TextMMD(
-                                    text = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_linkaccount),
-                                    style = KompaktTypography900.titleMedium
-                                )
-                            },
-                            navigationIcon = {
-                                IconButton(onClick = { onBackPressedDispatcher.onBackPressed() }) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_kompakt_arrow_left),
-                                        contentDescription = stringResource(R.string.navigate_up)
-                                    )
-                                }
-                            }
-                        )
-                    }
-                ) { padding ->
-                    AndroidView(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding),
-                        factory = { context ->
-                            createWebView(context, request, redirectUri).also { view ->
-                                webView = view
-                                view.loadUrl(localizedAuthUrl)
-                            }
+            KompaktLinkAccountScaffold(
+                onNavUp = { onBackPressedDispatcher.onBackPressed() }
+            ) { padding ->
+                AndroidView(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    factory = { context ->
+                        createWebView(context, request, redirectUri).also { view ->
+                            webView = view
+                            view.loadUrl(localizedAuthUrl)
                         }
-                    )
-                }
+                    }
+                )
             }
         }
     }

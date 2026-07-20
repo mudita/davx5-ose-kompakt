@@ -9,11 +9,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,16 +18,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import at.bitfire.davdroid.R
-import com.mudita.frontitude.R as RFrontitude
-import at.bitfire.davdroid.ui.KompaktTypography900
-import at.bitfire.davdroid.ui.composable.KompaktTheme
-import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
-import com.mudita.mmd.components.text.TextMMD
 
 /**
  * Kompakt variant of [LoginScreen].
@@ -102,7 +89,6 @@ fun KompaktLoginScreen(
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun KompaktLoginScreenContent(
     page: LoginScreenViewModel.Page,
     showAccountDetailsForm: Boolean,
@@ -110,57 +96,38 @@ private fun KompaktLoginScreenContent(
     onFinish: (newAccount: Account?) -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    KompaktTheme {
-        Scaffold(
-            topBar = {
-                KompaktTopAppBar(
-                    title = {
-                        TextMMD(
-                            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_linkaccount),
-                            style = KompaktTypography900.titleMedium
+    KompaktLinkAccountScaffold(
+        onNavUp = onNavUp,
+        snackbarHostState = snackbarHostState
+    ) { padding ->
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(top = padding.calculateTopPadding())
+        ) {
+
+            when (page) {
+                LoginScreenViewModel.Page.LoginType ->
+                    LoginTypePage(snackbarHostState = snackbarHostState)
+
+                LoginScreenViewModel.Page.LoginDetails ->
+                    LoginDetailsPage(snackbarHostState = snackbarHostState)
+
+                LoginScreenViewModel.Page.DetectResources ->
+                    KompaktDetectResourcesPage()
+
+                LoginScreenViewModel.Page.AccountDetails ->
+                    if (showAccountDetailsForm)
+                        // automatic creation failed: let the user fix it and retry
+                        AccountDetailsPage(
+                            snackbarHostState = snackbarHostState,
+                            onAccountCreated = { account -> onFinish(account) }
                         )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onNavUp) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_kompakt_arrow_left),
-                                contentDescription = stringResource(R.string.navigate_up)
-                            )
-                        }
-                    }
-                )
-            },
-            snackbarHost = { SnackbarHost(snackbarHostState) }
-        ) { padding ->
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .padding(top = padding.calculateTopPadding())
-            ) {
-
-                when (page) {
-                    LoginScreenViewModel.Page.LoginType ->
-                        LoginTypePage(snackbarHostState = snackbarHostState)
-
-                    LoginScreenViewModel.Page.LoginDetails ->
-                        LoginDetailsPage(snackbarHostState = snackbarHostState)
-
-                    LoginScreenViewModel.Page.DetectResources ->
-                        KompaktDetectResourcesPage()
-
-                    LoginScreenViewModel.Page.AccountDetails ->
-                        if (showAccountDetailsForm)
-                            // automatic creation failed: let the user fix it and retry
-                            AccountDetailsPage(
-                                snackbarHostState = snackbarHostState,
-                                onAccountCreated = { account -> onFinish(account) }
-                            )
-                        else
-                            // creating the account and waiting for setup (collection discovery) to finish
-                            KompaktSetupProgress()
-                }
-
+                    else
+                        // creating the account and waiting for setup (collection discovery) to finish
+                        KompaktSetupProgress()
             }
+
         }
     }
 }
