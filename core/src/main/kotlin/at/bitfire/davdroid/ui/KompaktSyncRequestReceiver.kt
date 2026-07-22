@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.repository.DavSyncStatsRepository
+import at.bitfire.davdroid.sync.KompaktInitDefaults
 import at.bitfire.davdroid.sync.worker.SyncWorkerManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -49,6 +50,9 @@ class KompaktSyncRequestReceiver : BroadcastReceiver() {
     @Inject
     lateinit var syncStatsRepository: DavSyncStatsRepository
 
+    @Inject
+    lateinit var initDefaults: KompaktInitDefaults
+
     private val logger = Logger.getLogger(javaClass.name)
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -66,8 +70,12 @@ class KompaktSyncRequestReceiver : BroadcastReceiver() {
                     return@launch
                 }
 
-                for (account in accountRepository.getAll())
+                for (account in accountRepository.getAll()) {
+                    // best-effort select the primary calendar first (no discovery wait, to keep the
+                    // receiver from blocking) so the sync isn't a no-op once defaults are discoverable
+                    initDefaults.ensureApplied(account, awaitDiscovery = false)
                     syncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)
+                }
             } finally {
                 pendingResult.finish()
             }
