@@ -82,7 +82,7 @@ fun KompaktAccountsScreen(
     // disappears, so the just-removed account never flashes under the "Account linked" dialog (SHP-555).
     var switchedFromAccount by rememberSaveable { mutableStateOf<String?>(null) }
 
-    LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
+    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) {
         justLinked = false
         switchedFromAccount = null
     }
