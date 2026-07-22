@@ -34,6 +34,7 @@ import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.sync.KompaktStorage
 import at.bitfire.davdroid.sync.SyncConditions
 import at.bitfire.davdroid.sync.SyncDataType
+import at.bitfire.davdroid.sync.account.InvalidAccountException
 import at.bitfire.davdroid.sync.worker.OneTimeSyncWorker
 import at.bitfire.davdroid.sync.worker.SyncWorkerManager
 import at.bitfire.davdroid.util.broadcastReceiverFlow
@@ -523,8 +524,18 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
                 return@launch
             }
 
+            // The account may have been removed and recreated since this screen was opened (e.g. during a
+            // Google re-link), leaving us with a stale reference. create() then throws InvalidAccountException
+            // on a background dispatcher — uncaught, that crashes the whole app. There's nothing to sync for a
+            // gone account, so abort quietly, matching how the sync workers handle it (SyncAdapterImpl / BaseSyncWorker).
+            val accountSettings = try {
+                accountSettingsFactory.create(account)
+            } catch (e: InvalidAccountException) {
+                logger.log(Level.WARNING, "Account doesn't exist anymore, skipping sync", e)
+                return@launch
+            }
+
             // no internet → show message, don't start a sync that would only fail
-            val accountSettings = accountSettingsFactory.create(account)
             if (!syncConditionsFactory.create(accountSettings).internetAvailable()) {
                 _showNoInternet.value = true
                 return@launch
