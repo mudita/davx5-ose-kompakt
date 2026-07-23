@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.repository.DavSyncStatsRepository
+import at.bitfire.davdroid.sync.KompaktInitDefaults
 import at.bitfire.davdroid.sync.worker.SyncWorkerManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -49,6 +50,9 @@ class KompaktSyncRequestReceiver : BroadcastReceiver() {
     @Inject
     lateinit var syncStatsRepository: DavSyncStatsRepository
 
+    @Inject
+    lateinit var initDefaults: KompaktInitDefaults
+
     private val logger = Logger.getLogger(javaClass.name)
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -66,8 +70,15 @@ class KompaktSyncRequestReceiver : BroadcastReceiver() {
                     return@launch
                 }
 
-                for (account in accountRepository.getAll())
-                    syncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)
+                for (account in accountRepository.getAll()) {
+                    // Select the primary calendar first (best-effort, no discovery wait so the receiver
+                    // never blocks). NOT_READY means no calendar is selected yet, so a sync would be an
+                    // empty no-op — skip it (a later trigger syncs once discovery/selection completes).
+                    // Note: this gates all authorities on the calendar defaults, which is correct while
+                    // the Kompakt flow only ever auto-selects the primary calendar (no address books).
+                    if (initDefaults.ensureApplied(account, awaitDiscovery = false) != KompaktInitDefaults.Outcome.NOT_READY)
+                        syncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)
+                }
             } finally {
                 pendingResult.finish()
             }

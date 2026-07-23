@@ -20,17 +20,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import at.bitfire.davdroid.BuildConfig
-import at.bitfire.davdroid.db.Collection
-import at.bitfire.davdroid.db.Service
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
 import at.bitfire.davdroid.repository.AccountRepository
-import at.bitfire.davdroid.repository.DavCollectionRepository
 import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.repository.DavSyncStatsRepository
 import at.bitfire.davdroid.repository.KompaktTimeFormatRepository
 import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
 import at.bitfire.davdroid.settings.AccountSettings
+import at.bitfire.davdroid.sync.KompaktInitDefaults
 import at.bitfire.davdroid.sync.KompaktStorage
 import at.bitfire.davdroid.sync.SyncConditions
 import at.bitfire.davdroid.sync.SyncDataType
@@ -65,10 +62,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Instant
 import java.time.ZoneId
 import java.util.UUID
@@ -93,7 +87,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     @ApplicationContext private val context: Context,
     private val accountRepository: AccountRepository,
     private val accountSettingsFactory: AccountSettings.Factory,
-    private val collectionRepository: DavCollectionRepository,
+    private val initDefaults: KompaktInitDefaults,
     private val serviceRepository: DavServiceRepository,
     private val syncStatsRepository: DavSyncStatsRepository,
     private val timeFormatRepository: KompaktTimeFormatRepository,
@@ -109,27 +103,6 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }
 
     companion object {
-        /**
-         * Sync interval (seconds) that the "Auto synchronization" toggle enables.
-         *
-         * In debug builds this is shortened to 15 minutes to make testing easier; release builds
-         * use the production default of once a day (24 h).
-         */
-        val AUTO_SYNC_INTERVAL_SECONDS = if (BuildConfig.DEBUG) 15 * 60L else 24 * 60 * 60L
-
-        /** AccountManager userData key holding the Kompakt init-defaults version applied for this account */
-        const val KEY_DEFAULTS_APPLIED = "kompakt_defaults_applied"
-
-        /**
-         * Current version of the Kompakt init defaults. Bump to re-run the (idempotent) primary-calendar
-         * selection once on existing accounts — e.g. to correct accounts where an older version locked in
-         * a wrong calendar. Auto-sync default is only ever applied on the very first setup (version 0).
-         */
-        const val DEFAULTS_VERSION = 2
-
-        /** Max time a user-initiated "Sync now" waits for collection discovery before giving up. */
-        const val DISCOVERY_WAIT_MS = 30_000L
-
         /** Grace period before treating "offline while syncing" as a lost connection (ignores brief blips). */
         const val OFFLINE_GRACE_MS = 2_000L
     }
@@ -154,7 +127,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
                 // recompute when the refresh worker transitions (e.g. discovery just finished)
                 RefreshCollectionsWorker
                     .existsFlow(context, RefreshCollectionsWorker.workerName(service.id))
-                    .map { withContext(ioDispatcher) { findPrimaryCalendarId(service.id) } }
+                    .map { withContext(ioDispatcher) { initDefaults.findPrimaryCalendarId(account, service.id) } }
                     .distinctUntilChanged()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -371,125 +344,44 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     // initialization defaults
 
-    private val defaultsMutex = Mutex()
-
     init {
         // seed the toggle state from the persisted sync interval
         viewModelScope.launch(ioDispatcher) {
-            try {
-                val interval = accountSettingsFactory.create(account).getSyncInterval(SyncDataType.EVENTS)
-                _autoSyncEnabled.value = interval == AUTO_SYNC_INTERVAL_SECONDS
-            } catch (e: Exception) {
-                logger.log(Level.WARNING, "Couldn't read sync interval for $account", e)
-            }
+            refreshAutoSyncToggle()
         }
 
-        // apply Kompakt init defaults (once per defaults version), after collection discovery
+        // Select the primary calendar (once, after discovery) so automatic sync triggers — e.g. the
+        // calendar's REQUEST_SYNC on re-entry — actually sync instead of no-op'ing over an empty
+        // selection. The first sync right after linking is intentionally left to the "Sync now / Later"
+        // modal, so we do NOT enqueue a sync here.
         viewModelScope.launch(ioDispatcher) {
-            if (appliedDefaultsVersion() >= DEFAULTS_VERSION)
+            if (initDefaults.appliedVersion(account) >= KompaktInitDefaults.DEFAULTS_VERSION)
                 return@launch
             serviceRepository.getCalDavServiceFlow(account.name).filterNotNull().collectLatest { service ->
-                if (appliedDefaultsVersion() >= DEFAULTS_VERSION)
+                if (initDefaults.appliedVersion(account) >= KompaktInitDefaults.DEFAULTS_VERSION)
                     return@collectLatest
-                // collections may already be present (e.g. relaunch right after login)
-                if (maybeApplyDefaults(service.id))
-                    return@collectLatest
-                // otherwise wait until the refresh worker succeeds, then apply
-                RefreshCollectionsWorker
-                    .existsFlow(context, RefreshCollectionsWorker.workerName(service.id), WorkInfo.State.SUCCEEDED)
-                    .first { succeeded -> succeeded }
-                maybeApplyDefaults(service.id)
+                var outcome = initDefaults.maybeApply(account, service.id)
+                if (outcome == KompaktInitDefaults.Outcome.NOT_READY) {
+                    RefreshCollectionsWorker
+                        .existsFlow(context, RefreshCollectionsWorker.workerName(service.id), WorkInfo.State.SUCCEEDED)
+                        .first { succeeded -> succeeded }
+                    outcome = initDefaults.maybeApply(account, service.id)
+                }
+                if (outcome == KompaktInitDefaults.Outcome.APPLIED)
+                    refreshAutoSyncToggle()   // reflect the auto-sync default enabled on first setup
             }
         }
     }
 
-    /** Version of the Kompakt init defaults already applied to this account (0 = none / first setup). */
-    private fun appliedDefaultsVersion(): Int =
+    /** Re-reads the persisted EVENTS sync interval and updates the [autoSyncEnabled] toggle state. */
+    private suspend fun refreshAutoSyncToggle() {
         try {
-            AccountManager.get(context).getUserData(account, KEY_DEFAULTS_APPLIED)?.toIntOrNull() ?: 0
-        } catch (_: Exception) {
-            // account may no longer exist → treat as up-to-date so we don't keep trying
-            DEFAULTS_VERSION
-        }
-
-    private fun markDefaultsApplied() {
-        try {
-            AccountManager.get(context).setUserData(account, KEY_DEFAULTS_APPLIED, DEFAULTS_VERSION.toString())
+            val interval = accountSettingsFactory.create(account).getSyncInterval(SyncDataType.EVENTS)
+            _autoSyncEnabled.value = interval == KompaktInitDefaults.AUTO_SYNC_INTERVAL_SECONDS
         } catch (e: Exception) {
-            logger.log(Level.WARNING, "Couldn't mark Kompakt defaults applied for $account", e)
+            logger.log(Level.WARNING, "Couldn't read sync interval for $account", e)
         }
     }
-
-    /**
-     * Applies the Kompakt initialization defaults, after collection discovery: selects **only** the
-     * user's primary Google calendar for synchronization. On the very first setup it also enables
-     * automatic sync by default (later runs — e.g. a defaults-version bump that re-corrects the
-     * selection — do not touch the auto-sync setting, to respect the user's toggle choice).
-     *
-     * Runs at most once per [DEFAULTS_VERSION]. Returns `true` if defaults are applied (or already
-     * up to date), `false` if the primary calendar can't be identified yet and the caller should retry.
-     */
-    private suspend fun maybeApplyDefaults(serviceId: Long): Boolean = defaultsMutex.withLock {
-        val version = appliedDefaultsVersion()
-        if (version >= DEFAULTS_VERSION)
-            return true
-        val calendars = collectionRepository.getByService(serviceId)
-            .filter { it.type == Collection.TYPE_CALENDAR }
-        if (calendars.isEmpty())
-            return false
-        // Don't guess: if the primary isn't identifiable yet (e.g. not discovered), wait and retry
-        // rather than locking in a wrong calendar.
-        val primaryId = findPrimaryCalendarId(calendars) ?: return false
-
-        // select only the primary calendar for sync
-        for (calendar in calendars) {
-            val shouldSync = calendar.id == primaryId
-            if (calendar.sync != shouldSync)
-                collectionRepository.setSync(calendar.id, shouldSync)
-        }
-
-        // enable automatic sync by default — only on the very first setup
-        if (version == 0) {
-            try {
-                accountSettingsFactory.create(account).setSyncInterval(SyncDataType.EVENTS, AUTO_SYNC_INTERVAL_SECONDS)
-            } catch (e: Exception) {
-                logger.log(Level.WARNING, "Couldn't set automatic sync for $account", e)
-            }
-            _autoSyncEnabled.value = true
-        }
-        markDefaultsApplied()
-        true
-    }
-
-    /**
-     * Identifies the user's **primary** Google calendar among the discovered calendars. Google's primary
-     * calendar is the one whose CalDAV collection id is the account email, so its URL contains the email
-     * (the "@" is usually `%40`-encoded); its display name also equals the email. Returns `null` if the
-     * primary can't be confidently identified — we deliberately do **not** fall back to an arbitrary
-     * calendar, to avoid selecting a secondary/added one (e.g. a test calendar).
-     */
-    /** Loads the account's calendar collections and identifies the primary one. */
-    private suspend fun findPrimaryCalendarId(serviceId: Long): Long? =
-        findPrimaryCalendarId(
-            collectionRepository.getByService(serviceId).filter { it.type == Collection.TYPE_CALENDAR }
-        )
-
-    private fun findPrimaryCalendarId(calendars: List<Collection>): Long? {
-        val email = account.name.lowercase()
-        val emailEncoded = email.replace("@", "%40")
-
-        calendars.firstOrNull { collection ->
-            val url = collection.url.toString().lowercase()
-            url.contains(email) || url.contains(emailEncoded)
-        }?.let { return it.id }
-
-        calendars.firstOrNull { collection ->
-            collection.displayName?.lowercase() == email
-        }?.let { return it.id }
-
-        return null
-    }
-
 
     // actions
 
@@ -499,22 +391,21 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             try {
                 accountSettingsFactory.create(account).setSyncInterval(
                     SyncDataType.EVENTS,
-                    if (enabled) AUTO_SYNC_INTERVAL_SECONDS else null
+                    if (enabled) KompaktInitDefaults.AUTO_SYNC_INTERVAL_SECONDS else null
                 )
             } catch (e: Exception) {
                 logger.log(Level.WARNING, "Couldn't set sync interval for $account", e)
             }
             // an explicit user choice counts as "defaults applied" so the init routine won't override it
-            markDefaultsApplied()
+            initDefaults.markApplied(account)
         }
     }
 
     fun syncNow() {
         viewModelScope.launch(ioDispatcher) {
-            // Make sure the primary calendar is selected for sync before enqueuing. The init defaults
-            // do this asynchronously, but right after linking the user may tap "Sync now" before that
-            // ran — and a sync only processes collections with sync=true, so it would sync nothing.
-            ensureDefaultsApplied()
+            // select the primary calendar before enqueuing, else a "Sync now" right after linking syncs nothing
+            if (initDefaults.ensureApplied(account) == KompaktInitDefaults.Outcome.APPLIED)
+                refreshAutoSyncToggle()
 
             // manual syncs skip the worker's constraints, so guard here: critically low storage → show the
             // "Your storage is full" message, don't start a sync that would only fail
@@ -532,27 +423,6 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             // track the specific EVENTS run this triggers, so its result is reported for this sync alone
             _trackedSync.value = syncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)[SyncDataType.EVENTS]
         }
-    }
-
-    /**
-     * Ensures the primary calendar is selected for sync before a user-initiated sync. Right after
-     * linking the calendars may not be discovered yet, so if the first attempt can't identify the
-     * primary, wait (bounded) for collection discovery to finish and try again — otherwise a quick
-     * "Sync now" tap would enqueue a sync with nothing selected and sync nothing.
-     */
-    private suspend fun ensureDefaultsApplied() {
-        if (appliedDefaultsVersion() >= DEFAULTS_VERSION)
-            return
-        val service = serviceRepository.getByAccountAndType(account.name, Service.TYPE_CALDAV) ?: return
-        if (maybeApplyDefaults(service.id))
-            return
-        // primary not discovered yet → wait for the refresh worker to finish, then apply
-        withTimeoutOrNull(DISCOVERY_WAIT_MS.milliseconds) {
-            RefreshCollectionsWorker
-                .existsFlow(context, RefreshCollectionsWorker.workerName(service.id), WorkInfo.State.SUCCEEDED)
-                .first { succeeded -> succeeded }
-        }
-        maybeApplyDefaults(service.id)
     }
 
     fun unlink() {
