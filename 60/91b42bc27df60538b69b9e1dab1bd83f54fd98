@@ -1,0 +1,24 @@
+docs/superpowers/specs/2026-08-12-oauth-scope-denial-design.md
+  bc0f618c849a6b62 248-283,541-546,599-603,674-680
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "6091b42bc27df60538b69b9e1dab1bd83f54fd98",
+  "prompts": {
+    "bc0f618c849a6b62": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "56b82f40-038a-47f1-8f23-ea4f0782d3de",
+        "model": "<synthetic>"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 54,
+      "total_deletions": 6,
+      "accepted_lines": 33675,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/a74d3105d09d8293526b15973bb6251c279be094980d8eeb68589fc23afb6b1f"
+    }
+  }
+}
