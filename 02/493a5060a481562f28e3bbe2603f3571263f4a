@@ -1,0 +1,24 @@
+docs/kompakt-sync-pause.md
+  4def8de27e39321d 1-491
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "02493a5060a481562f28e3bbe2603f3571263f4a",
+  "prompts": {
+    "4def8de27e39321d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c826cc80-81e1-4327-bdcb-7f8a92133f54",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 34112,
+      "total_deletions": 0,
+      "accepted_lines": 34112,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/7333103ab2f838edea7638e7459570b15466f8142f71452297e40399c60d5bb5"
+    }
+  }
+}
