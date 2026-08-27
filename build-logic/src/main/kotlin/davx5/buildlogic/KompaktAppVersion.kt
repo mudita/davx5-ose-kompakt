@@ -14,6 +14,6 @@ package davx5.buildlogic
 object KompaktAppVersion {
 
     const val CODE: Int = 1
-    const val NAME: String = "1.0.0"
+    const val NAME: String = "1.1.0-SNAPSHOT"
 
 }
