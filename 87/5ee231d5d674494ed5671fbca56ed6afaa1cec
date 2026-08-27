@@ -1,0 +1,24 @@
+docs/superpowers/plans/2026-08-27-linked-account-per-service-sync.md
+  4743e73b0bbdc200 1-809,811,816-1424
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "875ee231d5d674494ed5671fbca56ed6afaa1cec",
+  "prompts": {
+    "4743e73b0bbdc200": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5176ef9c-c465-401e-89f4-3a402aaa516f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 1428,
+      "total_deletions": 9,
+      "accepted_lines": 1419,
+      "overriden_lines": 2,
+      "messages_url": "https://gitai.miquido.dev/cas/87ec6a9ce96e03b928c624148257959f20ca54ca7943e3eb1f6860f33fd61dd8"
+    }
+  }
+}
