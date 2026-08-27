@@ -29,7 +29,7 @@ import kotlin.time.Duration.Companion.minutes
  * The request is **throttled**: a sync is only enqueued if the last successful sync finished at least
  * [SYNC_THROTTLE_MS] ago (or there has never been a successful sync). Otherwise the broadcast is a no-op.
  *
- * See `docs/kompakt-integration.md` for the caller contract.
+ * See `docs/app-integration.md` for the caller contract.
  */
 @AndroidEntryPoint
 class KompaktSyncRequestReceiver : BroadcastReceiver() {
