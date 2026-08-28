@@ -45,7 +45,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -108,29 +107,47 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         const val OFFLINE_GRACE_MS = 2_000L
     }
 
-    val email: String = account.name
+    private val email: String = account.name
 
 
-    // auto-sync toggle (mirrored in memory; this screen is the only writer of the EVENTS interval)
+    // calendar sync switch (mirrored in memory; this screen is the only writer of the EVENTS interval)
 
-    private val _autoSyncEnabled = MutableStateFlow(false)
-    val autoSyncEnabled: StateFlow<Boolean> = _autoSyncEnabled.asStateFlow()
+    private val _calendarSwitch = MutableStateFlow(
+        if (readAutoSyncEnabled()) KompaktSyncSwitch.On else KompaktSyncSwitch.Off
+    )
+
+    // AccountSettings throws when constructed on the main thread, so the seed reads the raw key.
+    // Equivalent to getSyncInterval(EVENTS): an absent key falls back to DEFAULT_SYNC_INTERVAL (4h),
+    // which never equals AUTO_SYNC_INTERVAL_SECONDS either.
+    private fun readAutoSyncEnabled(): Boolean =
+        try {
+            AccountManager.get(context)
+                .getUserData(account, AccountSettings.KEY_SYNC_INTERVAL_CALENDARS)
+                ?.toLongOrNull() == KompaktInitDefaults.AUTO_SYNC_INTERVAL_SECONDS
+        } catch (e: Exception) {
+            logger.log(Level.WARNING, "Couldn't read sync interval for $account", e)
+            false
+        }
 
 
     // primary calendar + last synchronization time
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val primaryCollectionId: StateFlow<Long?> =
+    private val primaryCollectionId: StateFlow<Reported<Long?>> =
         serviceRepository.getCalDavServiceFlow(account.name).flatMapLatest { service ->
             if (service == null)
-                flowOf(null)
+                flowOf(Reported.Value<Long?>(null))
             else
                 // recompute when the refresh worker transitions (e.g. discovery just finished)
                 RefreshCollectionsWorker
                     .existsFlow(context, RefreshCollectionsWorker.workerName(service.id))
-                    .map { withContext(ioDispatcher) { initDefaults.findPrimaryCalendarId(account, service.id) } }
+                    .map {
+                        Reported.Value<Long?>(
+                            withContext(ioDispatcher) { initDefaults.findPrimaryCalendarId(account, service.id) }
+                        )
+                    }
                     .distinctUntilChanged()
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Reported.Pending)
 
     private val dateTimeFormat = combine(
         timeFormatRepository.is24HourFormat,
@@ -140,24 +157,38 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val lastSyncFormatted: StateFlow<String?> = combine(
-        primaryCollectionId.flatMapLatest { id ->
-            if (id == null)
-                flowOf(null)
-            else
-                syncStatsRepository.getLastSyncedFlow(id).map { stats ->
-                    stats.firstOrNull { it.dataType == SyncDataType.EVENTS.name }?.lastSynced
+    private val lastSyncEpoch: Flow<Reported<Long?>> =
+        primaryCollectionId.flatMapLatest { reported ->
+            when (reported) {
+                Reported.Pending -> flowOf<Reported<Long?>>(Reported.Pending)
+                is Reported.Value -> {
+                    val collectionId = reported.value
+                    if (collectionId == null)
+                        flowOf<Reported<Long?>>(Reported.Value(null))
+                    else {
+                        val reportedStats: Flow<Reported<Long?>> =
+                            syncStatsRepository.getLastSyncedFlow(collectionId).map { stats ->
+                                Reported.Value(
+                                    stats.firstOrNull { it.dataType == SyncDataType.EVENTS.name }?.lastSynced
+                                )
+                            }
+                        reportedStats.onStart { emit(Reported.Pending) }
+                    }
                 }
-        },
-        dateTimeFormat
-    ) { epochMillis, format ->
-        epochMillis?.let { format.format(Instant.ofEpochMilli(it)) }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+            }
+        }
+
+    private val lastSync: Flow<Reported<String?>> =
+        combine(lastSyncEpoch, dateTimeFormat) { reported, format ->
+            when (reported) {
+                Reported.Pending -> Reported.Pending
+                is Reported.Value ->
+                    Reported.Value(reported.value?.let { format.format(Instant.ofEpochMilli(it)) })
+            }
+        }
 
 
     // manual sync lifecycle (loading indicator / success snackbar / error dialog)
-
-    enum class SyncResult { Success, Failure }
 
     /** WorkInfos of the calendar (EVENTS) one-time sync worker for this account. */
     private val eventsSyncWorkInfos =
@@ -181,15 +212,17 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             ?.let { Regex("numAuthExceptions=(\\d+)").find(it)?.groupValues?.get(1)?.toLongOrNull() }
             ?.let { it > 0 } == true
 
-    /** `true` while a calendar sync is enqueued/running (drives the "Loading data…" indicator). */
-    val syncing: StateFlow<Boolean> = eventsSyncWorkInfos
-        .map { it.isSyncActive() }
+    // Reported at the source: WorkManager's first query is asynchronous, so "not yet known" must be
+    // distinguishable from "not syncing" — wrapping a fabricated `false` afterwards would not be.
+    private val syncing: StateFlow<Reported<Boolean>> = eventsSyncWorkInfos
+        .map<List<WorkInfo>, Reported<Boolean>> { Reported.Value(it.isSyncActive()) }
         .distinctUntilChanged()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Reported.Pending)
 
-    private val _syncResult = MutableStateFlow<SyncResult?>(null)
-    /** Result of the latest *user-initiated* sync, or `null` once consumed by the UI. */
-    val syncResult: StateFlow<SyncResult?> = _syncResult.asStateFlow()
+    /** `true` only once WorkManager has reported an active sync. */
+    private val syncingNow: Flow<Boolean> = syncing.map { it is Reported.Value && it.value }
+
+    private val _syncFailed = MutableStateFlow(false)
 
     // Id of the specific EVENTS run the user triggered via syncNow() (or the pending run it coalesced into).
     // The result is read from this one run — not the aggregate unique-work list, which retains prior finished
@@ -203,17 +236,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             else WorkManager.getInstance(context).getWorkInfoByIdFlow(id)
         }
 
-    fun consumeSyncResult() {
-        _syncResult.value = null
-    }
-
     private val _showNoInternet = MutableStateFlow(false)
-    /** `true` when the user tapped "Synchronize now" without internet; drives the "No internet" message. */
-    val showNoInternet: StateFlow<Boolean> = _showNoInternet.asStateFlow()
-
-    fun consumeNoInternet() {
-        _showNoInternet.value = false
-    }
 
     /**
      * `true` while the device is critically low on storage (system threshold; see [KompaktStorage]). Like the
@@ -222,11 +245,6 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
      * live, so no extra persistence is needed.
      */
     private val _showOutOfStorage = MutableStateFlow(KompaktStorage.isStorageLow(context))
-    val showOutOfStorage: StateFlow<Boolean> = _showOutOfStorage.asStateFlow()
-
-    fun consumeOutOfStorage() {
-        _showOutOfStorage.value = false
-    }
 
     /** Re-check live free storage (call on screen entry / resume). */
     fun refreshStorageState() {
@@ -247,7 +265,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         awaitClose { context.contentResolver.unregisterContentObserver(observer) }
     }
 
-    val needsReauth: StateFlow<Boolean> =
+    private val needsReauth: StateFlow<Boolean> =
         merge(authStateChanges, reauthRefresh)
             .onStart { emit(Unit) }
             .map { withContext(ioDispatcher) { readNeedsReauth() } }
@@ -274,7 +292,6 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     private val _reauthPhase = MutableStateFlow(
         if (initialReauth && needsReauth.value) ReauthPhase.PENDING_LAUNCH else ReauthPhase.SHOW_CONTENT
     )
-    val reauthPhase: StateFlow<ReauthPhase> = _reauthPhase.asStateFlow()
 
     fun onReauthLaunchStarted() {
         if (_reauthPhase.value == ReauthPhase.PENDING_LAUNCH) {
@@ -310,11 +327,11 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             trackedSyncInfo.collect { info ->
                 when (info?.state) {
                     WorkInfo.State.SUCCEEDED -> {
-                        _syncResult.value = SyncResult.Success
+                        _syncFailed.value = false
                         _trackedSync.compareAndSet(info.id, null)
                     }
                     WorkInfo.State.FAILED -> {
-                        _syncResult.value = if (info.hadAuthError()) null else SyncResult.Failure
+                        _syncFailed.value = !info.hadAuthError()
                         _trackedSync.compareAndSet(info.id, null)
                     }
                     WorkInfo.State.CANCELLED ->
@@ -328,7 +345,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         // its network constraint (retrying) and the "Loading data…" loader would otherwise hang forever.
         // Cancel it and show the "No internet connection" message instead. Debounced to ignore brief blips.
         viewModelScope.launch {
-            combine(syncing, networkAvailable) { active, online -> active && !online }
+            combine(syncingNow, networkAvailable) { active, online -> active && !online }
                 .distinctUntilChanged()
                 .collectLatest { offlineWhileSyncing ->
                     if (!offlineWhileSyncing || _trackedSync.value == null)
@@ -341,6 +358,61 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
                 }
         }
     }
+
+
+    // the single state channel
+
+    // Constant: no CardDAV scope or service exists, so contacts consent cannot be granted yet and
+    // there is nothing to track. A later story replaces this with a real per-service source.
+    private val contactsState = KompaktServiceSyncState(
+        switch = KompaktSyncSwitch.ConsentMissing,
+        status = KompaktSyncStatus.NeverSynced
+    )
+
+    private val calendarState: Flow<KompaktServiceSyncState> = combine(
+        _calendarSwitch,
+        syncing,
+        lastSync,
+        _syncFailed,
+        ::serviceSyncState
+    )
+
+    private val dialog: Flow<KompaktLinkedAccountDialog?> = combine(
+        needsReauth,
+        _showOutOfStorage,
+        _showNoInternet,
+        _syncFailed,
+        ::linkedAccountDialog
+    )
+
+    val state: StateFlow<KompaktLinkedAccountState> = combine(
+        calendarState,
+        dialog,
+        _reauthPhase
+    ) { calendar, dialog, phase ->
+        KompaktLinkedAccountState(
+            email = email,
+            calendar = calendar,
+            contacts = contactsState,
+            dialog = dialog,
+            reauthPhase = phase
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialState())
+
+    // Every input must carry an immediate first value or combine emits nothing at all, so this seed is
+    // read synchronously rather than defaulted.
+    private fun initialState() = KompaktLinkedAccountState(
+        email = email,
+        calendar = KompaktServiceSyncState(_calendarSwitch.value, KompaktSyncStatus.Resolving),
+        contacts = contactsState,
+        dialog = linkedAccountDialog(
+            authError = readNeedsReauth(),
+            outOfStorage = KompaktStorage.isStorageLow(context),
+            noInternet = false,
+            syncFailed = false
+        ),
+        reauthPhase = _reauthPhase.value
+    )
 
 
     // initialization defaults
@@ -374,11 +446,13 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         }
     }
 
-    /** Re-reads the persisted EVENTS sync interval and updates the [autoSyncEnabled] toggle state. */
+    /** Re-reads the persisted EVENTS sync interval and updates the calendar switch. */
     private suspend fun refreshAutoSyncToggle() {
         try {
             val interval = accountSettingsFactory.create(account).getSyncInterval(SyncDataType.EVENTS)
-            _autoSyncEnabled.value = interval == KompaktInitDefaults.AUTO_SYNC_INTERVAL_SECONDS
+            _calendarSwitch.value =
+                if (interval == KompaktInitDefaults.AUTO_SYNC_INTERVAL_SECONDS) KompaktSyncSwitch.On
+                else KompaktSyncSwitch.Off
         } catch (e: Exception) {
             logger.log(Level.WARNING, "Couldn't read sync interval for $account", e)
         }
@@ -386,8 +460,9 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     // actions
 
-    fun setAutoSync(enabled: Boolean) {
-        _autoSyncEnabled.value = enabled    // optimistic
+    fun setCalendarSync(enabled: Boolean) {
+        // optimistic
+        _calendarSwitch.value = if (enabled) KompaktSyncSwitch.On else KompaktSyncSwitch.Off
         viewModelScope.launch(ioDispatcher) {
             try {
                 accountSettingsFactory.create(account).setSyncInterval(
@@ -400,6 +475,14 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             // an explicit user choice counts as "defaults applied" so the init routine won't override it
             initDefaults.markApplied(account)
         }
+    }
+
+    // The auth error is deliberately not cleared: KEY_NEEDS_REAUTH is cleared only by a successful
+    // re-auth, which is why its sheet has every dismiss path locked.
+    fun consumeDialog() {
+        _showNoInternet.value = false
+        _syncFailed.value = false
+        _showOutOfStorage.value = false
     }
 
     fun syncNow() {
