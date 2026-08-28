@@ -18,7 +18,7 @@ import javax.inject.Inject
  * Hosts the same [LoginScreen], but instead of navigating to the upstream `AccountActivity` when an
  * account is created, it simply returns [RESULT_OK] and finishes. This returns the user to
  * [at.bitfire.davdroid.ui.KompaktAccountsActivity], which then shows the "Account linked" modal on
- * top of [at.bitfire.davdroid.ui.KompaktLinkedAccountScreen].
+ * top of [at.bitfire.davdroid.ui.account.KompaktLinkedAccountScreen].
  */
 @AndroidEntryPoint
 class KompaktLoginActivity @Inject constructor() : AppCompatActivity() {

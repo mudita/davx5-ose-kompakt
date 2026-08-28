@@ -2,7 +2,7 @@
  * Copyright © All Contributors. See LICENSE and AUTHORS in the root directory for details.
  */
 
-package at.bitfire.davdroid.ui
+package at.bitfire.davdroid.ui.account
 
 import android.accounts.Account
 import android.accounts.AccountManager
@@ -29,6 +29,7 @@ import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
 import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.sync.KompaktInitDefaults
 import at.bitfire.davdroid.sync.KompaktStorage
+import at.bitfire.davdroid.ui.KompaktAuthState
 import at.bitfire.davdroid.sync.SyncConditions
 import at.bitfire.davdroid.sync.SyncDataType
 import at.bitfire.davdroid.sync.worker.OneTimeSyncWorker

@@ -2,7 +2,7 @@
  * Copyright © All Contributors. See LICENSE and AUTHORS in the root directory for details.
  */
 
-package at.bitfire.davdroid.ui
+package at.bitfire.davdroid.ui.account
 
 import android.accounts.Account
 import android.app.Activity
@@ -48,8 +48,10 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
 import com.mudita.frontitude.R as RFrontitude
-import at.bitfire.davdroid.ui.KompaktLinkedAccountModel.ReauthPhase
-import at.bitfire.davdroid.ui.KompaktLinkedAccountModel.SyncResult
+import at.bitfire.davdroid.ui.KompaktTypography500
+import at.bitfire.davdroid.ui.KompaktTypography900
+import at.bitfire.davdroid.ui.account.KompaktLinkedAccountModel.ReauthPhase
+import at.bitfire.davdroid.ui.account.KompaktLinkedAccountModel.SyncResult
 import at.bitfire.davdroid.ui.setup.KompaktLoginActivity
 import at.bitfire.davdroid.ui.composable.KompaktBottomBar
 import at.bitfire.davdroid.ui.composable.KompaktDottedDivider

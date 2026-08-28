@@ -41,6 +41,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
 import com.mudita.frontitude.R as RFrontitude
+import at.bitfire.davdroid.ui.account.KompaktLinkedAccountScreen
 import at.bitfire.davdroid.ui.composable.KompaktFramedIcon
 import at.bitfire.davdroid.ui.composable.KompaktTheme
 import at.bitfire.davdroid.ui.setup.KompaktLoginActivity
