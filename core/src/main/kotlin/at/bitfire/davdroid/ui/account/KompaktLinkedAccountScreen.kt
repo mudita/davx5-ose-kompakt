@@ -12,14 +12,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -48,25 +44,27 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
 import com.mudita.frontitude.R as RFrontitude
-import at.bitfire.davdroid.ui.KompaktTypography500
 import at.bitfire.davdroid.ui.KompaktTypography900
 import at.bitfire.davdroid.ui.account.KompaktLinkedAccountModel.ReauthPhase
-import at.bitfire.davdroid.ui.account.KompaktLinkedAccountModel.SyncResult
-import at.bitfire.davdroid.ui.setup.KompaktLoginActivity
-import at.bitfire.davdroid.ui.composable.KompaktBottomBar
-import at.bitfire.davdroid.ui.composable.KompaktDottedDivider
 import at.bitfire.davdroid.ui.composable.KompaktFramedIcon
-import at.bitfire.davdroid.ui.composable.KompaktListCell
 import at.bitfire.davdroid.ui.composable.KompaktMessageSheet
 import at.bitfire.davdroid.ui.composable.KompaktModalSheet
 import at.bitfire.davdroid.ui.composable.KompaktTheme
 import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
+import at.bitfire.davdroid.ui.setup.KompaktLoginActivity
 import com.mudita.mmd.components.buttons.OutlinedButtonMMD
-import com.mudita.mmd.components.progress_indicator.CircularProgressIndicatorMMD
-import com.mudita.mmd.components.switcher.SwitchMMD
 import com.mudita.mmd.components.text.TextMMD
-import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.milliseconds
+
+data class KompaktLinkedAccountActions(
+    val onBack: () -> Unit = {},
+    val onToggleCalendar: (Boolean) -> Unit = {},
+    val onSyncNow: () -> Unit = {},
+    val onUnlink: () -> Unit = {},
+    val onConsumeDialog: () -> Unit = {},
+    val onFailureClick: () -> Unit = {},
+    val onAccountLinkedDialogDismiss: () -> Unit = {},
+    val onReauthorize: () -> Unit = {}
+)
 
 /**
  * Stateful entry point for the Kompakt "Linked Account" detail screen: collects the view model state
@@ -89,14 +87,7 @@ fun KompaktLinkedAccountScreen(
         }
     )
 ) {
-    val autoSyncEnabled by model.autoSyncEnabled.collectAsStateWithLifecycle()
-    val lastSync by model.lastSyncFormatted.collectAsStateWithLifecycle()
-    val syncing by model.syncing.collectAsStateWithLifecycle()
-    val syncResult by model.syncResult.collectAsStateWithLifecycle()
-    val showNoInternet by model.showNoInternet.collectAsStateWithLifecycle()
-    val showOutOfStorage by model.showOutOfStorage.collectAsStateWithLifecycle()
-    val needsReauth by model.needsReauth.collectAsStateWithLifecycle()
-    val reauthPhase by model.reauthPhase.collectAsStateWithLifecycle()
+    val state by model.state.collectAsStateWithLifecycle()
 
     // re-read the persisted re-auth flag and re-check free storage whenever the screen comes to the
     // foreground, so a background auth failure or a low-storage condition surfaces its message immediately
@@ -126,33 +117,27 @@ fun KompaktLinkedAccountScreen(
         )
     }
 
-    LaunchedEffect(reauthPhase) {
-        if (reauthPhase == ReauthPhase.PENDING_LAUNCH) {
+    LaunchedEffect(state.reauthPhase) {
+        if (state.reauthPhase == ReauthPhase.PENDING_LAUNCH) {
             model.onReauthLaunchStarted()
             onReauthorize()
         }
     }
 
-    if (reauthPhase == ReauthPhase.SHOW_CONTENT) {
+    if (state.reauthPhase == ReauthPhase.SHOW_CONTENT) {
         KompaktLinkedAccountContent(
-            email = model.email,
-            autoSyncEnabled = autoSyncEnabled,
-            lastSync = lastSync,
-            syncing = syncing,
-            syncResult = syncResult,
-            showNoInternet = showNoInternet,
-            showOutOfStorage = showOutOfStorage,
-            showAuthError = needsReauth,
-            showAccountLinkedDialog = showAccountLinkedDialog,
-            onBack = onBack,
-            onToggleAutoSync = model::setAutoSync,
-            onSyncNow = model::syncNow,
-            onUnlink = model::unlink,
-            onConsumeSyncResult = model::consumeSyncResult,
-            onDismissNoInternet = model::consumeNoInternet,
-            onDismissOutOfStorage = model::consumeOutOfStorage,
-            onAccountLinkedDialogDismiss = onAccountLinkedDialogDismiss,
-            onReauthorize = onReauthorize
+            state = state,
+            actions = KompaktLinkedAccountActions(
+                onBack = onBack,
+                onToggleCalendar = model::setCalendarSync,
+                onSyncNow = model::syncNow,
+                onUnlink = model::unlink,
+                onConsumeDialog = model::consumeDialog,
+                onFailureClick = model::consumeDialog,
+                onAccountLinkedDialogDismiss = onAccountLinkedDialogDismiss,
+                onReauthorize = onReauthorize
+            ),
+            showAccountLinkedDialog = showAccountLinkedDialog
         )
     } else {
         KompaktTheme {
@@ -164,27 +149,12 @@ fun KompaktLinkedAccountScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KompaktLinkedAccountContent(
-    email: String,
-    autoSyncEnabled: Boolean,
-    lastSync: String?,
-    syncing: Boolean,
-    syncResult: SyncResult?,
-    showNoInternet: Boolean,
-    showOutOfStorage: Boolean,
-    showAuthError: Boolean,
-    showAccountLinkedDialog: Boolean,
-    onBack: () -> Unit,
-    onToggleAutoSync: (Boolean) -> Unit,
-    onSyncNow: () -> Unit,
-    onUnlink: () -> Unit,
-    onConsumeSyncResult: () -> Unit,
-    onDismissNoInternet: () -> Unit,
-    onDismissOutOfStorage: () -> Unit,
-    onAccountLinkedDialogDismiss: () -> Unit,
-    onReauthorize: () -> Unit
+    state: KompaktLinkedAccountState,
+    actions: KompaktLinkedAccountActions,
+    showAccountLinkedDialog: Boolean
 ) {
     var showUnlinkDialog by remember { mutableStateOf(false) }
-    var showDisableAutoSyncDialog by remember { mutableStateOf(false) }
+    var showDisableCalendarDialog by remember { mutableStateOf(false) }
 
     KompaktTheme {
         Scaffold(
@@ -197,7 +167,7 @@ fun KompaktLinkedAccountContent(
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = onBack) {
+                        IconButton(onClick = actions.onBack) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_kompakt_arrow_left),
                                 contentDescription = stringResource(R.string.navigate_up)
@@ -213,98 +183,53 @@ fun KompaktLinkedAccountContent(
                         }
                     }
                 )
+            },
+            bottomBar = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    OutlinedButtonMMD(
+                        onClick = actions.onSyncNow,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        TextMMD(
+                            text = stringResource(R.string.kompakt_button_synchronize),
+                            style = KompaktTypography900.labelMedium
+                        )
+                    }
+                }
             }
         ) { padding ->
-            Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    AccountHeader(email = email)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                AccountHeader(email = state.email)
 
-                    // Calendar / Auto synchronization cell with toggle
-                    KompaktListCell(
-                        icon = painterResource(R.drawable.ic_kompakt_calendar),
-                        title = stringResource(RFrontitude.string.common_label_calendar),
-                        subtitle = stringResource(RFrontitude.string.calendar_accountsync_toggle_button_autosyncronization),
-                        trailing = {
-                            SwitchMMD(
-                                checked = autoSyncEnabled,
-                                onCheckedChange = { enabled ->
-                                    if (enabled) onToggleAutoSync(true)
-                                    else showDisableAutoSyncDialog = true
-                                }
-                            )
-                        }
-                    )
+                KompaktServiceSyncCell(
+                    title = stringResource(RFrontitude.string.common_label_calendar),
+                    state = state.calendar,
+                    onCheckedChange = { enabled ->
+                        if (enabled) actions.onToggleCalendar(true)
+                        else showDisableCalendarDialog = true
+                    },
+                    onFailureClick = actions.onFailureClick,
+                    showDivider = true
+                )
 
-                    // Explanatory text (always visible)
-                    TextMMD(
-                        text = stringResource(RFrontitude.string.calendar_accountsync_notification_yourcalendarsyncseach),
-                        style = KompaktTypography500.bodyMedium,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                            .padding(bottom = 16.dp)
-                    )
-
-                    // "Or" with dotted dividers
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                    ) {
-                        KompaktDottedDivider(modifier = Modifier.weight(1f))
-                        TextMMD(
-                            text = stringResource(RFrontitude.string.common_label_or),
-                            style = KompaktTypography500.bodyMedium,
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        )
-                        KompaktDottedDivider(modifier = Modifier.weight(1f))
-                    }
-
-                    // Synchronize now
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    ) {
-                        OutlinedButtonMMD(
-                            onClick = onSyncNow,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            TextMMD(
-                                text = stringResource(RFrontitude.string.calendar_accountsync_button_synchronizenow),
-                                style = KompaktTypography900.labelMedium
-                            )
-                        }
-                    }
-
-                    // Last synchronization cell
-                    KompaktDottedDivider(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp)
-                    )
-                    KompaktListCell(
-                        icon = painterResource(
-                            if (lastSync == null) R.drawable.ic_kompakt_alert
-                            else R.drawable.ic_kompakt_success
-                        ),
-                        title = stringResource(RFrontitude.string.calendar_accountsync_label_lastsynchronization),
-                        subtitle = lastSync ?: stringResource(RFrontitude.string.calendar_accountsync_status_notsyncedyet)
-                    )
-                }
-
-                SyncStatusBar(
-                    syncing = syncing,
-                    syncResult = syncResult,
-                    onDismissSuccess = onConsumeSyncResult,
-                    modifier = Modifier.align(Alignment.BottomCenter)
+                KompaktServiceSyncCell(
+                    title = stringResource(R.string.kompakt_label_contacts),
+                    state = state.contacts,
+                    // inert until contacts consent can be requested
+                    onCheckedChange = {},
+                    onFailureClick = actions.onFailureClick
                 )
             }
         }
@@ -319,95 +244,95 @@ fun KompaktLinkedAccountContent(
             confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_unlink),
             onConfirm = {
                 showUnlinkDialog = false
-                onUnlink()
+                actions.onUnlink()
             },
             dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
             onDismiss = { showUnlinkDialog = false }
         )
     }
 
-    if (showDisableAutoSyncDialog) {
+    if (showDisableCalendarDialog) {
         KompaktModalSheet(
-            onDismissRequest = { showDisableAutoSyncDialog = false },
+            onDismissRequest = { showDisableCalendarDialog = false },
             title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_disableautosync),
             text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_nothingwillsyncronizewith),
             icon = painterResource(R.drawable.ic_kompakt_alert),
             confirmLabel = stringResource(RFrontitude.string.common_button_disable),
             onConfirm = {
-                showDisableAutoSyncDialog = false
-                onToggleAutoSync(false)
+                showDisableCalendarDialog = false
+                actions.onToggleCalendar(false)
             },
             dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
-            onDismiss = { showDisableAutoSyncDialog = false }
+            onDismiss = { showDisableCalendarDialog = false }
         )
     }
 
     if (showAccountLinkedDialog) {
         KompaktModalSheet(
-            onDismissRequest = onAccountLinkedDialogDismiss,
+            onDismissRequest = actions.onAccountLinkedDialogDismiss,
             title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_accountlinked),
-            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_csyncnowtoimportyour, email),
+            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_csyncnowtoimportyour, state.email),
             icon = painterResource(R.drawable.ic_kompakt_success),
             confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_syncnow),
             onConfirm = {
-                onAccountLinkedDialogDismiss()
-                onSyncNow()
+                actions.onAccountLinkedDialogDismiss()
+                actions.onSyncNow()
             },
             dismissLabel = stringResource(RFrontitude.string.common_dialog_button_later),
-            onDismiss = onAccountLinkedDialogDismiss
+            onDismiss = actions.onAccountLinkedDialogDismiss
         )
     }
 
-    if (syncResult == SyncResult.Failure) {
-        KompaktModalSheet(
-            onDismissRequest = onConsumeSyncResult,
-            title = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_h1_accountsyncfailed),
-            text = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour),
-            icon = painterResource(R.drawable.ic_kompakt_alert),
-            confirmLabel = stringResource(RFrontitude.string.common_dialog_button_tryagain),
-            onConfirm = {
-                onConsumeSyncResult()
-                onSyncNow()
-            },
-            dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
-            onDismiss = onConsumeSyncResult
-        )
-    }
+    when (state.dialog) {
+        KompaktLinkedAccountDialog.AuthError ->
+            // token expired / access revoked: persistent until re-auth succeeds. Offer re-linking
+            // (in place, keeping local data), or unlink and go back to the home screen.
+            KompaktModalSheet(
+                onDismissRequest = {}, // unreachable by design — all dismiss paths locked
+                title = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_h1_accountlinkerror),
+                text = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_body_linkyouraccountagaintocontinue),
+                icon = painterResource(R.drawable.ic_kompakt_alert),
+                confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_linkaccount),
+                onConfirm = actions.onReauthorize,   // flag stays set; cleared on successful re-auth + reload
+                dismissLabel = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_button_removeaccount),
+                shouldDismissOnBackPress = false,
+                shouldDismissOnClickOutside = false,
+                onDismiss = actions.onUnlink
+            )
 
-    if (showAuthError) {
-        // token expired / access revoked: persistent until re-auth succeeds. Offer re-linking
-        // (in place, keeping local data), or unlink and go back to the home screen.
-        KompaktModalSheet(
-            onDismissRequest = {}, // unreachable by design — all dismiss paths locked
-            title = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_h1_accountlinkerror),
-            text = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_body_linkyouraccountagaintocontinue),
-            icon = painterResource(R.drawable.ic_kompakt_alert),
-            confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_linkaccount),
-            onConfirm = onReauthorize,      // flag stays set; cleared on successful re-auth + reload
-            dismissLabel = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_button_removeaccount),
-            shouldDismissOnBackPress = false,
-            shouldDismissOnClickOutside = false,
-            onDismiss = onUnlink
-        )
-    }
+        KompaktLinkedAccountDialog.OutOfStorage ->
+            KompaktMessageSheet(
+                onDismissRequest = actions.onConsumeDialog,
+                title = stringResource(RFrontitude.string.common_error_dialog_h1_storageisfull),
+                text = stringResource(RFrontitude.string.common_error_dialog_body_changestorage),
+                icon = painterResource(R.drawable.ic_kompakt_alert),
+                buttonLabel = stringResource(RFrontitude.string.common_dialog_button_cancel)
+            )
 
-    if (showNoInternet) {
-        KompaktMessageSheet(
-            onDismissRequest = onDismissNoInternet,
-            title = stringResource(RFrontitude.string.common_label_nointernetconnection),
-            text = stringResource(RFrontitude.string.common_error_body_opensettingstocheck),
-            icon = painterResource(R.drawable.ic_kompakt_alert)
-        )
-    }
+        KompaktLinkedAccountDialog.NoInternet ->
+            KompaktMessageSheet(
+                onDismissRequest = actions.onConsumeDialog,
+                title = stringResource(RFrontitude.string.common_label_nointernetconnection),
+                text = stringResource(RFrontitude.string.common_error_body_opensettingstocheck),
+                icon = painterResource(R.drawable.ic_kompakt_alert)
+            )
 
-    if (showOutOfStorage) {
-        KompaktMessageSheet(
-            onDismissRequest = onDismissOutOfStorage,
-            title = stringResource(RFrontitude.string.common_error_dialog_h1_storageisfull),
-            text = stringResource(RFrontitude.string.common_error_dialog_body_changestorage),
-            icon = painterResource(R.drawable.ic_kompakt_alert),
-            buttonLabel = stringResource(RFrontitude.string.common_dialog_button_cancel)
-        )
+        KompaktLinkedAccountDialog.SyncFailed ->
+            KompaktModalSheet(
+                onDismissRequest = actions.onConsumeDialog,
+                title = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_h1_accountsyncfailed),
+                text = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour),
+                icon = painterResource(R.drawable.ic_kompakt_alert),
+                confirmLabel = stringResource(RFrontitude.string.common_dialog_button_tryagain),
+                onConfirm = {
+                    actions.onConsumeDialog()
+                    actions.onSyncNow()
+                },
+                dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
+                onDismiss = actions.onConsumeDialog
+            )
+
+        null -> {}
     }
 }
 
@@ -419,7 +344,7 @@ private fun AccountHeader(email: String) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 24.dp, bottom = 16.dp)
+            .padding(top = 24.dp, bottom = 32.dp)
             .padding(horizontal = 16.dp)
     ) {
         KompaktFramedIcon(painter = painterResource(R.drawable.ic_google_g))
@@ -434,160 +359,77 @@ private fun AccountHeader(email: String) {
     }
 }
 
-/**
- * Bottom status bar: a "Loading data…" indicator while syncing, or a dismissible "Data synchronized"
- * snackbar once a user-initiated sync succeeds. Renders nothing otherwise.
- */
-@Composable
-private fun SyncStatusBar(
-    syncing: Boolean,
-    syncResult: SyncResult?,
-    onDismissSuccess: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    when {
-        syncing ->
-            KompaktBottomBar(
-                modifier = modifier,
-                horizontalArrangement = Arrangement.Center,
-                verticalPadding = 20.dp
-            ) {
-                CircularProgressIndicatorMMD(size = 24.dp)
-                Spacer(modifier = Modifier.width(12.dp))
-                TextMMD(
-                    text = stringResource(RFrontitude.string.common_status_loadingdata),
-                    style = KompaktTypography900.labelLarge
-                )
-            }
-
-        syncResult == SyncResult.Success -> {
-            LaunchedEffect(Unit) {
-                delay(SUCCESS_SNACKBAR_DURATION_MS.milliseconds)
-                onDismissSuccess()
-            }
-            KompaktBottomBar(modifier = modifier) {
-                TextMMD(
-                    text = stringResource(RFrontitude.string.calendar_accountsync_toast_datasynchroniszed),
-                    style = KompaktTypography500.bodyMedium,
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                IconButton(onClick = onDismissSuccess) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_kompakt_close),
-                        contentDescription = stringResource(RFrontitude.string.common_dialog_button_cancel),
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-private const val SUCCESS_SNACKBAR_DURATION_MS = 3_000L
-
 
 // previews
 
 private const val PREVIEW_EMAIL = "very.long.mike.tyson@gmail.very.long.com"
-private const val PREVIEW_LAST_SYNC = "14.05.2026 · 11:30"
+private const val PREVIEW_LAST_SYNC = "Today 11:30"
+
+private fun previewState(
+    calendar: KompaktServiceSyncState,
+    contacts: KompaktServiceSyncState
+) = KompaktLinkedAccountState(email = PREVIEW_EMAIL, calendar = calendar, contacts = contacts)
+
+private fun on(status: KompaktSyncStatus) = KompaktServiceSyncState(KompaktSyncSwitch.On, status)
 
 @Preview
 @Composable
-private fun KompaktLinkedAccountContent_NotSynced_Preview() {
+private fun KompaktLinkedAccountContent_BothSynced_Preview() {
     KompaktLinkedAccountContent(
-        email = PREVIEW_EMAIL,
-        autoSyncEnabled = true,
-        lastSync = null,
-        syncing = false,
-        syncResult = null,
-        showNoInternet = false,
-        showOutOfStorage = false,
-        showAuthError = false,
-        showAccountLinkedDialog = false,
-        onBack = {},
-        onToggleAutoSync = {},
-        onSyncNow = {},
-        onUnlink = {},
-        onConsumeSyncResult = {},
-        onDismissNoInternet = {},
-        onDismissOutOfStorage = {},
-        onAccountLinkedDialogDismiss = {},
-        onReauthorize = {}
+        state = previewState(
+            on(KompaktSyncStatus.Synced(PREVIEW_LAST_SYNC)),
+            on(KompaktSyncStatus.Synced(PREVIEW_LAST_SYNC))
+        ),
+        actions = KompaktLinkedAccountActions(),
+        showAccountLinkedDialog = false
     )
 }
 
 @Preview
 @Composable
-private fun KompaktLinkedAccountContent_Idle_Preview() {
+private fun KompaktLinkedAccountContent_BothNeverSynced_Preview() {
     KompaktLinkedAccountContent(
-        email = PREVIEW_EMAIL,
-        autoSyncEnabled = true,
-        lastSync = PREVIEW_LAST_SYNC,
-        syncing = false,
-        syncResult = null,
-        showNoInternet = false,
-        showOutOfStorage = false,
-        showAuthError = false,
-        showAccountLinkedDialog = false,
-        onBack = {},
-        onToggleAutoSync = {},
-        onSyncNow = {},
-        onUnlink = {},
-        onConsumeSyncResult = {},
-        onDismissNoInternet = {},
-        onDismissOutOfStorage = {},
-        onAccountLinkedDialogDismiss = {},
-        onReauthorize = {}
+        state = previewState(on(KompaktSyncStatus.NeverSynced), on(KompaktSyncStatus.NeverSynced)),
+        actions = KompaktLinkedAccountActions(),
+        showAccountLinkedDialog = false
     )
 }
 
 @Preview
 @Composable
-private fun KompaktLinkedAccountContent_Syncing_Preview() {
+private fun KompaktLinkedAccountContent_CalendarOnAndContactsConsentMissing_Preview() {
     KompaktLinkedAccountContent(
-        email = PREVIEW_EMAIL,
-        autoSyncEnabled = true,
-        lastSync = PREVIEW_LAST_SYNC,
-        syncing = true,
-        syncResult = null,
-        showNoInternet = false,
-        showOutOfStorage = false,
-        showAuthError = false,
-        showAccountLinkedDialog = false,
-        onBack = {},
-        onToggleAutoSync = {},
-        onSyncNow = {},
-        onUnlink = {},
-        onConsumeSyncResult = {},
-        onDismissNoInternet = {},
-        onDismissOutOfStorage = {},
-        onAccountLinkedDialogDismiss = {},
-        onReauthorize = {}
+        state = previewState(
+            on(KompaktSyncStatus.Synced(PREVIEW_LAST_SYNC)),
+            KompaktServiceSyncState(KompaktSyncSwitch.ConsentMissing, KompaktSyncStatus.NeverSynced)
+        ),
+        actions = KompaktLinkedAccountActions(),
+        showAccountLinkedDialog = false
     )
 }
 
 @Preview
 @Composable
-private fun KompaktLinkedAccountContent_Success_Preview() {
+private fun KompaktLinkedAccountContent_MixedSyncingAndSynced_Preview() {
     KompaktLinkedAccountContent(
-        email = PREVIEW_EMAIL,
-        autoSyncEnabled = true,
-        lastSync = PREVIEW_LAST_SYNC,
-        syncing = false,
-        syncResult = SyncResult.Success,
-        showNoInternet = false,
-        showOutOfStorage = false,
-        showAuthError = false,
-        showAccountLinkedDialog = false,
-        onBack = {},
-        onToggleAutoSync = {},
-        onSyncNow = {},
-        onUnlink = {},
-        onConsumeSyncResult = {},
-        onDismissNoInternet = {},
-        onDismissOutOfStorage = {},
-        onAccountLinkedDialogDismiss = {},
-        onReauthorize = {}
+        state = previewState(
+            on(KompaktSyncStatus.Syncing),
+            on(KompaktSyncStatus.Synced(PREVIEW_LAST_SYNC))
+        ),
+        actions = KompaktLinkedAccountActions(),
+        showAccountLinkedDialog = false
+    )
+}
+
+@Preview
+@Composable
+private fun KompaktLinkedAccountContent_FailedAndResolving_Preview() {
+    KompaktLinkedAccountContent(
+        state = previewState(
+            on(KompaktSyncStatus.Failed("26.10.2025 11:00")),
+            on(KompaktSyncStatus.Resolving)
+        ),
+        actions = KompaktLinkedAccountActions(),
+        showAccountLinkedDialog = false
     )
 }
