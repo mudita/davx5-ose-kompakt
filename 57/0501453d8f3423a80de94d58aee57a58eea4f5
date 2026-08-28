@@ -1,0 +1,34 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "570501453d8f3423a80de94d58aee57a58eea4f5",
+  "prompts": {
+    "4743e73b0bbdc200": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5176ef9c-c465-401e-89f4-3a402aaa516f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 3031,
+      "total_deletions": 13,
+      "accepted_lines": 3382,
+      "overriden_lines": 0
+    },
+    "600713fde13d3394": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c1d56a49-e5e7-48db-bd46-72739cf170b3",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 0,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    }
+  }
+}
