@@ -1,0 +1,33 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/KompaktLinkedAccountModel.kt
+  8249ca8cf3579d8c 115-117
+core/src/test/kotlin/at/bitfire/davdroid/repository/KompaktAccountRepositoryDeleteTest.kt
+  8249ca8cf3579d8c 1-139
+core/src/main/kotlin/at/bitfire/davdroid/ui/KompaktLinkedAccountScreen.kt
+  8249ca8cf3579d8c 209,314-317,319
+core/src/main/kotlin/at/bitfire/davdroid/repository/AccountRepository.kt
+  8249ca8cf3579d8c 130-134,149-171,174-175
+core/src/main/kotlin/at/bitfire/davdroid/ui/KompaktAccountsScreen.kt
+  8249ca8cf3579d8c 224-226
+core/src/main/res/values/strings.xml
+  8249ca8cf3579d8c 597-604
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "c0f1ac2ce23dcbcd72df5f94880d0971f74a3d89",
+  "prompts": {
+    "8249ca8cf3579d8c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6b1f8448-a040-491b-bd1e-1bed8288af90",
+        "model": "claude-opus-5"
+      },
+      "human_author": null,
+      "messages": [],
+      "total_additions": 875,
+      "total_deletions": 63,
+      "accepted_lines": 810,
+      "overriden_lines": 0
+    }
+  }
+}
