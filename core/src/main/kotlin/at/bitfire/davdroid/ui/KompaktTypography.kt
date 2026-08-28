@@ -63,4 +63,10 @@ object KompaktTypography500 {
         fontSize = 21.sp,
         lineHeight = 23.sp
     )
+    val labelSmall = TextStyle(
+        fontFamily = LatoFontFamily,
+        fontWeight = FontWeight.Medium,
+        fontSize = 18.sp,
+        lineHeight = 18.sp
+    )
 }
