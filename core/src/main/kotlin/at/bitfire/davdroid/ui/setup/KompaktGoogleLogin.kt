@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -63,11 +64,13 @@ object KompaktGoogleLogin : LoginType {
             }
         }
 
-        val authRequestContract = rememberLauncherForActivityResult(model.authorizationContract()) { authResponse ->
-            if (authResponse != null)
-                model.authenticate(authResponse)
-            else
-                model.authCodeFailed()
+        val authContract = remember { model.authorizationContract() }
+        val authRequestContract = rememberLauncherForActivityResult(authContract) { authResponse ->
+            when {
+                authResponse != null -> model.authenticate(authResponse)
+                authContract.consentRefused -> model.consentRefused()
+                else -> model.authCodeFailed()
+            }
         }
 
         val launchSignIn = {
@@ -95,11 +98,19 @@ object KompaktGoogleLogin : LoginType {
             ) {
                 KompaktFramedIcon(painter = painterResource(R.drawable.ic_google_g))
 
-                if (uiState.error != null) {
-                    // authorization failed (e.g. user cancelled, no browser, token exchange error):
-                    // show a message and let the user retry the whole sign-in
+                val error = uiState.error
+                if (error != null) {
+                    // authorization failed (user cancelled, refused every scope, no browser,
+                    // token exchange error): show a message and let the user retry the whole sign-in
                     TextMMD(
-                        text = stringResource(RFrontitude.string.calendar_accountsync_error_h1_couldntconnecttogoogle),
+                        text = stringResource(
+                            when (error) {
+                                KompaktGoogleLoginViewModel.LoginError.ConsentRefused ->
+                                    RFrontitude.string.calendar_accountsync_error_h1_couldntsetupyouraccount
+                                KompaktGoogleLoginViewModel.LoginError.GoogleUnreachable ->
+                                    RFrontitude.string.calendar_accountsync_error_h1_couldntconnecttogoogle
+                            }
+                        ),
                         style = KompaktTypography900.labelMedium,
                         textAlign = TextAlign.Center
                     )

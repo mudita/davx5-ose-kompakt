@@ -15,7 +15,8 @@ import org.robolectric.annotation.ConscryptMode
 import java.util.logging.Logger
 
 /**
- * Guards the security-critical property that the Google OAuth authorization request uses PKCE (S256).
+ * Guards the security-critical property that the Google OAuth authorization request uses PKCE (S256),
+ * and the requested scope set (Calendar and Contacts, alongside `openid`/`email`).
  *
  * The Kompakt login runs in an embedded WebView and captures the redirect in-process, but the last line
  * of defence against a leaked authorization code is PKCE: without the `code_verifier` (which never leaves
@@ -37,6 +38,22 @@ class KompaktOAuthGoogleTest {
         assertNotNull("code_verifier must be set (PKCE)", request.codeVerifier)
         assertNotNull("code_challenge must be set (PKCE)", request.codeVerifierChallenge)
         assertEquals("S256", request.codeVerifierChallengeMethod)
+    }
+
+    @Test
+    fun `signIn request asks for the Calendar and Contacts scopes`() {
+        // pass a customClientId so the request does not depend on the app's signing certificate
+        val request = oAuthGoogle.signIn(email = null, customClientId = "test.apps.googleusercontent.com")
+
+        assertEquals(
+            setOf(
+                KompaktOAuthGoogle.SCOPE_CALENDAR,
+                KompaktOAuthGoogle.SCOPE_CONTACTS,
+                "openid",
+                "email"
+            ),
+            request.scopeSet
+        )
     }
 
 }
