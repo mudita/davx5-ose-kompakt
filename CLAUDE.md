@@ -21,18 +21,40 @@ expose that state to the other Kompakt apps
 
 ## Device and build envelope
 
-Global Mudita rules live in the workspace `CLAUDE.md` one directory up. They are not repeated here —
-but this fork **overrides** four of them:
+This app runs on **one specific device**, and every code and design decision has to hold inside that
+envelope. Global Mudita rules live in the workspace `CLAUDE.md` one directory up and are not repeated
+here — but every workspace rule marked **(overrides workspace)** below is replaced by what this
+file says instead.
 
-| Workspace rule | Here |
-|---|---|
-| check `../mudita-kompakt-ui` for UI components | this repo uses **`com.mudita:MMD`**, not `kompakt-ui` |
-| JVM 17 | **JDK 21** (`gradle/gradle-daemon-jvm.properties` pins `toolchainVersion=21`) |
-| min SDK 31+ | upstream's **`minSdk 24`**; `targetSdk 36`, `compileSdk 37` (`CommonBuildConfigPlugin`) |
-| no GMS | still true, but the app *does* call Google's CalDAV and OAuth **endpoints** over HTTP — that is not a Play Services dependency |
+- **Custom OS** — KompaktOS, a de-googled **Android 12 (API 31)** AOSP build. **(overrides
+  workspace)** the build keeps upstream's **`minSdk 24`**, not the workspace's 31+, so an API guard is
+  needed far lower than on sibling apps; `targetSdk 36` and `compileSdk 37`
+  (`CommonBuildConfigPlugin`). **(overrides workspace)** build with **JDK 21**, not JVM 17
+  (`gradle/gradle-daemon-jvm.properties` pins `toolchainVersion=21`).
+- **E-ink display** — the screen refreshes slowly and ghosts on fast or large-area redraws. Nothing
+  may repaint continuously or animate to convey state; where progress has to be shown, it is MMD's
+  own `CircularProgressIndicatorMMD`, which is drawn for this screen. Prefer a static layout that
+  changes once over one that updates as data streams in.
+- **No animations** — no transitions, enter/exit animations, shared-element transitions or ripples.
+  Not one Kompakt composable imports an `androidx.compose.animation` API today, and nothing enforces
+  that: the app theme does not null out window animations, so it holds only as long as it is written
+  that way. Upstream's screens do animate — that is upstream's code on an unreachable path, not a
+  precedent.
+- **Monochrome, no dark mode** — `KompaktTheme` wraps MMD's `ThemeMMD` and never reads
+  `isSystemInDarkTheme`. Upstream's `AppTheme` does follow the system setting and carries a dark
+  colour scheme, but every screen that uses it is unreachable (*Reachability on Kompakt*). Don't add a
+  night resource bucket or a second colour scheme for a Kompakt screen.
+- **No Google Play Services** **(overrides workspace, partly)** — the device has no GMS stack, and no
+  `play-services` or Firebase artifact appears anywhere in the build. A GMS call would compile and
+  then fail at runtime. The app *does* talk to Google's **CalDAV and OAuth endpoints** over HTTPS
+  (`dav4jvm`, AppAuth) — that is plain networking, not a Play Services dependency, and the distinction
+  matters when reading the OAuth code. There is also no Chrome or Custom Tabs on the device, which is
+  why authorization runs in `KompaktOAuthWebViewActivity`'s embedded WebView.
+- **MMD is the design system** **(overrides workspace)** — `com.mudita:MMD`, *not* the workspace's
+  `kompakt-ui`. Rules and the typography mapping are in *Design system & typography*.
 
-Those three plus `sdk.dir` in `local.properties` are the whole toolchain. **No credentials are needed
-to build** ([`docs/local-config.md`](docs/local-config.md)).
+Those SDK levels plus `sdk.dir` in `local.properties` are the whole toolchain. **No credentials are
+needed to build** ([`docs/local-config.md`](docs/local-config.md)).
 
 ## Where each fact is documented
 
