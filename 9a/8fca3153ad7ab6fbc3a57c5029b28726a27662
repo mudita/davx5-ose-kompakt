@@ -1,0 +1,28 @@
+core/src/test/kotlin/at/bitfire/davdroid/settings/KompaktDefaultsProviderTest.kt
+  b6369736caca8975 1-42
+core/src/main/kotlin/at/bitfire/davdroid/settings/KompaktDefaultsProvider.kt
+  b6369736caca8975 1-64
+app-ose/src/ose/kotlin/com/davx5/ose/di/KompaktSettingsProvidersModule.kt
+  b6369736caca8975 1-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "9a8fca3153ad7ab6fbc3a57c5029b28726a27662",
+  "prompts": {
+    "b6369736caca8975": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e759c273-892c-4d30-8193-261ba9e00306",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 137,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/4fe3de0c16d002200b4d3ebeb8bd48f84ed45e84ed546b7d7c29d92d95c78d56"
+    }
+  }
+}
