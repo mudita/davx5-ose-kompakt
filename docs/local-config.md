@@ -1,12 +1,11 @@
 # Local configuration
 
+Toolchain and SDK levels are in [`../CLAUDE.md`](../CLAUDE.md#device-and-build-envelope). This page is
+everything you have to set up or know beyond installing them.
+
 ## Prerequisites
 
-- **JDK 21** — `gradle/gradle-daemon-jvm.properties` pins `toolchainVersion=21`.
-- **Android SDK** with `compileSdk 37`; `minSdk 24`, `targetSdk 36`
-  (`build-logic/.../CommonBuildConfigPlugin.kt`). The target device is Android 12 (API 31), but this
-  fork keeps upstream's `minSdk`.
-- `local.properties` needs only `sdk.dir`, which Android Studio writes for you.
+`local.properties` needs only `sdk.dir`, which Android Studio writes for you.
 
 **No credentials are required to build**, unlike most sibling Kompakt repos: every dependency
 resolves from the three public repositories in `settings.gradle.kts` (mavenCentral, google, jitpack)
@@ -50,6 +49,10 @@ not change the fallback.
   shows Google's "This app hasn't been verified" interstitial (passable via *Advanced → Open*).
   Clearing that is a console/verification task, not a code change.
 
+That `applicationId` is also a **separate package** from upstream's `at.bitfire.davdroid`, so a stock
+DAVx⁵ can be installed alongside; provider authorities are derived from the package ID for the same
+reason.
+
 ## Installing on a device
 
 ```bash
@@ -68,10 +71,6 @@ is in the hundreds of millions (upstream derives it from the release version) wh
 the system app because the ROM signed it with this same `debug.keystore`, and the DAVx⁵ account plus
 its synced data survive — which is what makes it possible to exercise re-auth against the real OAuth
 client without relinking. Restore the device afterwards by installing an unmodified build.
-
-The `applicationId` `at.bitfire.davdroid.mudita` is a **separate package** from upstream's
-`at.bitfire.davdroid`, so a stock DAVx⁵ can be installed alongside; provider authorities are derived
-from the package ID for the same reason.
 
 ## Frontitude strings
 

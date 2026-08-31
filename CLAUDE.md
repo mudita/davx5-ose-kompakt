@@ -6,16 +6,6 @@ Guidance for Claude Code (claude.ai/code) when working in this repository.
 contains none of this** — no Kompakt code, no `CLAUDE.md`, no `docs/`. If you are on `main`, you are
 on the wrong branch; see [`docs/git-workflow.md`](docs/git-workflow.md).
 
-Global Mudita rules live in the workspace `CLAUDE.md` one directory up. They are not repeated here —
-but this fork **overrides** four of them:
-
-| Workspace rule | Here |
-|---|---|
-| check `../mudita-kompakt-ui` for UI components | this repo uses **`com.mudita:MMD`**, not `kompakt-ui` |
-| JVM 17 | **JDK 21** (`gradle/gradle-daemon-jvm.properties`) |
-| min SDK 31+ | upstream's **`minSdk 24`** |
-| no GMS | still true, but the app *does* call Google's CalDAV and OAuth **endpoints** over HTTP — that is not a Play Services dependency |
-
 ## Overview
 
 **davx5-ose-kompakt** is Mudita's fork of [DAVx⁵ OSE](https://github.com/bitfireAT/davx5-ose)
@@ -23,11 +13,43 @@ but this fork **overrides** four of them:
 so is this fork. Kotlin, Jetpack Compose, Hilt, Room, WorkManager; tests are JUnit 4 + MockK +
 Robolectric, plus instrumented tests on Gradle-managed devices.
 
-The Kompakt build ships as `at.bitfire.davdroid.mudita` — a separate applicationId **and a separate
-account type** from upstream — and replaces the multi-account UI with a single-account, e-ink-sized
-flow: link one Google account through an embedded WebView OAuth flow, sync its calendars, re-authorize
-in place, and expose that state to the other Kompakt apps over signature-protected intents,
-broadcasts and a content provider.
+The Kompakt build ships under **its own applicationId and its own account type**, separate from
+upstream's, and replaces the multi-account UI with a single-account, e-ink-sized flow: link one
+Google account through an embedded WebView OAuth flow, sync its calendars, re-authorize in place, and
+expose that state to the other Kompakt apps
+([`docs/app-integration.md`](docs/app-integration.md)).
+
+## Device and build envelope
+
+Global Mudita rules live in the workspace `CLAUDE.md` one directory up. They are not repeated here —
+but this fork **overrides** four of them:
+
+| Workspace rule | Here |
+|---|---|
+| check `../mudita-kompakt-ui` for UI components | this repo uses **`com.mudita:MMD`**, not `kompakt-ui` |
+| JVM 17 | **JDK 21** (`gradle/gradle-daemon-jvm.properties` pins `toolchainVersion=21`) |
+| min SDK 31+ | upstream's **`minSdk 24`**; `targetSdk 36`, `compileSdk 37` (`CommonBuildConfigPlugin`) |
+| no GMS | still true, but the app *does* call Google's CalDAV and OAuth **endpoints** over HTTP — that is not a Play Services dependency |
+
+Those three plus `sdk.dir` in `local.properties` are the whole toolchain. **No credentials are needed
+to build** ([`docs/local-config.md`](docs/local-config.md)).
+
+## Where each fact is documented
+
+One fact, one home. When something below changes, change it *there* — and check nothing else restates
+it, because nothing in this repo enforces agreement between two Markdown files.
+
+| Topic | Owner |
+|---|---|
+| Device envelope, toolchain and SDK levels | this file, above |
+| Conventions, traps, reachability, what not to do | this file |
+| Design-system and typography rules | this file; the *procedure* is [`docs/figma-workflow.md`](docs/figma-workflow.md) |
+| Signing, OAuth clients, on-device install, Frontitude pull | [`docs/local-config.md`](docs/local-config.md) |
+| Branches, merges, PR rules, `versionName` and tags | [`docs/git-workflow.md`](docs/git-workflow.md) |
+| Workflows, Nexus, `versionCode`, cutting a release | [`docs/ci-cd-release.md`](docs/ci-cd-release.md) |
+| Remotes, upstream base tag, the rebase procedure | [`docs/upstream-maintenance.md`](docs/upstream-maintenance.md) |
+| Cross-app intents, broadcasts, permissions, provider | [`docs/app-integration.md`](docs/app-integration.md) |
+| On-device test recipes, sync intervals, forcing errors | [`docs/kompakt-testing.md`](docs/kompakt-testing.md) |
 
 ## Common commands
 
@@ -39,9 +61,9 @@ broadcasts and a content provider.
 
 # Build / install
 ./gradlew :app-ose:assembleOseDebug
-./gradlew :app-ose:assembleOseQa                                        # minified, like release
-adb install -r -d app-ose/build/outputs/apk/ose/debug/davx-*-debug.apk   # -d: local versionCode is 1
-                                                                        # name the APK if the dir holds more than one
+./gradlew :app-ose:assembleOseQa                                        # see the qa trap below
+adb install -r -d app-ose/build/outputs/apk/ose/debug/davx-*-debug.apk   # see local-config.md for
+                                                                        # why -d, and when the glob breaks
 
 # What a PR checks that you can reproduce locally (test-core.yml), in order
 ./gradlew :app-ose:assembleDebug
@@ -77,7 +99,7 @@ Four Gradle modules plus two build-only ones:
 - **`buildSrc`** — `KompaktDeployTask` and `bump_build_version.py`.
 
 Edges: `app-ose → core → synctools`, `core → frontitude`. One product flavor, `ose`; build types
-`debug`, `qa`, `release` (`qa` inherits `release`, so it is minified too).
+`debug`, `qa`, `release`.
 
 ## Key architectural notes
 
@@ -96,15 +118,15 @@ Edges: `app-ose → core → synctools`, `core → frontitude`. One product flav
 - **Sync:** Android `SyncAdapter` services → `SyncWorker`/`BaseSyncWorker` → CalDAV/CardDAV over
   `dav4jvm` → the `synctools` mapping layer → Calendar/Contacts/Tasks content providers.
   Kompakt-specific defaults (first-sync window, primary-calendar selection, auto-sync interval) live
-  in `KompaktInitDefaults`; `AUTO_SYNC_INTERVAL_SECONDS` is **15 min in debug, 24 h in release**.
+  in `KompaktInitDefaults`; `AUTO_SYNC_INTERVAL_SECONDS` differs between debug and release
+  ([`docs/kompakt-testing.md`](docs/kompakt-testing.md)).
 - **Database:** Room, in `core`. Key entities `Service` (one per CalDAV/CardDAV service),
   `Collection`, `SyncStats`. `AccountRepository` wraps Android `AccountManager`; the account type is
   `bitfire.at.davdroid.mudita` (`@string/account_type`, `translatable="false"`).
 - **Two version objects sit side by side** in `build-logic/src/main/kotlin/davx5/buildlogic/`:
   upstream's `AppVersion` and our `KompaktAppVersion`. `app-ose` can import them because it applies
   the `davx5.common-buildconfig` plugin, whose classpath includes `build-logic` — that is how the
-  product version is wired without editing an upstream file. Version rules:
-  [`docs/git-workflow.md`](docs/git-workflow.md).
+  product version is wired without editing an upstream file.
 - **[`docs/app-integration.md`](docs/app-integration.md) is a published cross-app API, and the only
   record of it.** Every intent action, broadcast, permission, provider authority and provider column
   it lists is consumed by another app on the device (today, the Kompakt calendar app) over a runtime
@@ -126,11 +148,12 @@ Edges: `app-ose → core → synctools`, `core → frontitude`. One product flav
   and is named **"Calendar"** (`frontitude/frontituderc.json`).
 - **The OAuth client ID is chosen at runtime from the signing certificate**
   (`KompaktGoogleOAuthClients`). A build signed with an unregistered key silently gets
-  `FALLBACK_CLIENT_ID` and sign-in fails at Google, not in our code. Signing details:
-  [`docs/local-config.md`](docs/local-config.md).
+  `FALLBACK_CLIENT_ID` and sign-in fails at Google, not in our code
+  ([`docs/local-config.md`](docs/local-config.md)).
 - **`qa` is a minified build** (`initWith(release)`), so anything reflective that works in `debug` can
   still break there.
-- **`versionCode` is 1 in every local build** — only CI produces real ones.
+- **`versionCode` is 1 in every local build** — only CI produces real ones
+  ([`docs/ci-cd-release.md`](docs/ci-cd-release.md)).
 
 ## Fork conventions
 
@@ -188,10 +211,10 @@ Reading a design, the post-change audit checklist and the Frontitude-key convent
   ([`docs/ci-cd-release.md`](docs/ci-cd-release.md)). Kompakt releases are `release.x.y.z`.
 - **Don't edit `AppVersion.kt`** — it is upstream's and tracks the rebase base. **Don't change
   `KompaktAppVersion` as part of a feature change** either; version bumps are their own commit and
-  their own PR.
-- **Don't touch the signing config or the `applicationId`.** `at.bitfire.davdroid.mudita` plus the
-  checked-in `debug.keystore` certificate is what the registered Google OAuth client is bound to;
-  changing either breaks sign-in and on-device installs.
+  their own PR ([`docs/git-workflow.md`](docs/git-workflow.md)).
+- **Don't touch the signing config or the `applicationId`.** The registered Google OAuth client is
+  bound to that exact package-plus-certificate pair, so changing either breaks sign-in and on-device
+  installs ([`docs/local-config.md`](docs/local-config.md)).
 - **Don't hand-edit `frontitude` `strings.xml`** — Frontitude owns that copy and overwrites hand
   edits on the next pull. Pull instead
   ([`docs/local-config.md`](docs/local-config.md#frontitude-strings)).
@@ -226,25 +249,21 @@ Reading a design, the post-change audit checklist and the Frontitude-key convent
   especially for sync, OAuth and cross-app paths, which need a device.
 - **Don't cite line numbers** in these docs or in commit messages. Point at a class, task, constant or
   literal string; those stay valid and are greppable.
+- **Don't restate a fact that already has a home.** Link to its owner in *Where each fact is
+  documented* instead; two copies drift, and the stale one is the one someone acts on.
 
 ## Git workflow
 
 Full process — branches, merges, versions, PR rules — in
-[`docs/git-workflow.md`](docs/git-workflow.md). Day to day:
+[`docs/git-workflow.md`](docs/git-workflow.md). The three things that go wrong without it:
 
-- **Branches:** `task/<JIRA-ID>-short-desc` (or `task/NO-JIRA-<desc>`), `feature/<name>`,
-  `tech/<name>`, `release/x.y.z` cut from `kompakt`.
+- **Branch names carry meaning:** `task/<JIRA-ID>-short-desc` (or `task/NO-JIRA-<desc>`),
+  `feature/<name>`, `tech/<name>`, `release/x.y.z` — all cut from `kompakt`, never worked on directly.
 - **Commit / PR title:** `[<JIRA-ID>] Imperative summary`, e.g.
   `[SHP-1070] Select primary calendar before auto-sync on entry`; `[NO-JIRA]` for minor non-ticket
   work. Avoid vague verbs.
-- **Merge method:** `task/*` → squash; everything else → standard merge.
-- **GitHub defaults a new PR's base to `main`**, the upstream mirror. Always retarget to `kompakt` or
-  a `release/*` branch.
-- **PRs mandatory**, ≥ 2 approvals — a convention, not enforced by any ruleset. Every PR runs
-  compile, lint and `core` tests, but those are not required checks either — nothing mechanically
-  blocks a merge.
-- The convention is to reach `kompakt` only via `release/* → kompakt`, with a release cut by tagging
-  `release.x.y.z`.
+- **GitHub defaults a new PR's base to `main`**, the upstream mirror, which is never a valid target.
+  Retarget to `kompakt` or a `release/*` branch.
 
 ## Reachability on Kompakt
 
@@ -269,8 +288,8 @@ Only CalDAV is part of this flow — `KompaktLoginFinalizeModel` and `KompaktIni
 The deliberate entry points are `Kompakt`-prefixed and specified in
 [`docs/app-integration.md`](docs/app-integration.md): `KompaktAccountsActivity`'s `ACTION_ONBOARDING`
 and `ACTION_REAUTH`, `KompaktSyncRequestReceiver`, `KompaktLogoutRequestReceiver` and
-`KompaktAuthStateProvider`. Signature-protected, consumed by the calendar app, and covered by the
-public-API rule in *Won't do*.
+`KompaktAuthStateProvider`. Consumed by the calendar app, and covered by the public-API rule in
+*Won't do*.
 
 One exception to "specified": `KompaktAccountsActivity` also honours Android's standard
 `Intent.ACTION_SYNC` (it opens with a sync already requested). Nothing in this app sends it there, so

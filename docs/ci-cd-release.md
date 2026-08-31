@@ -18,8 +18,12 @@ Kompakt release path**.
 - `release.yml` fires only on a `v*` tag and builds a signed *upstream* release with bitfire's
   keystore secrets, which this fork does not have. **Never create a `v*` tag** — Kompakt releases are
   `release.x.y.z`.
-- `test-core.yml` and `test-synctools.yml` do still run on pull requests, and are the PR gate
-  (compile, lint, `core` unit tests, instrumented tests). Leave them alone.
+- `test-core.yml` and `test-synctools.yml` do still run on pull requests, and are the only PR gate
+  there is. `test-core.yml` has no branch or path filter, so it runs on every PR: `app-ose` debug
+  compile, `core` and `app-ose` lint, then `core` unit and instrumented tests. `test-synctools.yml`
+  adds its own lint and tests **only** when the PR touches `synctools/**` or
+  `gradle/libs.versions.toml`. Neither is a **required** check — a red run does not block the merge
+  button. Leave both workflows alone.
 
 `test-core.yml` and `release.yml` both call tasks on a module named `app`, which doesn't exist here;
 Gradle resolves them to `:app-ose:` (see *Traps* in [`../CLAUDE.md`](../CLAUDE.md)). Don't "fix" them.

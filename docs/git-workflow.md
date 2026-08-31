@@ -58,18 +58,14 @@ carries only `x.y.z`, `x.y.z-SNAPSHOT` or `x.y.z-rcN`, so nothing has to be stri
 
 ## Builds
 
-Full CI reference — every workflow, trigger and Nexus path — is in
-[`ci-cd-release.md`](ci-cd-release.md). The part that matters when branching:
+Every workflow, trigger and Nexus path is in [`ci-cd-release.md`](ci-cd-release.md). The part that
+matters when you pick a branch: a **push** to `release/**`, `feature/**` or `tech/**` builds a QA APK
+(a merge and a direct push count the same), the `release.x.y.z` tag builds production, and `kompakt`
+and `task/**` build nothing at all.
 
-Any **push** to `release/**`, `feature/**` or `tech/**` builds a QA APK to Nexus — a merge and a
-direct push count the same. The `release.x.y.z` tag builds production. Two things are specific to this
-repo:
-
-| Event | What runs |
-|---|---|
-| **PR opened / updated**, any base | `test-core.yml` — compile `app-ose:assembleDebug`, then lint (`core:lintDebug`, `app-ose:lintOseDebug`), `core` unit tests and `core` instrumented tests. It has no branch or path filter, so it runs on every PR. `test-synctools.yml` adds its own tests **only** when the PR touches `synctools/**` or `gradle/libs.versions.toml`. Neither is a **required** check — a red run does not block the merge button. |
-| `release → kompakt` | **nothing** — `kompakt` is not a build trigger, and neither is `task/**` |
-
+Pull requests are separate from that: the upstream test workflows run on every PR whatever its base,
+and neither is a **required** check — a red run does not block the merge button. What they run is in
+[`ci-cd-release.md`](ci-cd-release.md).
 
 ## Versions (`KompaktAppVersion` in `build-logic/src/main/kotlin/davx5/buildlogic/KompaktAppVersion.kt`)
 
@@ -79,9 +75,8 @@ edit `AppVersion.kt`.
 
 - `KompaktAppVersion.NAME` is the `versionName`. Development on a release: `x.y.z-SNAPSHOT`; release
   candidates `x.y.z-rcN`; production `x.y.z`.
-- `KompaktAppVersion.CODE` is only a local fallback (`1`). CI takes `versionCode` from the
-  `VERSION_CODE` env var, produced by `buildSrc/src/main/kotlin/scripts/bump_build_version.py`.
-  Never hardcode a real version code.
+- `KompaktAppVersion.CODE` is only a local fallback; the real `versionCode` comes from CI
+  ([`ci-cd-release.md`](ci-cd-release.md)). Never hardcode one.
 - **Git tags exist for builds that ship** — `release.x.y.z` (also `qa.*` and `development.*` for
   ad-hoc builds). RCs are not tagged; an RC is a version bump on `release/*`, built from the branch
   push.
