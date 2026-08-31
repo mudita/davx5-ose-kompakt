@@ -1,0 +1,26 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/KompaktSyncRequestReceiver.kt
+  3b7e6ae5f5d8a70c 36-37,62-64,86-92
+docs/app-integration.md
+  3b7e6ae5f5d8a70c 122-124,144-152
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "ddf38c8498ff38073021954a5cda17e5089392a9",
+  "prompts": {
+    "3b7e6ae5f5d8a70c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d68c3ada-ac9f-41c0-b1d1-f2ce1dc6e400",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 38,
+      "total_deletions": 11,
+      "accepted_lines": 559,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/b6767d68fc8caf5c9cd0ec51e1a1a7c6e5b8c69ba45c247aa002073157d99e10"
+    }
+  }
+}
