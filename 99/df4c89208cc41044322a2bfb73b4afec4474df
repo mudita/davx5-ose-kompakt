@@ -1,0 +1,38 @@
+docs/superpowers/specs/2026-08-27-linked-account-per-service-sync-design.md
+  4743e73b0bbdc200 1-240
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "99df4c89208cc41044322a2bfb73b4afec4474df",
+  "prompts": {
+    "202a8fae1aeb83e9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3f8d274b-f885-40b7-b2c7-0b6b3654eb62",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 299,
+      "total_deletions": 0,
+      "accepted_lines": 299,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/2e75502e6e5f0b3ca8bb9dfe1f70e9546443ce10175ad61d23db004e77ef6450"
+    },
+    "4743e73b0bbdc200": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5176ef9c-c465-401e-89f4-3a402aaa516f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 485,
+      "total_deletions": 245,
+      "accepted_lines": 240,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/bc8944093a32f0b589e685e7f394fccaf4c8e8424565d716ea57648ab2ba0747"
+    }
+  }
+}

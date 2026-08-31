@@ -1,0 +1,24 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktServiceSyncCell.kt
+  4743e73b0bbdc200 1-181
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "10c762cc37070b736744df04a979e54af0f9e1e6",
+  "prompts": {
+    "4743e73b0bbdc200": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5176ef9c-c465-401e-89f4-3a402aaa516f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 181,
+      "total_deletions": 0,
+      "accepted_lines": 181,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/5372205dba7ffd7fda2c3ecc1a3392549f18f9f56eb6aac99e49feca8e55f804"
+    }
+  }
+}

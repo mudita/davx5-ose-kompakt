@@ -1,0 +1,30 @@
+core/src/main/kotlin/at/bitfire/davdroid/network/KompaktOAuthGoogle.kt
+  00ff60b2f4aaaead 25,40-41,55
+docs/superpowers/specs/2026-08-19-mudita-client-contacts-scope-probe.md
+  00ff60b2f4aaaead 1-59
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktGoogleLoginViewModel.kt
+  00ff60b2f4aaaead 93-96
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktReauthModel.kt
+  00ff60b2f4aaaead 93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "f2f37217704f294bcea4d990d190c49fcdcae742",
+  "prompts": {
+    "00ff60b2f4aaaead": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "92a909cf-6359-4133-b476-8848393a0684",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 33699,
+      "total_deletions": 1,
+      "accepted_lines": 33698,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/e3729c8ba7be88ee157f84c0586af24469054452b8eb0cab5ea81b3462b6760b"
+    }
+  }
+}

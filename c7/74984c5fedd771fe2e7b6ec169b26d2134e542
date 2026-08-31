@@ -1,0 +1,26 @@
+docs/MOK-5642-auth-services-investigation.md
+  c4010f7cf5e18c74 1-202
+docs/MOK-5642-refinement.md
+  c4010f7cf5e18c74 164-165
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "c774984c5fedd771fe2e7b6ec169b26d2134e542",
+  "prompts": {
+    "c4010f7cf5e18c74": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "10212fbd-9696-4863-967b-8d3332d09835",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 204,
+      "total_deletions": 0,
+      "accepted_lines": 33825,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/09eac895beab4c3e67ee0d5fea305781e1343c0564277d6f0be2f035c661cb7a"
+    }
+  }
+}

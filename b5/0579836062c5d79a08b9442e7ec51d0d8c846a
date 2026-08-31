@@ -1,0 +1,34 @@
+docs/ci-cd-release.md
+  202a8fae1aeb83e9 24-25,74-75
+docs/figma-workflow.md
+  202a8fae1aeb83e9 1-37
+docs/local-config.md
+  202a8fae1aeb83e9 39-41,60-63,65-67,76-93
+docs/git-workflow.md
+  202a8fae1aeb83e9 51,63-65,68-69,71-72,107-112
+docs/kompakt-testing.md
+  202a8fae1aeb83e9 168
+docs/upstream-maintenance.md
+  202a8fae1aeb83e9 21,23-24,43-44,69-71,78-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "b50579836062c5d79a08b9442e7ec51d0d8c846a",
+  "prompts": {
+    "202a8fae1aeb83e9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3f8d274b-f885-40b7-b2c7-0b6b3654eb62",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 968,
+      "total_deletions": 46,
+      "accepted_lines": 968,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/391b279ca7b79aca48a6e2cfd20bc3fae814dee82cd9f2fe1517cb386423d0b7"
+    }
+  }
+}

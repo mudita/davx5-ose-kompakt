@@ -1,0 +1,24 @@
+core/src/main/kotlin/at/bitfire/davdroid/sync/worker/BaseSyncWorker.kt
+  e7b503d11f0507de 229-240,260-262
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "f57d9e6bc52a24a97508570316269895806e399e",
+  "prompts": {
+    "e7b503d11f0507de": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2cf33a71-3532-4899-89f6-41a964b681e4",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 15,
+      "total_deletions": 2,
+      "accepted_lines": 15,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/1d52d171494aceb34e75217105c3fef80550818720258bbe361bdffc4a791345"
+    }
+  }
+}

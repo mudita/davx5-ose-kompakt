@@ -1,0 +1,27 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/KompaktLinkedAccountScreen.kt
+  bdebc7feac533da2 51,80,86,97,112,127-159
+docs/kompakt-integration.md
+  bdebc7feac533da2 5-7,34-36,42-92,154,166,232
+core/src/main/kotlin/at/bitfire/davdroid/ui/KompaktLinkedAccountModel.kt
+  bdebc7feac533da2 86,102,277-296
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "7327ec112d57c6aa1d34c80a33d458cfbc49e8fc",
+  "prompts": {
+    "bdebc7feac533da2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bd7c05b4-174d-405d-a2fe-1461abb14bff",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": null,
+      "messages": [],
+      "total_additions": 20,
+      "total_deletions": 17,
+      "accepted_lines": 120,
+      "overriden_lines": 0
+    }
+  }
+}

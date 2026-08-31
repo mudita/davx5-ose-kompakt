@@ -1,0 +1,24 @@
+docs/git-workflow.md
+  202a8fae1aeb83e9 69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "0ba8735cd52c1e069189860b8e2660e7d542f042",
+  "prompts": {
+    "202a8fae1aeb83e9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3f8d274b-f885-40b7-b2c7-0b6b3654eb62",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 1273,
+      "total_deletions": 55,
+      "accepted_lines": 1001,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/391b279ca7b79aca48a6e2cfd20bc3fae814dee82cd9f2fe1517cb386423d0b7"
+    }
+  }
+}
