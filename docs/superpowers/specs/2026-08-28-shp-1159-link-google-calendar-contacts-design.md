@@ -181,9 +181,14 @@ Creating a CardDAV service makes `AutomaticSyncManager.updateAutomaticSync` read
 four hours. Contacts would quietly acquire a four-hourly periodic worker at link time.
 
 When Contacts consent is granted, the flow therefore sets the CONTACTS interval explicitly to
-`KompaktInitDefaults.AUTO_SYNC_INTERVAL_SECONDS` (24 h; 15 min in debug), mirroring what
-`KompaktInitDefaults` does for EVENTS on first setup. That also makes the toggle read **On**, which is
-what SHP-1156 and SHP-1155 expect from a granted consent.
+`AUTO_SYNC_INTERVAL_SECONDS` (24 h; 15 min in debug), mirroring what `KompaktInitDefaults` does for
+EVENTS on first setup. That also makes the toggle read **On**, which is what SHP-1156 and SHP-1155
+expect from a granted consent.
+
+The write itself belongs to `KompaktInitDefaults`, next to the EVENTS one and the constant they share;
+`KompaktLoginFinalizeModel` only decides *when* to call it. It stays outside `maybeApply`, which is
+gated on a CalDAV service and a resolvable primary calendar — a Contacts-only link has neither, and
+would silently keep upstream's four-hour interval.
 
 This moves no data: no collection is preselected, so those syncs are no-ops until SHP-1156. The
 alternative — leaving upstream's four-hour default in place — is simply wrong for this device.

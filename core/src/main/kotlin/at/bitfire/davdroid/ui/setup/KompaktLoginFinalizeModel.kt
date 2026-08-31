@@ -13,9 +13,7 @@ import at.bitfire.davdroid.db.Service
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
 import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
-import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.sync.KompaktInitDefaults
-import at.bitfire.davdroid.sync.SyncDataType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
@@ -25,8 +23,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import java.util.logging.Level
-import java.util.logging.Logger
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -39,10 +35,9 @@ import kotlin.time.Duration.Companion.milliseconds
 @HiltViewModel
 class KompaktLoginFinalizeModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val accountSettingsFactory: AccountSettings.Factory,
+    private val initDefaults: KompaktInitDefaults,
     private val serviceRepository: DavServiceRepository,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
-    private val logger: Logger
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     companion object {
@@ -62,7 +57,7 @@ class KompaktLoginFinalizeModel @Inject constructor(
                 .mapNotNull { type -> serviceRepository.getByAccountAndType(account.name, type) }
 
             if (services.any { service -> service.type == Service.TYPE_CARDDAV })
-                applyContactsSyncInterval(account)
+                initDefaults.applyContactsSyncInterval(account)
 
             if (services.isNotEmpty())
                 withTimeoutOrNull(DISCOVERY_WAIT_MS.milliseconds) {
@@ -72,17 +67,6 @@ class KompaktLoginFinalizeModel @Inject constructor(
                             .first { succeeded -> succeeded }
                 }
             _ready.value = true
-        }
-    }
-
-    // Creating the CardDAV service makes upstream fall back to its four-hour DEFAULT_SYNC_INTERVAL for
-    // contacts; the Kompakt interval has to replace it before that periodic worker outlives setup.
-    private fun applyContactsSyncInterval(account: Account) {
-        try {
-            accountSettingsFactory.create(account)
-                .setSyncInterval(SyncDataType.CONTACTS, KompaktInitDefaults.AUTO_SYNC_INTERVAL_SECONDS)
-        } catch (e: Exception) {
-            logger.log(Level.WARNING, "Couldn't set contacts sync interval for $account", e)
         }
     }
 
