@@ -1,0 +1,24 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktServiceSyncStatus.kt
+  4743e73b0bbdc200 1-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "a13472dcf34d45f2591aa9e631bb3334bbc8386b",
+  "prompts": {
+    "4743e73b0bbdc200": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5176ef9c-c465-401e-89f4-3a402aaa516f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 37,
+      "total_deletions": 0,
+      "accepted_lines": 2589,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/822d0cd2a0dc97baa607fb271e96974fd1ce6032af10b901f431073e06706980"
+    }
+  }
+}

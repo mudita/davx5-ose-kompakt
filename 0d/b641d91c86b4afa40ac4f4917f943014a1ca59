@@ -1,0 +1,38 @@
+docs/kompakt-testing.md
+  4743e73b0bbdc200 7-9,56,60-61,72,106,147,194
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "0db641d91c86b4afa40ac4f4917f943014a1ca59",
+  "prompts": {
+    "4743e73b0bbdc200": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5176ef9c-c465-401e-89f4-3a402aaa516f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 23,
+      "total_deletions": 20,
+      "accepted_lines": 3154,
+      "overriden_lines": 1,
+      "messages_url": "https://gitai.miquido.dev/cas/ac6e5383c65829f018986e2a6ad72a558bc05dfd1d409f0933745970e727344d"
+    },
+    "600713fde13d3394": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c1d56a49-e5e7-48db-bd46-72739cf170b3",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 545,
+      "total_deletions": 4,
+      "accepted_lines": 844,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/a0fface5c0e237ba8695ee2d2515324c815f35eb64c2a6c064199bbd986e8bff"
+    }
+  }
+}

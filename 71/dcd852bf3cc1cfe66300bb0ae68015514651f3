@@ -1,0 +1,26 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktGoogleLogin.kt
+  3e16c53e1930c792 98-101,103-110
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktGoogleLoginViewModel.kt
+  3e16c53e1930c792 15,52-56,60,89,96-102,121,138
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "71dcd852bf3cc1cfe66300bb0ae68015514651f3",
+  "prompts": {
+    "3e16c53e1930c792": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e035d732-7051-4bd4-b49b-23ec704887a7",
+        "model": "claude-opus-5"
+      },
+      "human_author": "piotriwaniec",
+      "messages": [],
+      "total_additions": 29,
+      "total_deletions": 9,
+      "accepted_lines": 29,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/3bec8d61d757ecc451cbfb945176675f2cf4be612ead7f9a9afcca3c2a02c5af"
+    }
+  }
+}
