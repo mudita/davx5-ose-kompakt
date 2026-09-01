@@ -5,7 +5,7 @@ Practical recipes for testing the Kompakt account/sync flow on a device or emula
 ## Auto-sync interval (debug vs. release)
 
 The interval that the **"Auto synchronization"** toggle enables depends on the build type
-(`KompaktLinkedAccountModel.AUTO_SYNC_INTERVAL_SECONDS`):
+(`KompaktInitDefaults.AUTO_SYNC_INTERVAL_SECONDS`):
 
 | Build | Auto-sync interval |
 |---|---|
@@ -165,7 +165,7 @@ adb shell "sqlite3 /data/system_ce/0/accounts_ce.db \
 
 ## Auth (token) state export — testing
 
-The auth state is exposed to other apps two ways (see `docs/kompakt-integration.md` and `KompaktAuthState`):
+The auth state is exposed to other apps two ways (see [`app-integration.md`](app-integration.md) and `KompaktAuthState`):
 a read‑only `ContentProvider` at `content://at.bitfire.davdroid.mudita.kompakt.authstate/auth_state` (column
 `needs_reauth` = 0/1 per account), and an `AUTH_STATE_CHANGED` broadcast fired **only on a transition**.
 Both are guarded by the signature permission `at.bitfire.davdroid.mudita.permission.READ_AUTH_STATE`.

@@ -21,7 +21,7 @@ import androidx.core.net.toUri
  *    [android.content.ContentResolver.notifyChange] on [CONTENT_URI], so consumers can also observe
  *    via a [android.database.ContentObserver].
  *
- * See `docs/kompakt-integration.md` for the consumer-side contract.
+ * See `docs/app-integration.md` for the consumer-side contract.
  */
 object KompaktAuthState {
 

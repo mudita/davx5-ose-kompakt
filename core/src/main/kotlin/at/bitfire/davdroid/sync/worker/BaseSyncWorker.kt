@@ -216,7 +216,7 @@ abstract class BaseSyncWorker(
                 else -> wasNeedingReauth
             }
             // Kompakt: on a state transition, notify other (same-signed) apps so they can react
-            // (e.g. prompt re-login). See KompaktAuthState / docs/kompakt-integration.md.
+            // (e.g. prompt re-login). See KompaktAuthState / docs/app-integration.md.
             if (nowNeedingReauth != wasNeedingReauth)
                 KompaktAuthStateBroadcaster.notifyAuthStateChanged(applicationContext, account, nowNeedingReauth)
         }
