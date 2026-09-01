@@ -1,0 +1,24 @@
+docs/superpowers/specs/2026-08-28-shp-1159-link-google-calendar-contacts-design.md
+  7696b3a61edfb364 184-191
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "60fcfc472ebf9187d0cc4b3cda809fb16ff15ab8",
+  "prompts": {
+    "7696b3a61edfb364": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "705536a6-57f5-4d31-9560-91a2b5ddbc9f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "piotriwaniec",
+      "messages": [],
+      "total_additions": 257,
+      "total_deletions": 3,
+      "accepted_lines": 8,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/bde134adc49d3c127b0aaad1ad89be8233f7aa7d6c585ba55e54da1567e3bad6"
+    }
+  }
+}
