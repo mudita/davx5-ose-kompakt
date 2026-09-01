@@ -4,6 +4,8 @@
 
 package at.bitfire.davdroid.ui.composable
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,7 +18,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -26,38 +27,55 @@ import at.bitfire.davdroid.ui.KompaktTypography900
 import com.mudita.mmd.components.text.TextMMD
 
 /**
- * A Kompakt list row: a 28dp leading icon, a title ((NEW) Label/Small/900) and subtitle
- * ((NEW) Body/Medium/500), with an optional [trailing] slot (e.g. a switch).
+ * A Kompakt list row: a 28dp [leading] slot, a title ((NEW) Label/Medium/900) and subtitle
+ * ((NEW) Label/Small/500), with an optional [trailing] slot (e.g. a switch) and an optional bottom
+ * separator.
  */
 @Composable
 fun KompaktListCell(
-    icon: Painter,
     title: String,
     subtitle: String,
     modifier: Modifier = Modifier,
-    trailing: @Composable (() -> Unit)? = null
+    leading: @Composable () -> Unit = {},
+    trailing: @Composable (() -> Unit)? = null,
+    showDivider: Boolean = false
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 80.dp)
-            .padding(horizontal = 16.dp, vertical = 10.dp)
-    ) {
-        Icon(
-            painter = icon,
-            contentDescription = null,
-            modifier = Modifier.size(28.dp)
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            TextMMD(text = title, style = KompaktTypography900.labelSmall)
-            TextMMD(text = subtitle, style = KompaktTypography500.labelMedium)
-        }
-        if (trailing != null) {
+    Box(modifier = modifier.fillMaxWidth()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 80.dp)
+                .padding(horizontal = 16.dp, vertical = 4.dp)
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(28.dp)
+            ) {
+                leading()
+            }
             Spacer(modifier = Modifier.width(16.dp))
-            trailing()
+            Column(
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                TextMMD(text = title, style = KompaktTypography900.labelMedium)
+                TextMMD(text = subtitle, style = KompaktTypography500.labelSmall)
+            }
+            if (trailing != null) {
+                Spacer(modifier = Modifier.width(16.dp))
+                trailing()
+            }
         }
+
+        if (showDivider)
+            KompaktDottedDivider(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    // starts where the title does: row padding + icon slot + gap
+                    .padding(start = 16.dp + 28.dp + 16.dp)
+                    .fillMaxWidth()
+            )
     }
 }
 
@@ -65,8 +83,15 @@ fun KompaktListCell(
 @Composable
 private fun KompaktListCell_Preview() {
     KompaktListCell(
-        icon = painterResource(R.drawable.ic_kompakt_calendar),
         title = "Calendar",
-        subtitle = "Auto synchronization",
+        subtitle = "Last sync - Today 11:30",
+        leading = {
+            Icon(
+                painter = painterResource(R.drawable.ic_kompakt_success),
+                contentDescription = null,
+                modifier = Modifier.size(28.dp)
+            )
+        },
+        showDivider = true
     )
 }

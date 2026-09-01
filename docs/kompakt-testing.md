@@ -4,7 +4,9 @@ Practical recipes for testing the Kompakt account/sync flow on a device or emula
 
 ## Auto-sync interval (debug vs. release)
 
-The interval that the **"Auto synchronization"** toggle enables depends on the build type
+The linked-account screen now lists **Calendar** and **Contacts** as separate rows, each with its own
+toggle and status line; the Contacts toggle is inert until contacts sync is implemented. The interval
+that the Calendar toggle enables depends on the build type
 (`KompaktInitDefaults.AUTO_SYNC_INTERVAL_SECONDS`):
 
 | Build | Auto-sync interval |
@@ -51,11 +53,12 @@ adb shell am force-stop at.bitfire.davdroid.mudita
 adb shell "run-as at.bitfire.davdroid.mudita sqlite3 databases/services.db \
   \"UPDATE collection SET url = url || 'force404/' WHERE sync = 1;\""
 
-# 3) open the app and tap 'Synchronize now'
+# 3) open the app and tap 'Synchronize'
 adb shell monkey -p at.bitfire.davdroid.mudita -c android.intent.category.LAUNCHER 1
 ```
 
-Expected: after "Loading data…", the **"Account sync failed / Try again"** dialog appears.
+Expected: the Calendar row shows **"Syncing now…"**, then the
+**"Account sync failed / Try again"** dialog appears.
 
 Restore afterwards:
 
@@ -66,7 +69,7 @@ adb shell "run-as at.bitfire.davdroid.mudita sqlite3 databases/services.db \
 ```
 
 Notes / caveats:
-- A manual "Synchronize now" does **not** re-run collection discovery, so the broken URL stays in effect
+- A manual "Synchronize" does **not** re-run collection discovery, so the broken URL stays in effect
   for the test. If a periodic/background sync or a re-discovery runs, the real collection may be re-added
   (with `sync = false`); if the state gets messy, just unlink and re-link the account.
 - If the server returns **401** for the bogus path (instead of 404), you'll get "Account not linked"
@@ -100,7 +103,7 @@ Notes / caveats:
 
 - **UI message + manual guard:** fill storage below the system threshold (e.g. `adb shell` write a large file
   until free space drops past the "storage running out" point), open the linked-account screen → the
-  **"Your storage is full"** message appears immediately; tapping **Synchronize now** keeps showing it and
+  **"Your storage is full"** message appears immediately; tapping **Synchronize** keeps showing it and
   does not start a sync. Delete the file → on next resume the message clears.
 - **Automatic park & auto-resume:** with auto-sync on, fill storage low → the periodic/one-time sync workers
   sit ENQUEUED with the storage-not-low constraint unmet (no `SQLITE_FULL` loop in logcat). Free space → the
@@ -141,7 +144,7 @@ Revoke the calendar runtime permission, then sync:
 ```bash
 adb shell pm revoke at.bitfire.davdroid.mudita android.permission.WRITE_CALENDAR
 adb shell pm revoke at.bitfire.davdroid.mudita android.permission.READ_CALENDAR
-# tap 'Synchronize now' → Calendar Provider access error → "Account sync failed"
+# tap 'Synchronize' → Calendar Provider access error → "Account sync failed"
 adb shell pm grant at.bitfire.davdroid.mudita android.permission.READ_CALENDAR
 adb shell pm grant at.bitfire.davdroid.mudita android.permission.WRITE_CALENDAR
 ```
@@ -188,7 +191,7 @@ with `needs_reauth=1`). After re-linking and a clean sync it flips back (and fir
 > only its **contents** may be invalidated.
 
 Revoke the account's access on the Google side
-(Google Account -> Security -> third-party access -> remove DAVx5), then tap **Synchronize now**. The
+(Google Account -> Security -> third-party access -> remove DAVx5), then tap **Synchronize**. The
 refresh token is now invalid -> AppAuth's refresh fails (`invalid_grant`) -> `OAuthInterceptor` returns
 `null` -> the request goes out without a bearer -> server returns **401** -> `needs_reauth` flips to 1
 and `AUTH_STATE_CHANGED` fires. Re-link the account to recover.

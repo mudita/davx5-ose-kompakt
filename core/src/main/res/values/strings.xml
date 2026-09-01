@@ -594,5 +594,12 @@
     <string name="widget_icon_sync_label">Icon Sync Button</string>
     <string name="widget_sync_description">Tap to run synchronization manually.</string>
 
+    <!-- Kompakt: TODO replace temporary placeholders with :frontitude keys. Once connected-->
+    <string name="kompakt_label_contacts">Contacts</string>
+    <string name="kompakt_status_sync_off">Sync is OFF</string>
+    <string name="kompakt_status_syncing_now">Syncing now...</string>
+    <string name="kompakt_status_last_sync">Last sync - %1$s</string>
+    <string name="kompakt_button_synchronize">Synchronize</string>
+
     <!-- cert4android -->
 </resources>

@@ -218,6 +218,7 @@ that maps to a `(NEW)` Figma style:
 | `Label/Small/900` | `KompaktTypography900.labelSmall` |
 | `Body/Small/500` | `KompaktTypography500.bodySmall` |
 | `Body/Medium/500` | `KompaktTypography500.bodyMedium` |
+| `Label/Small/500` | `KompaktTypography500.labelSmall` |
 | `Label/Medium/500` | `KompaktTypography500.labelMedium` |
 
 Reading a design, the post-change audit checklist and the Frontitude-key convention:
