@@ -1,0 +1,36 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktReauthModel.kt
+  2434bc169f91a3a5 14,43,107
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktServiceSwitch.kt
+  2434bc169f91a3a5 30-41,52-55,58
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountScreen.kt
+  2434bc169f91a3a5 55
+docs/app-integration.md
+  2434bc169f91a3a5 147-151
+core/src/main/kotlin/at/bitfire/davdroid/db/SyncStatsDao.kt
+  2434bc169f91a3a5 33
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountModel.kt
+  2434bc169f91a3a5 31-32,53,118-127,301-306,308-310,347,349-351,359,385-386,426-427
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktInitDefaults.kt
+  2434bc169f91a3a5 146-150,152-153
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "e652855868fc6a3ff01270340d1cadd084f3d7d3",
+  "prompts": {
+    "2434bc169f91a3a5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d426cd3a-bbea-470e-baa2-5bff24092beb",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 381,
+      "total_deletions": 45,
+      "accepted_lines": 1378,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/0f8200e98ba4743e87237473a82add32798fedc1406321dca1de1970cffdd17f"
+    }
+  }
+}
