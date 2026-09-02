@@ -81,7 +81,12 @@ class KompaktAddConsentModel @AssistedInject constructor(
         /** The missing consent is granted and applied; the screen may close. */
         data object Granted : AddConsentState
 
-        /** The user cancelled or declined — no error surfaces, the screen just closes. */
+        /**
+         * Authorization came back without the scope this flow asked for — nothing was granted to apply,
+         * so no error surfaces and the screen just closes with the toggle still off. Cancelling the
+         * WebView is not this: it's indistinguishable from any other authorization failure and reports
+         * [Failed], the same as a link or a re-authorization does.
+         */
         data object Denied : AddConsentState
 
         /** A technical failure: a different account, or the request/apply step failed. */
@@ -113,10 +118,6 @@ class KompaktAddConsentModel @AssistedInject constructor(
 
     fun signInFailed() {
         _state.value = AddConsentState.Failed
-    }
-
-    fun consentRefused() {
-        _state.value = AddConsentState.Denied
     }
 
     fun authenticate(authResponse: AuthorizationResponse) {

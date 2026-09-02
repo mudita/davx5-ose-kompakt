@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -74,13 +73,11 @@ private fun AddConsentOAuth(
     model: KompaktAddConsentModel,
     onNavUp: () -> Unit
 ) {
-    val authContract = remember { model.authorizationContract() }
-    val authRequestContract = rememberLauncherForActivityResult(authContract) { authResponse ->
-        when {
-            authResponse != null -> model.authenticate(authResponse)
-            authContract.consentRefused -> model.consentRefused()
-            else -> model.signInFailed()
-        }
+    val authRequestContract = rememberLauncherForActivityResult(model.authorizationContract()) { authResponse ->
+        if (authResponse != null)
+            model.authenticate(authResponse)
+        else
+            model.signInFailed()
     }
 
     LaunchedEffect(Unit) {
