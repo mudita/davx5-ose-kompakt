@@ -44,6 +44,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
 import com.mudita.frontitude.R as RFrontitude
+import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.ui.KompaktTypography900
 import at.bitfire.davdroid.ui.account.KompaktLinkedAccountModel.ReauthPhase
 import at.bitfire.davdroid.ui.composable.KompaktFramedIcon
@@ -57,7 +58,7 @@ import com.mudita.mmd.components.text.TextMMD
 
 data class KompaktLinkedAccountActions(
     val onBack: () -> Unit = {},
-    val onToggleCalendar: (Boolean) -> Unit = {},
+    val onToggleService: (KompaktSyncService, Boolean) -> Unit = { _, _ -> },
     val onSyncNow: () -> Unit = {},
     val onUnlink: () -> Unit = {},
     val onConsumeDialog: () -> Unit = {},
@@ -128,7 +129,7 @@ fun KompaktLinkedAccountScreen(
             state = state,
             actions = KompaktLinkedAccountActions(
                 onBack = onBack,
-                onToggleCalendar = model::setCalendarSync,
+                onToggleService = model::setServiceSync,
                 onSyncNow = model::syncNow,
                 onUnlink = model::unlink,
                 onConsumeDialog = model::consumeDialog,
@@ -153,7 +154,7 @@ fun KompaktLinkedAccountContent(
     showAccountLinkedDialog: Boolean
 ) {
     var showUnlinkDialog by remember { mutableStateOf(false) }
-    var showDisableCalendarDialog by remember { mutableStateOf(false) }
+    var serviceToDisable by remember { mutableStateOf<KompaktSyncService?>(null) }
 
     KompaktTheme {
         Scaffold(
@@ -216,8 +217,8 @@ fun KompaktLinkedAccountContent(
                     title = stringResource(RFrontitude.string.common_label_calendar),
                     state = state.calendar,
                     onCheckedChange = { enabled ->
-                        if (enabled) actions.onToggleCalendar(true)
-                        else showDisableCalendarDialog = true
+                        if (enabled) actions.onToggleService(KompaktSyncService.CALENDAR, true)
+                        else serviceToDisable = KompaktSyncService.CALENDAR
                     },
                     onFailureClick = actions.onFailureClick,
                     showDivider = true
@@ -226,7 +227,10 @@ fun KompaktLinkedAccountContent(
                 KompaktServiceSyncCell(
                     title = stringResource(RFrontitude.string.common_label_contacts),
                     state = state.contacts,
-                    onCheckedChange = { /* SHP-1151 */ },
+                    onCheckedChange = { enabled ->
+                        if (enabled) actions.onToggleService(KompaktSyncService.CONTACTS, true)
+                        else serviceToDisable = KompaktSyncService.CONTACTS
+                    },
                     onFailureClick = actions.onFailureClick
                 )
             }
@@ -249,19 +253,19 @@ fun KompaktLinkedAccountContent(
         )
     }
 
-    if (showDisableCalendarDialog) {
+    serviceToDisable?.let { service ->
         KompaktModalSheet(
-            onDismissRequest = { showDisableCalendarDialog = false },
+            onDismissRequest = { serviceToDisable = null },
             title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_disablecalendarsync),
             text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_nothingwillsynchronizewithyour),
             icon = painterResource(R.drawable.ic_kompakt_alert),
             confirmLabel = stringResource(RFrontitude.string.common_button_disable),
             onConfirm = {
-                showDisableCalendarDialog = false
-                actions.onToggleCalendar(false)
+                serviceToDisable = null
+                actions.onToggleService(service, false)
             },
             dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
-            onDismiss = { showDisableCalendarDialog = false }
+            onDismiss = { serviceToDisable = null }
         )
     }
 
