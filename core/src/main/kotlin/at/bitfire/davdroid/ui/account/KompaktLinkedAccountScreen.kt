@@ -43,7 +43,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
-import com.mudita.frontitude.R as RFrontitude
 import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.ui.KompaktTypography900
 import at.bitfire.davdroid.ui.account.KompaktLinkedAccountModel.ReauthPhase
@@ -53,6 +52,7 @@ import at.bitfire.davdroid.ui.composable.KompaktModalSheet
 import at.bitfire.davdroid.ui.composable.KompaktTheme
 import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
 import at.bitfire.davdroid.ui.setup.KompaktLoginActivity
+import com.mudita.frontitude.R as RFrontitude
 import com.mudita.mmd.components.buttons.OutlinedButtonMMD
 import com.mudita.mmd.components.text.TextMMD
 

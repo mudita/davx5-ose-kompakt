@@ -26,10 +26,10 @@ import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
 import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.settings.KompaktAccountSettings
 import at.bitfire.davdroid.sync.KompaktInitDefaults
-import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.sync.KompaktStartSyncUseCase
-import at.bitfire.davdroid.sync.KompaktSyncWork
 import at.bitfire.davdroid.sync.KompaktStorage
+import at.bitfire.davdroid.sync.KompaktSyncService
+import at.bitfire.davdroid.sync.KompaktSyncWork
 import at.bitfire.davdroid.sync.SyncConditions
 import at.bitfire.davdroid.util.broadcastReceiverFlow
 import dagger.assisted.Assisted
@@ -50,6 +50,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.stateIn
@@ -113,6 +114,16 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     // state
 
     private val email: String = account.name
+
+    // Read once, on the main thread, and reused for every synchronous seed below: the switch read
+    // parses the stored authorization, and doing it per service would parse it four times per entry.
+    private val initialSwitches: Map<KompaktSyncService, KompaktSyncSwitch> =
+        try {
+            switches.readAll(account)
+        } catch (e: Exception) {
+            logger.log(Level.WARNING, "Couldn't read the sync switches for $account", e)
+            KompaktSyncService.entries.associateWith { KompaktSyncSwitch.Off }
+        }
 
     private val dateTimeFormat = combine(
         timeFormatRepository.is24HourFormat,
@@ -287,9 +298,16 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }
 
     fun setServiceSync(service: KompaktSyncService, enabled: Boolean) {
+        // The cell renders ConsentMissing exactly like Off, so its switch reports an enable. Persisting
+        // one would arm the periodic worker for a service Google answers 403 for, and that path never
+        // passes the eligibility filter. Requesting the missing consent is SHP-1151.
+        if (enabled && readSwitch(service) == KompaktSyncSwitch.ConsentMissing)
+            return
+
         viewModelScope.launch(ioDispatcher) {
-            // Stop tracking first, so cancelling the run is not reported as its failure.
-            if (!enabled)
+            // Stop tracking first, so cancelling the run is not reported as its failure. Only Calendar
+            // runs are tracked, so another service's toggle must not clear one.
+            if (!enabled && service == KompaktSyncService.CALENDAR)
                 _trackedSync.value = null
             try {
                 switches.setEnabled(account, service, enabled)
@@ -326,11 +344,11 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     // Seeded synchronously so the first frame is right and the switch does not flicker on entry.
     private fun switchOf(service: KompaktSyncService): StateFlow<KompaktSyncSwitch> =
         switches.observe(account, service)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), readSwitch(service))
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialSwitches.getValue(service))
 
-    // Reported at the source: the first query is asynchronous, so "not yet known" must be
-    // distinguishable from "not syncing" — wrapping a fabricated `false` afterwards would not be.
-    // Pending counts as syncing, or a just-tapped sync shows nothing until its worker starts.
+    // Reported at the source: the first query is asynchronous, so "not yet known" must stay
+    // distinguishable from "not syncing", and combine needs every input to carry a first value.
+    // AccountProgress.Pending counts as syncing, or a just-tapped sync shows nothing until it starts.
     private fun syncingOf(service: KompaktSyncService): Flow<Reported<Boolean>> =
         accountProgress(
             account,
@@ -338,6 +356,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             listOf(service.dataType)
         )
             .map<AccountProgress, Reported<Boolean>> { Reported.Value(it != AccountProgress.Idle) }
+            .onStart { emit(Reported.Pending) }
             .distinctUntilChanged()
 
     private fun lastSyncOf(service: KompaktSyncService): Flow<Reported<String?>> =
@@ -363,8 +382,8 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     // are read synchronously rather than defaulted.
     private fun initialState() = KompaktLinkedAccountState(
         email = email,
-        calendar = KompaktServiceSyncState(readSwitch(KompaktSyncService.CALENDAR), KompaktSyncStatus.Resolving),
-        contacts = KompaktServiceSyncState(readSwitch(KompaktSyncService.CONTACTS), KompaktSyncStatus.Resolving),
+        calendar = KompaktServiceSyncState(initialSwitches.getValue(KompaktSyncService.CALENDAR), KompaktSyncStatus.Resolving),
+        contacts = KompaktServiceSyncState(initialSwitches.getValue(KompaktSyncService.CONTACTS), KompaktSyncStatus.Resolving),
         dialog = linkedAccountDialog(
             authError = readNeedsReauth(),
             outOfStorage = KompaktStorage.isStorageLow(context),
@@ -404,7 +423,8 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             return
         }
         // track the specific EVENTS run this triggers, so its result is reported for this sync alone
-        _trackedSync.value = startSyncUseCase(account, requested)[KompaktSyncService.CALENDAR]
+        startSyncUseCase(account, requested)[KompaktSyncService.CALENDAR]
+            ?.let { _trackedSync.value = it }
     }
 
     /**

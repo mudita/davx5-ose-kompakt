@@ -6,7 +6,6 @@ package at.bitfire.davdroid.ui.account
 
 import android.accounts.Account
 import at.bitfire.davdroid.settings.KompaktAccountSettings
-import at.bitfire.davdroid.sync.KompaktInitDefaults
 import at.bitfire.davdroid.sync.KompaktServiceToggle
 import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.sync.KompaktSyncWork
@@ -19,8 +18,7 @@ import javax.inject.Inject
 class KompaktServiceSwitch @Inject constructor(
     private val accountSettings: KompaktAccountSettings,
     private val toggle: KompaktServiceToggle,
-    private val syncWork: KompaktSyncWork,
-    private val initDefaults: KompaktInitDefaults
+    private val syncWork: KompaktSyncWork
 ) {
 
     fun read(account: Account, service: KompaktSyncService): KompaktSyncSwitch =
@@ -28,6 +26,18 @@ class KompaktServiceSwitch @Inject constructor(
             consented = service.isConsented(accountSettings.getAuthState(account)),
             on = toggle.isOn(account, service)
         )
+
+    // One authorization read for every service: parsing the stored token is the expensive half, and a
+    // screen that seeds each service separately pays it once per service before its first frame.
+    fun readAll(account: Account): Map<KompaktSyncService, KompaktSyncSwitch> {
+        val authState = accountSettings.getAuthState(account)
+        return KompaktSyncService.entries.associateWith { service ->
+            kompaktSyncSwitch(
+                consented = service.isConsented(authState),
+                on = toggle.isOn(account, service)
+            )
+        }
+    }
 
     fun observe(account: Account, service: KompaktSyncService): Flow<KompaktSyncSwitch> =
         combine(
@@ -39,11 +49,13 @@ class KompaktServiceSwitch @Inject constructor(
 
     // Persist before cancelling: the persisted write is what disables the periodic worker and the
     // content trigger, so cancelling first leaves a window for the scheduler to restart the run.
+    //
+    // The defaults marker is deliberately not written here. It records that collection selection ran,
+    // and claiming that from a toggle would stop selection ever happening; the stored interval this
+    // writes is already the only record of the user's choice, and KompaktInitDefaults respects it.
     suspend fun setEnabled(account: Account, service: KompaktSyncService, on: Boolean) {
         toggle.set(account, service, on)
-        if (on)
-            initDefaults.markApplied(account, service)
-        else
+        if (!on)
             syncWork.cancel(account, service)
     }
 

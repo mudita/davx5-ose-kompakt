@@ -11,7 +11,7 @@ import at.bitfire.davdroid.di.qualifier.IoDispatcher
 import at.bitfire.davdroid.network.KompaktGrantedServices
 import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.settings.KompaktAccountSettings
-import at.bitfire.davdroid.sync.worker.SyncWorkerManager
+import at.bitfire.davdroid.sync.KompaktStartSyncUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +40,7 @@ import javax.inject.Inject
 @HiltViewModel
 class KompaktReauthModel @Inject constructor(
     private val kompaktAccountSettings: KompaktAccountSettings,
-    private val syncWorkerManager: SyncWorkerManager,
+    private val startSyncUseCase: KompaktStartSyncUseCase,
     private val accountRepository: AccountRepository,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     private val logger: Logger
@@ -104,7 +104,7 @@ class KompaktReauthModel @Inject constructor(
                         kompaktAccountSettings.updateAuthState(account, authState)
                         // Clearing the flag is what publishes the change, via KompaktAuthStateReplicator.
                         kompaktAccountSettings.setReauthNeeded(account, false)
-                        syncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)
+                        startSyncUseCase(account)
                     } catch (e: Exception) {
                         logger.log(Level.WARNING, "Couldn't store re-authorized credentials for $account", e)
                     }

@@ -17,9 +17,7 @@ import javax.inject.Singleton
 
 interface KompaktServiceToggle {
 
-    /** Safe on the main thread, so a screen's first frame is correct without waiting. */
     fun isOn(account: Account, service: KompaktSyncService): Boolean
-
 
     fun observe(account: Account, service: KompaktSyncService): Flow<Boolean>
 

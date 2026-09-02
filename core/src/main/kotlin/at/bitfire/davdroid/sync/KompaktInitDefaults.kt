@@ -143,12 +143,14 @@ class KompaktInitDefaults @Inject constructor(
             KompaktSyncService.CONTACTS -> { /* interval only */ }
         }
 
-        if (version == 0) {
-            try {
+        // Only when nothing is stored, not when the marker is 0: a user who switched the service off
+        // before discovery finished has stored the manual sentinel, and overwriting it here would turn
+        // their choice back on and re-arm the periodic worker.
+        try {
+            if (kompaktAccountSettings.getSyncInterval(account, service.dataType) == null)
                 kompaktAccountSettings.setSyncInterval(account, service.dataType, AUTO_SYNC_INTERVAL_SECONDS)
-            } catch (e: Exception) {
-                logger.log(Level.WARNING, "Couldn't set automatic sync for $account", e)
-            }
+        } catch (e: Exception) {
+            logger.log(Level.WARNING, "Couldn't set automatic sync for $account", e)
         }
         markApplied(account, service)
         Outcome.APPLIED

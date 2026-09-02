@@ -144,11 +144,11 @@ context.sendBroadcast(intent)
 
 ### What happens
 
-If at least 15 minutes have passed since the last successful sync,
-`KompaktSyncRequestReceiver` (in DAVx⁵ Mudita) enqueues a one‑time manual sync for every linked
-account via `SyncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)` — the same path used
-by the in‑app "Synchronize now" button and the sync widget. The "Last synchronization" timestamp updates
-on successful completion (and is left unchanged on failure).
+If at least 15 minutes have passed since the last successful sync, `KompaktSyncRequestReceiver` (in
+DAVx⁵ Mudita) enqueues a one‑time manual sync for every linked account — but **only for the services
+that qualify** (see condition 7 above), so it may enqueue for one service, both, or neither. This is the
+same path used by the in‑app "Synchronize now" button. The "Last synchronization" timestamp updates on
+successful completion (and is left unchanged on failure).
 
 A **successful** manual sync (this broadcast or the in‑app button) also **pushes the next automatic
 (periodic) sync back by a full interval, counting from now** — so triggering a manual sync resets the
