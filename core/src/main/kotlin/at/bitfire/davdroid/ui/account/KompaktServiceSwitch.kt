@@ -27,18 +27,6 @@ class KompaktServiceSwitch @Inject constructor(
             on = toggle.isOn(account, service)
         )
 
-    // One authorization read for every service: parsing the stored token is the expensive half, and a
-    // screen that seeds each service separately pays it once per service before its first frame.
-    fun readAll(account: Account): Map<KompaktSyncService, KompaktSyncSwitch> {
-        val authState = accountSettings.getAuthState(account)
-        return KompaktSyncService.entries.associateWith { service ->
-            kompaktSyncSwitch(
-                consented = service.isConsented(authState),
-                on = toggle.isOn(account, service)
-            )
-        }
-    }
-
     fun observe(account: Account, service: KompaktSyncService): Flow<KompaktSyncSwitch> =
         combine(
             accountSettings.observeAuthState(account),

@@ -49,6 +49,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -114,16 +115,6 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     // state
 
     private val email: String = account.name
-
-    // Read once, on the main thread, and reused for every synchronous seed below: the switch read
-    // parses the stored authorization, and doing it per service would parse it four times per entry.
-    private val initialSwitches: Map<KompaktSyncService, KompaktSyncSwitch> =
-        try {
-            switches.readAll(account)
-        } catch (e: Exception) {
-            logger.log(Level.WARNING, "Couldn't read the sync switches for $account", e)
-            KompaktSyncService.entries.associateWith { KompaktSyncSwitch.Off }
-        }
 
     private val dateTimeFormat = combine(
         timeFormatRepository.is24HourFormat,
@@ -298,13 +289,14 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }
 
     fun setServiceSync(service: KompaktSyncService, enabled: Boolean) {
-        // The cell renders ConsentMissing exactly like Off, so its switch reports an enable. Persisting
-        // one would arm the periodic worker for a service Google answers 403 for, and that path never
-        // passes the eligibility filter. Requesting the missing consent is SHP-1151.
-        if (enabled && readSwitch(service) == KompaktSyncSwitch.ConsentMissing)
-            return
-
         viewModelScope.launch(ioDispatcher) {
+            // The cell renders ConsentMissing exactly like Off, so its switch reports an enable.
+            // Persisting one would arm the periodic worker for a service Google answers 403 for, and
+            // that path never passes the eligibility filter. Requesting the consent is SHP-1151.
+            // Re-read rather than trusting the rendered position, which may be minutes old.
+            if (enabled && readSwitch(service) == KompaktSyncSwitch.ConsentMissing)
+                return@launch
+
             // Stop tracking first, so cancelling the run is not reported as its failure. Only Calendar
             // runs are tracked, so another service's toggle must not clear one.
             if (!enabled && service == KompaktSyncService.CALENDAR)
@@ -341,10 +333,13 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     // state sources, one question each
 
-    // Seeded synchronously so the first frame is right and the switch does not flicker on entry.
+    // Starts at Resolving rather than reading the stored settings synchronously: that read parses the
+    // saved authorization, which is not work for the main thread. The cell renders Resolving like Off
+    // and ignores input until the real position arrives.
     private fun switchOf(service: KompaktSyncService): StateFlow<KompaktSyncSwitch> =
         switches.observe(account, service)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialSwitches.getValue(service))
+            .flowOn(ioDispatcher)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), KompaktSyncSwitch.Resolving)
 
     // Reported at the source: the first query is asynchronous, so "not yet known" must stay
     // distinguishable from "not syncing", and combine needs every input to carry a first value.
@@ -382,8 +377,8 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     // are read synchronously rather than defaulted.
     private fun initialState() = KompaktLinkedAccountState(
         email = email,
-        calendar = KompaktServiceSyncState(initialSwitches.getValue(KompaktSyncService.CALENDAR), KompaktSyncStatus.Resolving),
-        contacts = KompaktServiceSyncState(initialSwitches.getValue(KompaktSyncService.CONTACTS), KompaktSyncStatus.Resolving),
+        calendar = KompaktServiceSyncState(KompaktSyncSwitch.Resolving, KompaktSyncStatus.Resolving),
+        contacts = KompaktServiceSyncState(KompaktSyncSwitch.Resolving, KompaktSyncStatus.Resolving),
         dialog = linkedAccountDialog(
             authError = readNeedsReauth(),
             outOfStorage = KompaktStorage.isStorageLow(context),

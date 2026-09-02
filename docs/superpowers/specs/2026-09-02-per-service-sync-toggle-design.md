@@ -399,6 +399,34 @@ stays in the ViewModel and this component never learns what a dialog is.
 **Guardrail for review:** if this class gains a fifth constructor dependency or its first
 `MutableStateFlow`, it is turning into the controller this design exists to avoid.
 
+### The switch starts at `Resolving`
+
+`KompaktSyncSwitch` carries a fourth position, `Resolving`, which is where every service starts. The
+screen seeds `switchOf`'s `stateIn` with it and `observe` replaces it once the stored settings have been
+read, off the main thread via `flowOn`.
+
+The alternative was a synchronous seed, and it is what an earlier revision did. It is rejected because
+of what one read costs: the consent half deserializes the stored OAuth token, and the screen needs a
+position twice per service — once for `switchOf`, once for `initialState` — so a synchronous seed parsed
+that blob four times on the main thread before the first frame, on a display that repaints in about a
+second. No amount of caching makes main-thread JSON the right call there; it only makes it cheaper.
+
+**The accepted cost** is that a service whose sync is on renders off for the first frame and then
+populates. That is a real repaint on e-ink, and it is the thing to watch: if it is reported as a visible
+flip, the answer is to seed synchronously again and pay the parse. Device check 12 is written to catch
+it. Weakening Invariant 2 to "the first frame is *honest*, not necessarily final" is a deliberate trade,
+not an oversight.
+
+Two consequences that keep it safe. `KompaktServiceSyncCell` renders `Resolving` exactly like `Off` and
+**drops input while in it** — not via `SwitchMMD`'s `enabled`, which also greys the control, but by not
+forwarding the callback — so a tap cannot act on a value the screen does not have yet. And the pure
+`kompaktSyncSwitch(consented, on)` never returns `Resolving`: it is a seed, not a derivation, so the
+rule that consent vetoes and the interval decides is unchanged.
+
+`setServiceSync` re-reads the position rather than trusting the rendered one, because a tap can arrive
+minutes after the frame; that read now happens inside the coroutine, so no path parses on the main
+thread.
+
 ### `ui/account/KompaktServiceLastSync.kt` — when did this service last sync
 
 ```kotlin
@@ -905,5 +933,32 @@ seam, has ever run on hardware.
     `KompaktInitDefaults` is assumed to have made.
 11. The Contacts row settles on *Not synced yet* rather than sitting at *Resolving*, with no address
     book selected — the shipping configuration, and the one the last-sync query returns `NULL` for.
+12. **How visible the switch settling from `Resolving` is.** A service that is on renders off for the
+    first frame and then populates. If that reads as a flip rather than as loading, the answer is to seed
+    synchronously again and accept the main-thread parse — see *The switch starts at `Resolving`*. This
+    is the one deliberate repaint in the design and the only place it can be judged.
 
 `docs/kompakt-testing.md` has the recipes.
+
+### Already verified on device
+
+On a Kompakt (`LD20240700365`) with a linked account, against the build from commit
+`e65285586`. Recorded so the list above is not re-run wholesale.
+
+- The last-sync query, executed verbatim through `sqlite3` against the live `services.db`: returns the
+  Calendar timestamp shown in the UI, correctly excluding a second calendar with `sync = 0`, and
+  returns `NULL` for a service with no rows — the empty case that needs no guard. It also re-emits
+  after each sync with no explicit refresh, which is the join's invalidation working.
+- `KompaktInitDefaults` selected exactly the primary calendar and left the other alone.
+- *Synchronize* with Calendar on enqueues **one** worker, `dataType=EVENTS`. Before this change the
+  same tap enqueued EVENTS, CONTACTS and TASKS.
+- *Synchronize* with every service off enqueues **nothing** — the seventh no-op condition.
+- Switching Calendar off logs `Disabling periodic worker … dataType=EVENTS` and cancels the job,
+  scoped to that service.
+- Switching Calendar on re-arms the periodic worker (`interval=900`, the debug value) **and** enqueues
+  a manual run by itself — AC 9.
+- A service switched off stays off across a force-stop and relaunch, with nothing re-arming it.
+
+Not yet exercised: AC 7 proper (switching off *during* an active run — the calendar syncs too fast to
+catch), anything Contacts-behavioural (no `carddav` scope on this branch), and the `version == 0`
+window in check 3, which needs a fresh link.

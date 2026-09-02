@@ -30,6 +30,9 @@ fun KompaktServiceSyncCell(
     showDivider: Boolean = false
 ) {
     val syncOn = state.switch == KompaktSyncSwitch.On
+    // Not SwitchMMD's `enabled`, which also greys the control: while resolving it should look normal
+    // and simply not act.
+    val acceptsInput = state.switch != KompaktSyncSwitch.Resolving
     KompaktListCell(
         title = title,
         subtitle =
@@ -47,7 +50,7 @@ fun KompaktServiceSyncCell(
                 )
         },
         trailing = {
-            SwitchMMD(checked = syncOn, onCheckedChange = onCheckedChange)
+            SwitchMMD(checked = syncOn, onCheckedChange = { if (acceptsInput) onCheckedChange(it) })
         },
         showDivider = showDivider
     )
