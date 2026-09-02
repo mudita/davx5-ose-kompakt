@@ -13,10 +13,16 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertSame
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.ConscryptMode
 import java.util.UUID
 
+// Robolectric so Account carries its name and type: the JVM stub leaves both null, under which
+// workerName produces "null/null" on either side of a comparison and proves nothing.
+@RunWith(RobolectricTestRunner::class)
+@ConscryptMode(ConscryptMode.Mode.OFF)      // required because main project uses Conscrypt, but unit tests do not
 class KompaktSyncWorkTest {
 
     private val account = Account("user@example.com", "bitfire.at.davdroid.mudita")
@@ -29,20 +35,11 @@ class KompaktSyncWorkTest {
     fun enqueuesTheServicesOwnDataTypeAndReturnsItsRunId() = runTest {
         val id = UUID.randomUUID()
         every {
-            syncWorkerManager.enqueueOneTimeReturningId(any(), SyncDataType.CONTACTS, manual = true)
+            syncWorkerManager.enqueueOneTimeReturningId(account, SyncDataType.CONTACTS, manual = true)
         } returns id
 
         assertEquals(id, syncWork.enqueue(account, KompaktSyncService.CONTACTS, manual = true))
 
-        // withArg, not the account by value: MockK matches on equals/hashCode, which Account lacks
-        // outside an Android runtime.
-        verify {
-            syncWorkerManager.enqueueOneTimeReturningId(
-                withArg { assertSame(account, it) },
-                SyncDataType.CONTACTS,
-                manual = true
-            )
-        }
         // Never the all-authorities call: it fans out over SyncDataType.entries and ignores toggles.
         verify(exactly = 0) {
             syncWorkerManager.enqueueOneTimeAllAuthorities(any(), any(), any(), any(), any())
