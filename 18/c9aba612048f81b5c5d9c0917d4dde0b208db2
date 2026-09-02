@@ -1,0 +1,30 @@
+docs/local-config.md
+  e26259a5232d4cbb 91-100
+frontitude/.gitignore
+  e26259a5232d4cbb 2
+frontitude/keys_to_filter.py
+  e26259a5232d4cbb 1-51
+frontitude/move_frontitude_files.py
+  e26259a5232d4cbb 1,6-7,11-20,43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "18c9aba612048f81b5c5d9c0917d4dde0b208db2",
+  "prompts": {
+    "e26259a5232d4cbb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "553889b0-6280-4cb8-9b19-377427dd5c27",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 435,
+      "total_deletions": 7445,
+      "accepted_lines": 91,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/0c2c0ee668a89ce9ebb52eb4fbb3630c18238181f9a07a338a88bdf3e636c8fb"
+    }
+  }
+}
