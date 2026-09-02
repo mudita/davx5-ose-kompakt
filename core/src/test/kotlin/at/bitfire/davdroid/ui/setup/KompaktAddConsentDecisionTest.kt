@@ -26,7 +26,11 @@ class KompaktAddConsentDecisionTest {
     private val oAuthGoogle = KompaktOAuthGoogle(context, OAuthIntegration(context), Logger.getGlobal())
 
     private fun authStateGranting(vararg scopes: String): AuthState {
-        val request = oAuthGoogle.signIn(email = null, customClientId = "test.apps.googleusercontent.com")
+        val request = oAuthGoogle.signIn(
+            email = null,
+            customClientId = "test.apps.googleusercontent.com",
+            dataScopes = KompaktOAuthGoogle.LINK_DATA_SCOPES
+        )
         val response = AuthorizationResponse.Builder(request).setScopes(*scopes).build()
         return AuthState(response, null)
     }

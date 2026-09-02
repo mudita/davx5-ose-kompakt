@@ -106,7 +106,7 @@ class KompaktAddConsentModel @AssistedInject constructor(
         return oAuthGoogle.signIn(
             email = account.name,
             customClientId = null,
-            scopes = setOf(dataScope, "openid", "email"),
+            dataScopes = setOf(dataScope),
             includeGrantedScopes = true
         )
     }

@@ -75,7 +75,8 @@ class KompaktGoogleLoginViewModel @AssistedInject constructor(
     fun signIn() =
         oAuthGoogle.signIn(
             email = uiState.emailWithDomain,
-            customClientId = uiState.customClientId.trimToNull()
+            customClientId = uiState.customClientId.trimToNull(),
+            dataScopes = KompaktOAuthGoogle.LINK_DATA_SCOPES
         )
 
     fun signInFailed() {

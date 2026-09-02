@@ -33,7 +33,11 @@ class KompaktOAuthGoogleTest {
     @Test
     fun `signIn request uses PKCE with S256`() {
         // pass a customClientId so the request does not depend on the app's signing certificate
-        val request = oAuthGoogle.signIn(email = null, customClientId = "test.apps.googleusercontent.com")
+        val request = oAuthGoogle.signIn(
+            email = null,
+            customClientId = "test.apps.googleusercontent.com",
+            dataScopes = KompaktOAuthGoogle.LINK_DATA_SCOPES
+        )
 
         assertNotNull("code_verifier must be set (PKCE)", request.codeVerifier)
         assertNotNull("code_challenge must be set (PKCE)", request.codeVerifierChallenge)
@@ -41,27 +45,27 @@ class KompaktOAuthGoogleTest {
     }
 
     @Test
-    fun `signIn request asks for the Calendar and Contacts scopes`() {
-        // pass a customClientId so the request does not depend on the app's signing certificate
-        val request = oAuthGoogle.signIn(email = null, customClientId = "test.apps.googleusercontent.com")
-
+    fun `a link asks for both data scopes`() {
+        // The policy a first-time link and a re-authorization both use. Asserted against literals, not
+        // against the constants it's built from — comparing it to SCOPE_CONTACTS would still pass if
+        // Contacts were dropped, silently taking Contacts sync out of every new link.
         assertEquals(
             setOf(
-                KompaktOAuthGoogle.SCOPE_CALENDAR,
-                KompaktOAuthGoogle.SCOPE_CONTACTS,
-                "openid",
-                "email"
+                "https://www.googleapis.com/auth/calendar",
+                "https://www.googleapis.com/auth/carddav"
             ),
-            request.scopeSet
+            KompaktOAuthGoogle.LINK_DATA_SCOPES
         )
     }
 
     @Test
-    fun `signIn with a reduced scope set requests only that scope`() {
+    fun `signIn adds the sign-in scopes and nothing else`() {
+        // A caller can't forget openid/email, and can't accidentally regain a data scope it left out:
+        // one data scope in, exactly that scope plus the sign-in scopes out.
         val request = oAuthGoogle.signIn(
             email = null,
             customClientId = "test.apps.googleusercontent.com",
-            scopes = setOf(KompaktOAuthGoogle.SCOPE_CONTACTS, "openid", "email")
+            dataScopes = setOf(KompaktOAuthGoogle.SCOPE_CONTACTS)
         )
 
         assertEquals(
@@ -75,7 +79,7 @@ class KompaktOAuthGoogleTest {
         val request = oAuthGoogle.signIn(
             email = null,
             customClientId = "test.apps.googleusercontent.com",
-            scopes = setOf(KompaktOAuthGoogle.SCOPE_CONTACTS, "openid", "email"),
+            dataScopes = setOf(KompaktOAuthGoogle.SCOPE_CONTACTS),
             includeGrantedScopes = true
         )
 
@@ -84,7 +88,11 @@ class KompaktOAuthGoogleTest {
 
     @Test
     fun `signIn without includeGrantedScopes sets no incremental-auth parameter`() {
-        val request = oAuthGoogle.signIn(email = null, customClientId = "test.apps.googleusercontent.com")
+        val request = oAuthGoogle.signIn(
+            email = null,
+            customClientId = "test.apps.googleusercontent.com",
+            dataScopes = KompaktOAuthGoogle.LINK_DATA_SCOPES
+        )
 
         assertEquals(null, request.additionalParameters?.get("include_granted_scopes"))
     }

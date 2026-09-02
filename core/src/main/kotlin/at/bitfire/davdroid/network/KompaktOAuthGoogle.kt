@@ -29,18 +29,18 @@ class KompaktOAuthGoogle @Inject constructor(
     )
 
     /**
-     * @param scopes defaults to Calendar + Contacts + `openid`/`email` (a full new-link or re-auth
-     * request). [KompaktAddConsentModel][at.bitfire.davdroid.ui.setup.KompaktAddConsentModel] passes a
-     * single data scope here to request only the missing permission.
+     * @param dataScopes which data this request asks access to. Callers state their own policy: a new
+     * link or a re-authorization asks for both, adding a missing consent asks for just that one.
+     * [SIGN_IN_SCOPES] is added on top of whatever is passed here.
      * @param includeGrantedScopes sets Google's `include_granted_scopes` request parameter, so the
      * returned token's granted-scope set is the union of every scope previously granted to this user
-     * for this OAuth client plus whatever this request grants — required whenever [scopes] is a subset,
+     * for this OAuth client plus whatever this request grants — required whenever [dataScopes] is a subset,
      * so applying the result never looks like the other service's consent was revoked.
      */
     fun signIn(
         email: String?,
         customClientId: String?,
-        scopes: Set<String> = setOf(SCOPE_CALENDAR, SCOPE_CONTACTS, "openid", "email"),
+        dataScopes: Set<String>,
         includeGrantedScopes: Boolean = false
     ): AuthorizationRequest {
         logger.info("Google OAuth signing-key index: ${KompaktGoogleOAuthClients.clientIndex(context)}")
@@ -50,7 +50,7 @@ class KompaktOAuthGoogle @Inject constructor(
             ResponseTypeValues.CODE,
             oAuthIntegration.redirectUri
         )
-            .setScopes(scopes)
+            .setScopes(dataScopes + SIGN_IN_SCOPES)
             .setLoginHint(email)
         if (includeGrantedScopes)
             builder.setAdditionalParameters(mapOf("include_granted_scopes" to "true"))
@@ -60,6 +60,19 @@ class KompaktOAuthGoogle @Inject constructor(
     companion object {
         const val SCOPE_CALENDAR = "https://www.googleapis.com/auth/calendar"
         const val SCOPE_CONTACTS = "https://www.googleapis.com/auth/carddav"
+
+        /**
+         * Identity, not data access: these grant nothing, but the ID token they produce is the only way
+         * to learn the account's e-mail on a device with no Google account registered. [signIn] adds
+         * them to every request, so no caller can leave them out.
+         */
+        private val SIGN_IN_SCOPES = setOf("openid", "email")
+
+        /**
+         * The data this app can sync — what a first-time link or a re-authorization asks for. Adding a
+         * single missing consent deliberately asks for less, so it names its one scope instead.
+         */
+        val LINK_DATA_SCOPES = setOf(SCOPE_CALENDAR, SCOPE_CONTACTS)
 
         /** Extracts the `email` claim from an OIDC ID token's JWT payload, or `null` if absent/unparseable. */
         fun parseEmailFromIdToken(idToken: String): String? = try {
