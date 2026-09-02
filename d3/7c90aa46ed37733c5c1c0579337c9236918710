@@ -1,0 +1,24 @@
+.github/workflows/test-core.yml
+  016c8798cb245134 47,49-51,70-91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "d37c90aa46ed37733c5c1c0579337c9236918710",
+  "prompts": {
+    "016c8798cb245134": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fa7846b2-e5eb-4cde-9940-6519c8602180",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 39,
+      "total_deletions": 82,
+      "accepted_lines": 30,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/ae84774e67638711fade30dcdde432625a135b022e66295fbc08622ba870960a"
+    }
+  }
+}

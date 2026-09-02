@@ -1,0 +1,26 @@
+docs/superpowers/specs/2026-08-31-shp-1189-ci-unit-test-coverage-design.md
+  f239601f7b337bc2 1-238
+buildSrc/src/main/kotlin/KompaktKoverAggregationPlugin.kt
+  f239601f7b337bc2 1-76,78-111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "90fe396ccaad3f68cd04dbe36be7a4bceca3586d",
+  "prompts": {
+    "f239601f7b337bc2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0a7fee1e-80fd-4316-aaf8-fad306e43c45",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 86,
+      "total_deletions": 46,
+      "accepted_lines": 348,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/7e72605e2d71738ba5c209631bbc01fc3966edabfd42c5d4270efc4596e8e802"
+    }
+  }
+}

@@ -1,0 +1,55 @@
+core/src/test/kotlin/at/bitfire/davdroid/network/KompaktGrantedServicesTest.kt
+  3e16c53e1930c792 1-6,8,11-12,18,21-22,26-67,87
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktOAuthWebViewActivity.kt
+  3e16c53e1930c792 26,177-180,206-212,219-221,228,239
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountModel.kt
+  4743e73b0bbdc200 1-4,6-22,24,26-67,69-367,409-427,429-430,432-434,436-445,447-474,376,404
+  3e16c53e1930c792 23,25,68,368-369,371-372,374,384-390,393-395,428,431,435,370,373,375,377-383,391-392,396-403,406-408,446
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktGoogleLogin.kt
+  3e16c53e1930c792 101-104,106-113
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktReauthModel.kt
+  3e16c53e1930c792 13,37-38,62-63,102-103
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktGoogleLoginViewModel.kt
+  3e16c53e1930c792 15,52-56,60,89,96-102,121,138,141-144
+docs/superpowers/specs/2026-08-28-shp-1159-link-google-calendar-contacts-design.md
+  3e16c53e1930c792 1-83,86-95,100-132,134-135,151-198,200-205,207-238
+core/src/test/kotlin/at/bitfire/davdroid/network/KompaktOAuthGoogleTest.kt
+  3e16c53e1930c792 43-58
+docs/local-config.md
+  3e16c53e1930c792 51-54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "25803396b56816ae7b61f755962587d311dc8150",
+  "prompts": {
+    "3e16c53e1930c792": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e035d732-7051-4bd4-b49b-23ec704887a7",
+        "model": "claude-opus-5"
+      },
+      "human_author": "piotriwaniec",
+      "messages": [],
+      "total_additions": 911,
+      "total_deletions": 69,
+      "accepted_lines": 101,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/4fc90c62529ea906a3703274c3456fd1cdc045e52e373e82063726295dfa0fc5"
+    },
+    "4743e73b0bbdc200": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5176ef9c-c465-401e-89f4-3a402aaa516f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 2558,
+      "total_deletions": 0,
+      "accepted_lines": 2,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/ca1eefb16004086f915ff057090eeb4ba441d546b393cdd15e3b0486bfdb86cc"
+    }
+  }
+}

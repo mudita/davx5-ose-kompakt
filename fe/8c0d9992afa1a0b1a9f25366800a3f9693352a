@@ -1,0 +1,25 @@
+buildSrc/src/main/kotlin/KompaktKoverAggregationPlugin.kt
+  f239601f7b337bc2 36-87
+build.gradle.kts
+  f239601f7b337bc2 14-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "fe8c0d9992afa1a0b1a9f25366800a3f9693352a",
+  "prompts": {
+    "f239601f7b337bc2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0a7fee1e-80fd-4316-aaf8-fad306e43c45",
+        "model": "claude-opus-5"
+      },
+      "human_author": null,
+      "messages": [],
+      "total_additions": 140,
+      "total_deletions": 30,
+      "accepted_lines": 150,
+      "overriden_lines": 0
+    }
+  }
+}

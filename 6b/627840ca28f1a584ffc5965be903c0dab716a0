@@ -1,0 +1,26 @@
+docs/superpowers/specs/2026-08-31-shp-1189-ci-unit-test-coverage-design.md
+  f239601f7b337bc2 1-173
+.github/workflows/kompakt-pull-request.yml
+  f239601f7b337bc2 1-84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "6b627840ca28f1a584ffc5965be903c0dab716a0",
+  "prompts": {
+    "f239601f7b337bc2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0a7fee1e-80fd-4316-aaf8-fad306e43c45",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 2716,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/dd6188235b246333f1d89448699add970185db7a0ff9d764fb5133fa3c518bc2"
+    }
+  }
+}
