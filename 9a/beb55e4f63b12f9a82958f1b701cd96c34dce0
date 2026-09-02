@@ -1,0 +1,52 @@
+frontitude/src/main/res/values/strings.xml
+  f6364155f5512ab0 8-10,27-29,106-107
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountModel.kt
+  f6364155f5512ab0 24,112-120,247-251,262,275-300,319,381-387,389,391,393-395,399,404,410-412,415,418,422-427,432-441,443,462-464,470-471,479,487-490,499,520,539-541,557
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktLoginActivity.kt
+  f6364155f5512ab0 34-43,49-50,54-78,80-95
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountScreen.kt
+  f6364155f5512ab0 47,67-69,98,123-136,155-157,177-178,241-246,255-261,300-344
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktInitDefaults.kt
+  f6364155f5512ab0 138-140,142,144
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktAddConsentModel.kt
+  f6364155f5512ab0 1-191
+core/src/main/kotlin/at/bitfire/davdroid/network/KompaktOAuthGoogle.kt
+  f6364155f5512ab0 31-45,47,53,55-57,63-75
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktLoginFinalizeModel.kt
+  f6364155f5512ab0 8,18-19,59-63,68,81-86
+core/src/test/kotlin/at/bitfire/davdroid/ui/setup/KompaktAddConsentDecisionTest.kt
+  f6364155f5512ab0 1-143
+core/src/main/kotlin/at/bitfire/davdroid/repository/AccountRepository.kt
+  f6364155f5512ab0 126-146
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktAddConsentDecision.kt
+  f6364155f5512ab0 1-44
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountState.kt
+  f6364155f5512ab0 14-15
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktAddConsentScreen.kt
+  f6364155f5512ab0 1-104
+core/src/test/kotlin/at/bitfire/davdroid/network/KompaktOAuthGoogleTest.kt
+  f6364155f5512ab0 59-91
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktGoogleLoginViewModel.kt
+  f6364155f5512ab0 107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "9abeb55e4f63b12f9a82958f1b701cd96c34dce0",
+  "prompts": {
+    "f6364155f5512ab0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d248f61-12f3-4dde-b581-4508be1b02b1",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 752,
+      "total_deletions": 132,
+      "accepted_lines": 3515,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/641b3c39b7812729bcfd4b6b399262479dbd59537d91a5114f79849dc162ed23"
+    }
+  }
+}

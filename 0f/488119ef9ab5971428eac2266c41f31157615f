@@ -1,0 +1,28 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktAddConsentModel.kt
+  f6364155f5512ab0 149-152
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountScreen.kt
+  f6364155f5512ab0 259
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktAddConsentScreen.kt
+  f6364155f5512ab0 79-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "0f488119ef9ab5971428eac2266c41f31157615f",
+  "prompts": {
+    "f6364155f5512ab0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d248f61-12f3-4dde-b581-4508be1b02b1",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 41,
+      "accepted_lines": 2607,
+      "overriden_lines": 4,
+      "messages_url": "https://gitai.miquido.dev/cas/42818c0489a65af18cae28549269c0dc0f95e822e60682e85b3873b8390032c6"
+    }
+  }
+}
