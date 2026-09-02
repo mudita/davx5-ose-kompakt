@@ -1,0 +1,26 @@
+docs/superpowers/plans/2026-09-02-per-service-sync-toggle.md
+  2434bc169f91a3a5 25-28,679-680,1662-1663,1669-1672,1677-1688,1701-1705,1707-1712,1718-1725,1728-1734,1736,1740-1744,1746-1747,1751-1757,1759-1760,1764-1771,1782-1809,1838,1848-1849,1868-1870,1879-1889,1891-1893,2249-2252
+docs/superpowers/specs/2026-09-02-per-service-sync-toggle-design.md
+  2434bc169f91a3a5 411,425-464,757-758,812,817-826,849-853,898-899
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "4c8a81ffbecccd4e5a014bf9815f117a39351b19",
+  "prompts": {
+    "2434bc169f91a3a5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d426cd3a-bbea-470e-baa2-5bff24092beb",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 191,
+      "total_deletions": 124,
+      "accepted_lines": 191,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/192821d3a73d8fc70fdec98bf2605da498682214ec37d23e3fdca9f9dd6ec0c0"
+    }
+  }
+}
