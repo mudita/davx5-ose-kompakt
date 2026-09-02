@@ -1,0 +1,56 @@
+frontitude/src/main/res/values-pl/strings.xml
+  e26259a5232d4cbb 3-5,9,11,20,23,26,34,37-38
+frontitude/src/main/res/values-pt/strings.xml
+  e26259a5232d4cbb 3-5,9,11,13,20,23,25-26,34,37-38
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountScreen.kt
+  e26259a5232d4cbb 181,201,228,241-242,244,257-258,274
+frontitude/frontituderc.json
+  e26259a5232d4cbb 5-6
+frontitude/src/main/res/values-fr/strings.xml
+  e26259a5232d4cbb 3-5,9,11,20,23,26,34,37-38
+docs/local-config.md
+  e26259a5232d4cbb 91-100
+frontitude/.gitignore
+  e26259a5232d4cbb 2
+frontitude/src/main/res/values-de/strings.xml
+  e26259a5232d4cbb 3-5,9,11,20,23,26,31,34,37-38
+frontitude/src/main/res/values-es/strings.xml
+  e26259a5232d4cbb 3-5,9,11,20,23,26,28,34,37-38
+frontitude/src/main/res/values-it/strings.xml
+  e26259a5232d4cbb 3-5,9,11,20,23,26,34,37-38
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktServiceSyncCell.kt
+  e26259a5232d4cbb 37,63,66,70
+frontitude/src/main/res/values-cs/strings.xml
+  e26259a5232d4cbb 3-5,9,11,20,23,26,34,37-38
+frontitude/move_frontitude_files.py
+  e26259a5232d4cbb 1,6-7,11-20,43
+frontitude/src/main/res/values-nl/strings.xml
+  e26259a5232d4cbb 3-5,9,11,20,23,26,34,37-38
+frontitude/src/main/res/values/strings.xml
+  e26259a5232d4cbb 3-5,7,9,11-12,20,23,26,34,37-38
+frontitude/keys_to_filter.py
+  e26259a5232d4cbb 1-51
+core/src/main/kotlin/at/bitfire/davdroid/ui/KompaktAccountsScreen.kt
+  e26259a5232d4cbb 225
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "0494186aacfe2e7298c528fc48ce78606bc39aee",
+  "prompts": {
+    "e26259a5232d4cbb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "553889b0-6280-4cb8-9b19-377427dd5c27",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 198,
+      "total_deletions": 1817,
+      "accepted_lines": 212,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/8c751790af6b1d44fac9657c5f5318cb5f2760a2c2bc2e32f86618c1f42fa381"
+    }
+  }
+}

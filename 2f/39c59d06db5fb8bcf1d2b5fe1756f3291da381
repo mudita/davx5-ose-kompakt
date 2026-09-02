@@ -1,0 +1,26 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktGoogleLogin.kt
+  9adfab344c3f7824 69-72
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktOAuthWebViewActivity.kt
+  9adfab344c3f7824 176-177,210-211
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "2f39c59d06db5fb8bcf1d2b5fe1756f3291da381",
+  "prompts": {
+    "9adfab344c3f7824": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "93d8c2fd-9eeb-42cf-bd87-fdf35fe2767a",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 612,
+      "total_deletions": 52,
+      "accepted_lines": 522,
+      "overriden_lines": 8,
+      "messages_url": "https://gitai.miquido.dev/cas/6011b02b936bfccc47538e348214f98cd2356f3db0855fadd03f844e5a12a914"
+    }
+  }
+}
