@@ -20,7 +20,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import at.bitfire.davdroid.db.Service
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
+import at.bitfire.davdroid.network.KompaktGrantedServices
 import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.repository.DavSyncStatsRepository
@@ -63,6 +65,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import net.openid.appauth.AuthState
 import java.time.Instant
 import java.time.ZoneId
 import java.util.UUID
@@ -362,12 +365,47 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     // the single state channel
 
-    // Constant: no CardDAV scope or service exists, so contacts consent cannot be granted yet and
-    // there is nothing to track. A later story replaces this with a real per-service source.
-    private val contactsState = KompaktServiceSyncState(
-        switch = KompaktSyncSwitch.ConsentMissing,
-        status = KompaktSyncStatus.NeverSynced
-    )
+    // Same re-read triggers as needsReauth: both are facts about the persisted AuthState, which only
+    // the sync worker and the re-auth flow ever write.
+    private val contactsSwitch: StateFlow<KompaktSyncSwitch> =
+        merge(authStateChanges, reauthRefresh)
+            .onStart { emit(Unit) }
+            .map { withContext(ioDispatcher) { readContactsSwitch() } }
+            .distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), readContactsSwitch())
+
+    // Consent alone would report On for a scope granted during re-auth, where no service, no discovery
+    // and no interval follow — so the interval, not the scope, decides between On and Off.
+    private fun readContactsSwitch(): KompaktSyncSwitch = when {
+        !readContactsConsent() -> KompaktSyncSwitch.ConsentMissing
+        readContactsAutoSyncEnabled() -> KompaktSyncSwitch.On
+        else -> KompaktSyncSwitch.Off
+    }
+
+    private fun readContactsConsent(): Boolean =
+        try {
+            val authState = AccountManager.get(context)
+                .getUserData(account, AccountSettings.KEY_AUTH_STATE)
+                ?.let { json -> AuthState.jsonDeserialize(json) }
+            Service.TYPE_CARDDAV in KompaktGrantedServices.fromAuthState(authState)
+        } catch (e: Exception) {
+            logger.log(Level.WARNING, "Couldn't read the stored authorization for $account", e)
+            false
+        }
+
+    private fun readContactsAutoSyncEnabled(): Boolean =
+        try {
+            AccountManager.get(context)
+                .getUserData(account, AccountSettings.KEY_SYNC_INTERVAL_ADDRESSBOOKS)
+                ?.toLongOrNull() == KompaktInitDefaults.AUTO_SYNC_INTERVAL_SECONDS
+        } catch (e: Exception) {
+            logger.log(Level.WARNING, "Couldn't read contacts sync interval for $account", e)
+            false
+        }
+
+    private val contactsState: Flow<KompaktServiceSyncState> = contactsSwitch.map { switch ->
+        KompaktServiceSyncState(switch = switch, status = KompaktSyncStatus.NeverSynced)
+    }
 
     private val calendarState: Flow<KompaktServiceSyncState> = combine(
         _calendarSwitch,
@@ -387,13 +425,14 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     val state: StateFlow<KompaktLinkedAccountState> = combine(
         calendarState,
+        contactsState,
         dialog,
         _reauthPhase
-    ) { calendar, dialog, phase ->
+    ) { calendar, contacts, dialog, phase ->
         KompaktLinkedAccountState(
             email = email,
             calendar = calendar,
-            contacts = contactsState,
+            contacts = contacts,
             dialog = dialog,
             reauthPhase = phase
         )
@@ -404,7 +443,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     private fun initialState() = KompaktLinkedAccountState(
         email = email,
         calendar = KompaktServiceSyncState(_calendarSwitch.value, KompaktSyncStatus.Resolving),
-        contacts = contactsState,
+        contacts = KompaktServiceSyncState(contactsSwitch.value, KompaktSyncStatus.NeverSynced),
         dialog = linkedAccountDialog(
             authError = readNeedsReauth(),
             outOfStorage = KompaktStorage.isStorageLow(context),

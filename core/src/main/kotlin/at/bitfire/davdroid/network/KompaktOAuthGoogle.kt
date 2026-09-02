@@ -22,6 +22,7 @@ class KompaktOAuthGoogle @Inject constructor(
 
     private val SCOPES = arrayOf(
         SCOPE_CALENDAR,                                 // CalDAV
+        SCOPE_CONTACTS,                                 // CardDAV
         "openid",
         "email"                                         // needed to extract email from ID token
     )
@@ -49,5 +50,6 @@ class KompaktOAuthGoogle @Inject constructor(
 
     companion object {
         const val SCOPE_CALENDAR = "https://www.googleapis.com/auth/calendar"
+        const val SCOPE_CONTACTS = "https://www.googleapis.com/auth/carddav"
     }
 }

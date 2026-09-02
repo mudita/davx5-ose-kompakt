@@ -13,6 +13,7 @@ import at.bitfire.davdroid.db.Service
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
 import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
+import at.bitfire.davdroid.sync.KompaktInitDefaults
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
@@ -26,14 +27,15 @@ import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * Waits for the newly linked account's setup to complete (CalDAV collection discovery) before the
- * Kompakt login flow navigates to the Linked Account screen. This way the "Account linked / Sync now"
- * dialog only appears once the calendars are discovered, so tapping "Sync now" works immediately
- * instead of after a delay.
+ * Waits for the newly linked account's setup to complete (collection discovery for every service the
+ * account has) before the Kompakt login flow navigates to the Linked Account screen. This way the
+ * "Account linked / Sync now" dialog only appears once the collections are discovered, so tapping
+ * "Sync now" works immediately instead of after a delay.
  */
 @HiltViewModel
 class KompaktLoginFinalizeModel @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val initDefaults: KompaktInitDefaults,
     private val serviceRepository: DavServiceRepository,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
@@ -51,12 +53,18 @@ class KompaktLoginFinalizeModel @Inject constructor(
         if (_ready.value)
             return
         viewModelScope.launch(ioDispatcher) {
-            val service = serviceRepository.getByAccountAndType(account.name, Service.TYPE_CALDAV)
-            if (service != null)
+            val services = listOf(Service.TYPE_CALDAV, Service.TYPE_CARDDAV)
+                .mapNotNull { type -> serviceRepository.getByAccountAndType(account.name, type) }
+
+            if (services.any { service -> service.type == Service.TYPE_CARDDAV })
+                initDefaults.applyContactsSyncInterval(account)
+
+            if (services.isNotEmpty())
                 withTimeoutOrNull(DISCOVERY_WAIT_MS.milliseconds) {
-                    RefreshCollectionsWorker
-                        .existsFlow(context, RefreshCollectionsWorker.workerName(service.id), WorkInfo.State.SUCCEEDED)
-                        .first { succeeded -> succeeded }
+                    for (service in services)
+                        RefreshCollectionsWorker
+                            .existsFlow(context, RefreshCollectionsWorker.workerName(service.id), WorkInfo.State.SUCCEEDED)
+                            .first { succeeded -> succeeded }
                 }
             _ready.value = true
         }

@@ -227,8 +227,7 @@ fun KompaktLinkedAccountContent(
                 KompaktServiceSyncCell(
                     title = stringResource(R.string.kompakt_label_contacts),
                     state = state.contacts,
-                    // inert until contacts consent can be requested
-                    onCheckedChange = {},
+                    onCheckedChange = { /* SHP-1151 */ },
                     onFailureClick = actions.onFailureClick
                 )
             }
@@ -271,7 +270,7 @@ fun KompaktLinkedAccountContent(
         KompaktModalSheet(
             onDismissRequest = actions.onAccountLinkedDialogDismiss,
             title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_accountlinked),
-            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_csyncnowtoimportyour, state.email),
+            text = "Synchronize now to import your selected Google data", //TODO fronti
             icon = painterResource(R.drawable.ic_kompakt_success),
             confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_syncnow),
             onConfirm = {
