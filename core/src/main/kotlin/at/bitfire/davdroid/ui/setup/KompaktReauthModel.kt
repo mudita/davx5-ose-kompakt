@@ -5,18 +5,14 @@
 package at.bitfire.davdroid.ui.setup
 
 import android.accounts.Account
-import android.accounts.AccountManager
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
 import at.bitfire.davdroid.network.KompaktGrantedServices
 import at.bitfire.davdroid.repository.AccountRepository
-import at.bitfire.davdroid.settings.AccountSettings
+import at.bitfire.davdroid.settings.KompaktAccountSettings
 import at.bitfire.davdroid.sync.worker.SyncWorkerManager
-import at.bitfire.davdroid.ui.KompaktAuthStateBroadcaster
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,7 +28,7 @@ import javax.inject.Inject
  *
  * After OAuth completes ([apply]):
  *  - **Same account** — the fresh OAuth [net.openid.appauth.AuthState] is applied **in place** (via
- *    [AccountSettings.updateAuthState]), preserving the account and its pending local changes, and a sync
+ *    [KompaktAccountSettings.updateAuthState]), preserving the account and its pending local changes, and a sync
  *    is enqueued → [ReauthState.Refreshed]. The account is never unlinked on this path. If the
  *    re-authorization granted neither the Calendar nor the Contacts scope, the token is **not** applied
  *    and the flow reports [ReauthState.Failed] instead.
@@ -43,8 +39,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class KompaktReauthModel @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val accountSettingsFactory: AccountSettings.Factory,
+    private val kompaktAccountSettings: KompaktAccountSettings,
     private val syncWorkerManager: SyncWorkerManager,
     private val accountRepository: AccountRepository,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
@@ -106,13 +101,9 @@ class KompaktReauthModel @Inject constructor(
 
                 else -> {
                     try {
-                        accountSettingsFactory.create(account).updateAuthState(authState)
-                        // token valid again: clear the flag and notify content observers of the transition
-                        val accountManager = AccountManager.get(context)
-                        val wasNeedingReauth = accountManager.getUserData(account, AccountSettings.KEY_NEEDS_REAUTH) == "1"
-                        accountManager.setUserData(account, AccountSettings.KEY_NEEDS_REAUTH, null)
-                        if (wasNeedingReauth)
-                            KompaktAuthStateBroadcaster.notifyAuthStateChanged(context, account, needsReauth = false)
+                        kompaktAccountSettings.updateAuthState(account, authState)
+                        // Clearing the flag is what publishes the change, via KompaktAuthStateReplicator.
+                        kompaktAccountSettings.setReauthNeeded(account, false)
                         syncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)
                     } catch (e: Exception) {
                         logger.log(Level.WARNING, "Couldn't store re-authorized credentials for $account", e)

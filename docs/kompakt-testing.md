@@ -219,8 +219,8 @@ provider reports `0`, then trigger the 401 **once**.
 Reliable ways to observe:
 - A **`ContentObserver`** from a same-signed app on `KompaktAuthState.CONTENT_URI` (easiest -- you already
   know the provider works); see step 4.
-- A temporary `Log`/`logger.info` line in `KompaktAuthStateBroadcaster.notifyAuthStateChanged` (debug
-  build only), then `adb logcat | grep AUTH_STATE_CHANGED`.
+- `KompaktAuthStateReplicator.publish` already logs on a debug build, so
+  `adb logcat | grep AUTH_STATE_CHANGED` shows every publication.
 
 ### 4. Read the provider / receive the push (cross‑app — the real end‑to‑end test)
 
