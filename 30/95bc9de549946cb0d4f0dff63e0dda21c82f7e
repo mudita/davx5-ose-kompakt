@@ -1,0 +1,30 @@
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktSyncEligibilityTest.kt
+  2434bc169f91a3a5 1-95
+docs/superpowers/plans/2026-09-02-per-service-sync-toggle.md
+  2434bc169f91a3a5 356-358,360-364,366-368
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktSyncWorkTest.kt
+  2434bc169f91a3a5 17-19,22-25,38
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktSyncEligibility.kt
+  2434bc169f91a3a5 1-27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "3095bc9de549946cb0d4f0dff63e0dda21c82f7e",
+  "prompts": {
+    "2434bc169f91a3a5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d426cd3a-bbea-470e-baa2-5bff24092beb",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 141,
+      "total_deletions": 27,
+      "accepted_lines": 141,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/78f211540a0b13e23f20b8c6b29dc1f77bd8bb1458b86e1940dcf075fb6c8449"
+    }
+  }
+}
