@@ -1,0 +1,11 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountScreen.kt
+  90a9cf2b9fc06857 93-94
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountModel.kt
+  90a9cf2b9fc06857 27,83,113,204-205,207
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "185dbbdaa1ecfb0c462fcfa11ebee8accd747a38",
+  "prompts": {}
+}
