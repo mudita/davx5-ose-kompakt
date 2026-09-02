@@ -17,6 +17,18 @@ data class KompaktLinkedAccountState(
 
 enum class KompaktLinkedAccountDialog { AuthError, OutOfStorage, NoInternet, SyncFailed }
 
+// Deliberately one-directional: a missing Calendar consent can only come from a partial grant at link
+// time, where the user already saw the choice. [nudgeSettled] is what separates such an account from one
+// linked before Contacts sync could be granted at all — linking settles it up front.
+internal fun contactsDiscoveryNudgeVisible(
+    calendar: KompaktSyncSwitch,
+    contacts: KompaktSyncSwitch,
+    nudgeSettled: Boolean
+): Boolean =
+    calendar != KompaktSyncSwitch.ConsentMissing &&
+        contacts == KompaktSyncSwitch.ConsentMissing &&
+        !nudgeSettled
+
 internal fun linkedAccountDialog(
     authError: Boolean,
     outOfStorage: Boolean,

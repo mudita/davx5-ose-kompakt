@@ -390,11 +390,8 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             .distinctUntilChanged()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), readSwitch(type, intervalKey))
 
-    private fun readSwitch(@ServiceType type: String, intervalKey: String): KompaktSyncSwitch = when {
-        !readConsent(type) -> KompaktSyncSwitch.ConsentMissing
-        readAutoSyncEnabled(intervalKey) -> KompaktSyncSwitch.On
-        else -> KompaktSyncSwitch.Off
-    }
+    private fun readSwitch(@ServiceType type: String, intervalKey: String): KompaktSyncSwitch =
+        syncSwitch(readConsent(type), readAutoSyncEnabled(intervalKey))
 
     private fun readConsent(@ServiceType type: String): Boolean =
         try {
@@ -433,11 +430,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     // never applies the other direction (a Calendar-missing account can only come from a fresh
     // partial-grant link, where the user already saw the consent screen at that time).
     private val showContactsDiscoveryNudge: Flow<Boolean> =
-        combine(calendarSwitch, contactsSwitch, _contactsDiscoveryNudgeShown) { calendar, contacts, shown ->
-            calendar != KompaktSyncSwitch.ConsentMissing &&
-                contacts == KompaktSyncSwitch.ConsentMissing &&
-                !shown
-        }
+        combine(calendarSwitch, contactsSwitch, _contactsDiscoveryNudgeShown, ::contactsDiscoveryNudgeVisible)
 
     private val calendarState: Flow<KompaktServiceSyncState> = combine(
         calendarSwitch,
@@ -485,9 +478,11 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             syncFailed = false
         ),
         reauthPhase = _reauthPhase.value,
-        showContactsDiscoveryNudge = calendarSwitch.value != KompaktSyncSwitch.ConsentMissing &&
-            contactsSwitch.value == KompaktSyncSwitch.ConsentMissing &&
-            !_contactsDiscoveryNudgeShown.value
+        showContactsDiscoveryNudge = contactsDiscoveryNudgeVisible(
+            calendarSwitch.value,
+            contactsSwitch.value,
+            _contactsDiscoveryNudgeShown.value
+        )
     )
 
 

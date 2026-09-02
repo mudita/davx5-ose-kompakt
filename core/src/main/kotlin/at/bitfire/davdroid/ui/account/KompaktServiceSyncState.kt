@@ -26,6 +26,14 @@ data class KompaktServiceSyncState(
     val status: KompaktSyncStatus
 )
 
+// Consent alone would report On for a scope granted during re-auth, where no service, no discovery and
+// no interval follow — so the interval, not the scope, decides between On and Off.
+internal fun syncSwitch(consentGranted: Boolean, autoSyncEnabled: Boolean): KompaktSyncSwitch = when {
+    !consentGranted -> KompaktSyncSwitch.ConsentMissing
+    autoSyncEnabled -> KompaktSyncSwitch.On
+    else -> KompaktSyncSwitch.Off
+}
+
 internal fun serviceSyncState(
     switch: KompaktSyncSwitch,
     syncing: Reported<Boolean>,
