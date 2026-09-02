@@ -27,7 +27,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import net.openid.appauth.AuthState
-import org.json.JSONException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -139,25 +138,16 @@ class KompaktAccountSettingsImpl @Inject constructor(
         }
 
     override fun getAuthState(account: Account) =
-        get(account, AccountSettings.KEY_AUTH_STATE)?.let { json -> parseAuthState(json) }
+        authStateOf(get(account, AccountSettings.KEY_AUTH_STATE))
 
     override fun observeAuthState(account: Account, emitInitial: Boolean) =
-        observe(account, AccountSettings.KEY_AUTH_STATE, emitInitial)
-            .map { json -> json?.let { parseAuthState(it) } }
+        observe(account, AccountSettings.KEY_AUTH_STATE, emitInitial).map { authStateOf(it) }
 
     override suspend fun updateAuthState(account: Account, authState: AuthState) =
         write(account, AccountSettings.KEY_AUTH_STATE) {
             accountSettingsFactory.create(account).updateAuthState(authState)
         }
 
-    // Lenient like getSyncInterval, so that one unparseable stored value reads as "nothing stored"
-    // instead of tearing down a flow that follows this key.
-    private fun parseAuthState(json: String): AuthState? =
-        try {
-            AuthState.jsonDeserialize(json)
-        } catch (_: JSONException) {
-            null
-        }
 
     private fun get(account: Account, key: String): String? =
         accountManager.getUserData(account, key)
@@ -198,6 +188,17 @@ class KompaktAccountSettingsImpl @Inject constructor(
     }
 
 }
+
+// A corrupt stored value reads as "no authorization" rather than throwing, because the linked-account
+// screen resolves this while composing.
+internal fun authStateOf(json: String?): AuthState? =
+    json?.let {
+        try {
+            AuthState.jsonDeserialize(it)
+        } catch (_: Exception) {
+            null
+        }
+    }
 
 @Module
 @InstallIn(SingletonComponent::class)
