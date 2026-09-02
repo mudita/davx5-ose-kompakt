@@ -100,6 +100,11 @@ The request is **throttled**: a sync is only enqueued if the last successful syn
 **15 minutes** ago (or no successful sync has ever happened). If a successful sync completed less than 15
 minutes ago, the broadcast is a **no‑op**.
 
+Synchronization is requested **per service**. Each of Calendar and Contacts is enqueued only when the
+user has that service's sync toggle switched on, has granted its Google permission, and that service is
+configured. A service failing any of those is skipped — so a request may now enqueue **nothing at all**,
+even for a linked and otherwise healthy account.
+
 ### Contract
 
 - **Action:** `at.bitfire.davdroid.mudita.action.REQUEST_SYNC`
@@ -119,6 +124,9 @@ minutes ago, the broadcast is a **no‑op**.
 5. An account must be linked. With no linked account the broadcast is a no‑op.
 6. Normal sync conditions still apply afterwards (e.g. connectivity) — the broadcast only *enqueues* a
    manual sync; it does not bypass the lack of a network.
+7. **At least one service must be eligible.** A service is skipped when its sync toggle is off, when the
+   account has not granted that service's Google permission, or when the service is not configured. If
+   no service qualifies, the broadcast is a no‑op and nothing is enqueued.
 
 ### Caller — manifest
 
