@@ -185,24 +185,26 @@ fun KompaktLinkedAccountContent(
                 )
             },
             bottomBar = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    OutlinedButtonMMD(
-                        onClick = actions.onSyncNow,
+                // Withheld too, or it would enqueue a sync for services whose stored state is unread.
+                if (!state.isLoading)
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp),
-                        shape = RoundedCornerShape(12.dp)
+                            .padding(16.dp)
                     ) {
-                        TextMMD(
-                            text = stringResource(RFrontitude.string.common_button_synchronize),
-                            style = KompaktTypography900.labelMedium
-                        )
+                        OutlinedButtonMMD(
+                            onClick = actions.onSyncNow,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            TextMMD(
+                                text = stringResource(RFrontitude.string.common_button_synchronize),
+                                style = KompaktTypography900.labelMedium
+                            )
+                        }
                     }
-                }
             }
         ) { padding ->
             Column(
@@ -213,26 +215,29 @@ fun KompaktLinkedAccountContent(
             ) {
                 AccountHeader(email = state.email)
 
-                KompaktServiceSyncCell(
-                    title = stringResource(RFrontitude.string.common_label_calendar),
-                    state = state.calendar,
-                    onCheckedChange = { enabled ->
-                        if (enabled) actions.onToggleService(KompaktSyncService.CALENDAR, true)
-                        else serviceToDisable = KompaktSyncService.CALENDAR
-                    },
-                    onFailureClick = actions.onFailureClick,
-                    showDivider = true
-                )
+                // Revealed together, so the list repaints once instead of per row as each settles.
+                if (!state.isLoading) {
+                    KompaktServiceSyncCell(
+                        title = stringResource(RFrontitude.string.common_label_calendar),
+                        state = state.calendar,
+                        onCheckedChange = { enabled ->
+                            if (enabled) actions.onToggleService(KompaktSyncService.CALENDAR, true)
+                            else serviceToDisable = KompaktSyncService.CALENDAR
+                        },
+                        onFailureClick = actions.onFailureClick,
+                        showDivider = true
+                    )
 
-                KompaktServiceSyncCell(
-                    title = stringResource(RFrontitude.string.common_label_contacts),
-                    state = state.contacts,
-                    onCheckedChange = { enabled ->
-                        if (enabled) actions.onToggleService(KompaktSyncService.CONTACTS, true)
-                        else serviceToDisable = KompaktSyncService.CONTACTS
-                    },
-                    onFailureClick = actions.onFailureClick
-                )
+                    KompaktServiceSyncCell(
+                        title = stringResource(RFrontitude.string.common_label_contacts),
+                        state = state.contacts,
+                        onCheckedChange = { enabled ->
+                            if (enabled) actions.onToggleService(KompaktSyncService.CONTACTS, true)
+                            else serviceToDisable = KompaktSyncService.CONTACTS
+                        },
+                        onFailureClick = actions.onFailureClick
+                    )
+                }
             }
         }
     }
@@ -425,11 +430,25 @@ private fun KompaktLinkedAccountContent_MixedSyncingAndSynced_Preview() {
 
 @Preview
 @Composable
-private fun KompaktLinkedAccountContent_FailedAndResolving_Preview() {
+private fun KompaktLinkedAccountContent_FailedAndNeverSynced_Preview() {
     KompaktLinkedAccountContent(
         state = previewState(
             on(KompaktSyncStatus.Failed("26.10.2025 11:00")),
-            on(KompaktSyncStatus.Resolving)
+            on(KompaktSyncStatus.NeverSynced)
+        ),
+        actions = KompaktLinkedAccountActions(),
+        showAccountLinkedDialog = false
+    )
+}
+
+// Renders the header alone: that is the loading face, not an empty screen.
+@Preview
+@Composable
+private fun KompaktLinkedAccountContent_Loading_Preview() {
+    KompaktLinkedAccountContent(
+        state = previewState(
+            on(KompaktSyncStatus.Synced(PREVIEW_LAST_SYNC)),
+            KompaktServiceSyncState(KompaktSyncSwitch.Resolving, KompaktSyncStatus.Resolving)
         ),
         actions = KompaktLinkedAccountActions(),
         showAccountLinkedDialog = false

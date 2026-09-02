@@ -26,7 +26,12 @@ sealed interface KompaktSyncStatus {
 data class KompaktServiceSyncState(
     val switch: KompaktSyncSwitch,
     val status: KompaktSyncStatus
-)
+) {
+
+    val isLoading: Boolean
+        get() = switch == KompaktSyncSwitch.Resolving || status == KompaktSyncStatus.Resolving
+
+}
 
 internal fun serviceSyncState(
     switch: KompaktSyncSwitch,
