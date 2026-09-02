@@ -1,0 +1,24 @@
+core/src/test/kotlin/at/bitfire/davdroid/startup/KompaktAuthStateReplicatorTest.kt
+  d52106317ca91cf7 1-30,36-78,84-89,92-99,102-108,111-119,122-123,125-129,132-133,135-140,143-144,146-150
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "643e025aced5e2e20d767376db02f8ac0e53d8b3",
+  "prompts": {
+    "d52106317ca91cf7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f94b97a5-a6ca-46bd-867b-b957dee0f10a",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 309,
+      "total_deletions": 26,
+      "accepted_lines": 8,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/09d965d6acf9de2eb634a3824db2af55498ae7a4165d74c95b00989d9c5927b2"
+    }
+  }
+}
