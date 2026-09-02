@@ -407,11 +407,8 @@ stays in the ViewModel and this component never learns what a dialog is.
 
 ```kotlin
 class KompaktServiceLastSync @Inject constructor(
-    private val db: AppDatabase,
     private val serviceRepository: DavServiceRepository,
-    private val collectionRepository: DavCollectionRepository,
-    private val syncStatsRepository: DavSyncStatsRepository,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+    private val syncStatsRepository: DavSyncStatsRepository
 ) {
     fun observe(account: Account, service: KompaktSyncService): Flow<Reported<Long?>>
 }
@@ -425,32 +422,46 @@ first emission is asynchronous, so *not loaded yet* must stay distinguishable fr
 wrapping a fabricated `null` afterwards would lose exactly that. The existing `syncing` flow carries the
 same argument.
 
-**Storage: no new DAO query, and no upstream edit.** `CollectionDao` exposes no Flow for
-collections-by-service and `SyncStatsDao` has no per-service maximum, so the maximum is composed in
-Kotlin from `getByServiceAndSync` and `getLastSyncedFlow`. `getByServiceAndSync` is a blocking,
-non-suspend DAO call, so it needs an explicit hop onto the IO dispatcher.
+**Storage: one appended DAO query.** `CollectionDao` exposes no Flow for collections-by-service and
+`SyncStatsDao` has no per-service maximum, so one is added:
 
-**The recompute trigger is `AppDatabase.invalidationTracker`**, which Room 2.8.4 provides as
-`createFlow("collection")` and which nothing in this repo uses today. The selected set is not otherwise
-observable, and the alternative trigger — `RefreshCollectionsWorker.existsFlow` — calls
-`WorkManager.getInstance` internally, so it would either break Invariant 4 or force a third method onto
-`KompaktSyncWork`, which is how the earlier attempt's work seam began growing into a module.
+```kotlin
+// SyncStatsDao
+@Query("SELECT MAX(syncstats.lastSync) FROM syncstats " +
+       "INNER JOIN collection ON collection.id = syncstats.collectionId " +
+       "WHERE collection.serviceId = :serviceId AND collection.sync " +
+       "AND syncstats.dataType = :dataType")
+fun lastSyncFlow(serviceId: Long, dataType: String): Flow<Long?>
+```
 
-Using the tracker rather than a manual `refresh()` is what keeps the earlier attempt's caveat from
-having to be restated here: it required `KompaktInitDefaults` to stay the only writer of
-`Collection.sync` *because its recompute triggers did not observe that flag*, a rule nothing enforced.
-Observing the table makes a second writer simply work.
+plus a passthrough on `DavSyncStatsRepository`, because nothing outside a repository touches a DAO in
+this codebase. A `JOIN` rather than a subquery so the invalidation set is unambiguous: Room re-emits on
+a write to **either** table, which means both a completed sync and a `Collection.sync` flip recompute
+the value, with no explicit trigger anywhere.
 
-**One trap, recorded because it is silent:** `combine` over an **empty** list of flows never emits. A
-service with no selected collections would sit at `Reported.Pending` forever — which is precisely
-Contacts today. The empty case must return `Reported.Value(null)` explicitly, and it needs a test.
+**Rejected: `AppDatabase.invalidationTracker.createFlow("collection")` as the trigger**, composing the
+maximum in Kotlin. It touches no upstream file, which is the only thing in its favour, and it is worse
+in three ways that matter more. The table name is a string nothing verifies, so renaming the table stops
+the recompute with no compile error and no failing test. It uses the returned `Set<String>` purely as a
+side channel. And it is a pattern used nowhere else here, so it reads as a workaround rather than as the
+way this codebase talks to Room.
 
-A DAO-level `MAX` with a join onto `collection` would collapse this to one query and one observer, and
-would cost one appended method on `SyncStatsDao` plus a passthrough on `DavSyncStatsRepository` — both
-upstream files. It is not taken, because the fork rule asks for an upstream edit only when a new file
-cannot express the behaviour, and here one can. If the observer count ever matters, that swap is a
-change to this component's internals with no caller affected — which is the main reason the composition
-is behind an interface at all.
+It also kept a defect the query removes. Composing the maximum requires `combine` over one flow per
+selected collection, and `combine` over an **empty** list never emits — so a service with no selected
+collections would sit at `Reported.Pending` forever, which is precisely the shipping Contacts
+configuration. SQL `MAX` over zero rows returns `NULL`, so that case is ordinary behaviour rather than a
+guard someone has to remember to write.
+
+Two things the query keeps that the earlier attempt could not. `KompaktInitDefaults` need not be the
+only writer of `Collection.sync` — that attempt required it *because its recompute triggers did not
+observe the flag*, a rule nothing enforced. And `RefreshCollectionsWorker.existsFlow` stays out of this
+file: it calls `WorkManager.getInstance` internally, so using it would either break Invariant 4 or force
+a third method onto `KompaktSyncWork`, which is how that attempt's work seam began growing into a
+module.
+
+The cost is honest and bounded: `SyncStatsDao` goes from three methods to four. It is a small upstream
+file that upstream rarely touches, unlike `CollectionDao` at forty-plus methods and actively changed —
+which is also why the query lives here rather than there.
 
 ### Additions to existing files
 
@@ -743,8 +754,8 @@ fun setServiceSync(service: KompaktSyncService, enabled: Boolean) {
    `KompaktStartSyncUseCase`, is named for the action it performs rather than the question it answers.
 4. **No new file calls `AccountManager.get`, `WorkManager.getInstance`, or a worker static helper**,
    except `KompaktSyncWork`. Grep-checkable, and the reason every rule tests without Robolectric.
-   `RefreshCollectionsWorker.existsFlow` counts, which is why `KompaktServiceLastSync` uses Room's
-   invalidation tracker rather than a discovery transition.
+   `RefreshCollectionsWorker.existsFlow` counts, which is why `KompaktServiceLastSync` gets its
+   recompute from a Room query's own invalidation rather than a discovery transition.
 
 `KompaktInitDefaults` no longer needs to be the only writer of `Collection.sync`. The earlier attempt
 required that, because its last-sync recompute triggers did not observe the flag; observing the
@@ -798,13 +809,21 @@ Contacts row live, per-service disable confirmation), `ui/KompaktSyncRequestRece
 `sync/worker/SyncWorkerManager.kt` (one visibility keyword), `docs/app-integration.md`.
 
 **Unchanged:** `KompaktServiceSyncCell`, `KompaktLinkedAccountState`, `linkedAccountDialog`,
-`KompaktLastSyncFormatter`, `SyncStatsDao`, `CollectionDao`, `AppDatabase`.
+`KompaktLastSyncFormatter`, `CollectionDao`, `AppDatabase`.
 
 `core/.../network/KompaktOAuthGoogle.kt` gains one companion constant, `SCOPE_CONTACTS`. It is a Kompakt
 file, and the constant is not added to its requested `SCOPES` array.
 
-**Exactly one upstream edit**, and it is one keyword on a method the fork added itself. Everything else
-is a new `Kompakt*` file or an existing `Kompakt*` file. `docs/app-integration.md` is ours.
+**Three upstream edits, all pure appends, none changing existing behaviour:**
+
+| File | Edit | Why a new file cannot express it |
+|---|---|---|
+| `sync/worker/SyncWorkerManager.kt` | drop one `private` keyword | the method is the fork's own addition (SHP-1046) |
+| `db/SyncStatsDao.kt` | one `@Query` returning `Flow<Long?>` | Room accepts a query only on a DAO |
+| `repository/DavSyncStatsRepository.kt` | one passthrough | nothing outside a repository touches a DAO here |
+
+No schema change and no migration — the query is a `SELECT`, and `AppDatabase` already exposes
+`syncStatsDao()`, so neither the database class nor a Room version is affected.
 
 ---
 
@@ -827,11 +846,11 @@ correct in any order:
 - switching a service on does **not** enqueue when that service is ineligible — the AC 9 path goes
   through the same use case as the button.
 - marking Calendar's defaults applied does not mark Contacts'.
-- **`KompaktServiceLastSync` emits `Reported.Value(null)`, not nothing, when no collection is
-  selected.** The empty-`combine` trap: a `combine` over zero flows never emits, which would strand the
-  Contacts row at `Resolving` forever. This is the single most likely defect in the component and the
-  case a reviewer is least likely to notice.
-- `KompaktServiceLastSync` re-emits when `Collection.sync` flips, without any explicit refresh.
+- **`KompaktServiceLastSync` emits `Reported.Value(null)`, not nothing, when the account has no
+  `Service` row** for that type — the branch above the query, which is the one case the SQL cannot
+  cover. The no-collections-selected case is `MAX` over zero rows and needs no guard.
+- `KompaktServiceLastSync` emits `Reported.Pending` before its first value, so *not loaded yet* stays
+  distinguishable from *never synced*.
 
 `kotlinx-coroutines-test` is in the version catalog and in `core`'s `androidTestImplementation` but not
 its `testImplementation`; moving it in is a one-line change to an already-present artifact.
@@ -876,7 +895,7 @@ seam, has ever run on hardware.
 10. The Calendar row's last-sync time is unchanged by the switch from the primary-calendar read to the
     selected-set read. They should agree today; if they do not, the selection is not what
     `KompaktInitDefaults` is assumed to have made.
-11. The Contacts row does not sit at *Resolving* — the empty-`combine` case, with no address book
-    selected, which is the shipping configuration.
+11. The Contacts row settles on *Not synced yet* rather than sitting at *Resolving*, with no address
+    book selected — the shipping configuration, and the one the last-sync query returns `NULL` for.
 
 `docs/kompakt-testing.md` has the recipes.
