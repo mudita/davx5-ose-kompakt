@@ -62,17 +62,21 @@ class KompaktInitDefaults @Inject constructor(
 
     private val mutex = Mutex()
 
-    /** Applied defaults version for [account] (0 = none / first setup). */
-    fun appliedVersion(account: Account): Int =
+    /** Applied defaults version for [account] and [service] (0 = none / first setup). */
+    fun appliedVersion(account: Account, service: KompaktSyncService): Int =
         try {
-            kompaktAccountSettings.getDefaultsAppliedVersion(account) ?: 0
+            appliedVersionOf(
+                perService = kompaktAccountSettings.getDefaultsAppliedVersion(account, service),
+                legacy = kompaktAccountSettings.getLegacyDefaultsAppliedVersion(account),
+                service = service
+            )
         } catch (_: Exception) {
             DEFAULTS_VERSION   // account gone → treat as up to date so we stop retrying
         }
 
-    suspend fun markApplied(account: Account) {
+    suspend fun markApplied(account: Account, service: KompaktSyncService) {
         try {
-            kompaktAccountSettings.setDefaultsApplied(account, DEFAULTS_VERSION)
+            kompaktAccountSettings.setDefaultsApplied(account, service, DEFAULTS_VERSION)
         } catch (e: Exception) {
             logger.log(Level.WARNING, "Couldn't mark Kompakt defaults applied for $account", e)
         }
@@ -84,20 +88,24 @@ class KompaktInitDefaults @Inject constructor(
      * tight time budget (a BroadcastReceiver) pass false to attempt once without blocking. A fast no-op
      * once applied.
      */
-    suspend fun ensureApplied(account: Account, awaitDiscovery: Boolean = true): Outcome {
-        if (appliedVersion(account) >= DEFAULTS_VERSION)
+    suspend fun ensureApplied(
+        account: Account,
+        service: KompaktSyncService,
+        awaitDiscovery: Boolean = true
+    ): Outcome {
+        if (appliedVersion(account, service) >= DEFAULTS_VERSION)
             return Outcome.ALREADY_APPLIED
-        val service = serviceRepository.getByAccountAndType(account.name, Service.TYPE_CALDAV)
+        val serviceRow = serviceRepository.getByAccountAndType(account.name, service.serviceType)
             ?: return Outcome.NOT_READY
-        maybeApply(account, service.id).let { if (it != Outcome.NOT_READY) return it }
+        maybeApply(account, service, serviceRow.id).let { if (it != Outcome.NOT_READY) return it }
         if (!awaitDiscovery)
             return Outcome.NOT_READY
         withTimeoutOrNull(DISCOVERY_WAIT_MS.milliseconds) {
             RefreshCollectionsWorker
-                .existsFlow(context, RefreshCollectionsWorker.workerName(service.id), WorkInfo.State.SUCCEEDED)
+                .existsFlow(context, RefreshCollectionsWorker.workerName(serviceRow.id), WorkInfo.State.SUCCEEDED)
                 .first { succeeded -> succeeded }
         }
-        return maybeApply(account, service.id)
+        return maybeApply(account, service, serviceRow.id)
     }
 
     /**
@@ -105,30 +113,44 @@ class KompaktInitDefaults @Inject constructor(
      * (a version bump does not, to respect the user's toggle choice). Returns [Outcome.NOT_READY] if the
      * primary isn't identifiable yet so the caller can retry after discovery.
      */
-    suspend fun maybeApply(account: Account, serviceId: Long): Outcome = mutex.withLock {
-        val version = appliedVersion(account)
+    suspend fun maybeApply(
+        account: Account,
+        service: KompaktSyncService,
+        serviceId: Long
+    ): Outcome = mutex.withLock {
+        val version = appliedVersion(account, service)
         if (version >= DEFAULTS_VERSION)
             return Outcome.ALREADY_APPLIED
-        val calendars = collectionRepository.getByService(serviceId)
-            .filter { it.type == Collection.TYPE_CALENDAR }
-        if (calendars.isEmpty())
-            return Outcome.NOT_READY
-        val primaryId = findPrimaryCalendarId(account, calendars) ?: return Outcome.NOT_READY
 
-        for (calendar in calendars) {
-            val shouldSync = calendar.id == primaryId
-            if (calendar.sync != shouldSync)
-                collectionRepository.setSync(calendar.id, shouldSync)
+        when (service) {
+            KompaktSyncService.CALENDAR -> {
+                val calendars = collectionRepository.getByService(serviceId)
+                    .filter { it.type == Collection.TYPE_CALENDAR }
+                if (calendars.isEmpty())
+                    return Outcome.NOT_READY
+                val primaryId = findPrimaryCalendarId(account, calendars) ?: return Outcome.NOT_READY
+
+                for (calendar in calendars) {
+                    val shouldSync = calendar.id == primaryId
+                    if (calendar.sync != shouldSync)
+                        collectionRepository.setSync(calendar.id, shouldSync)
+                }
+            }
+
+            // No address book is selected. Selecting one creates a local address book that the syncer
+            // then deletes, with its pending changes, on any run where the database set comes back
+            // empty -- which a narrowed scope produces.
+            KompaktSyncService.CONTACTS -> { /* interval only */ }
         }
 
         if (version == 0) {
             try {
-                kompaktAccountSettings.setSyncInterval(account, SyncDataType.EVENTS, AUTO_SYNC_INTERVAL_SECONDS)
+                kompaktAccountSettings.setSyncInterval(account, service.dataType, AUTO_SYNC_INTERVAL_SECONDS)
             } catch (e: Exception) {
                 logger.log(Level.WARNING, "Couldn't set automatic sync for $account", e)
             }
         }
-        markApplied(account)
+        markApplied(account, service)
         Outcome.APPLIED
     }
 
@@ -170,3 +192,9 @@ class KompaktInitDefaults @Inject constructor(
     }
 
 }
+
+// The pre-split marker meant "calendar defaults applied", so it counts for CALENDAR and nothing else.
+internal fun appliedVersionOf(perService: Int?, legacy: Int?, service: KompaktSyncService): Int =
+    perService
+        ?: legacy?.takeIf { service == KompaktSyncService.CALENDAR }
+        ?: 0

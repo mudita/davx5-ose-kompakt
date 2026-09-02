@@ -29,6 +29,7 @@ import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
 import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.settings.KompaktAccountSettings
 import at.bitfire.davdroid.sync.KompaktInitDefaults
+import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.sync.KompaktStorage
 import at.bitfire.davdroid.sync.SyncConditions
 import at.bitfire.davdroid.sync.SyncDataType
@@ -436,17 +437,18 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         // selection. The first sync right after linking is intentionally left to the "Sync now / Later"
         // modal, so we do NOT enqueue a sync here.
         viewModelScope.launch(ioDispatcher) {
-            if (initDefaults.appliedVersion(account) >= KompaktInitDefaults.DEFAULTS_VERSION)
+            val kompaktService = KompaktSyncService.CALENDAR
+            if (initDefaults.appliedVersion(account, kompaktService) >= KompaktInitDefaults.DEFAULTS_VERSION)
                 return@launch
             serviceRepository.getCalDavServiceFlow(account.name).filterNotNull().collectLatest { service ->
-                if (initDefaults.appliedVersion(account) >= KompaktInitDefaults.DEFAULTS_VERSION)
+                if (initDefaults.appliedVersion(account, kompaktService) >= KompaktInitDefaults.DEFAULTS_VERSION)
                     return@collectLatest
-                val outcome = initDefaults.maybeApply(account, service.id)
+                val outcome = initDefaults.maybeApply(account, kompaktService, service.id)
                 if (outcome == KompaktInitDefaults.Outcome.NOT_READY) {
                     RefreshCollectionsWorker
                         .existsFlow(context, RefreshCollectionsWorker.workerName(service.id), WorkInfo.State.SUCCEEDED)
                         .first { succeeded -> succeeded }
-                    initDefaults.maybeApply(account, service.id)
+                    initDefaults.maybeApply(account, kompaktService, service.id)
                 }
             }
         }
@@ -470,7 +472,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
                 _calendarSwitch.value = readCalendarSwitch()
             }
             // an explicit user choice counts as "defaults applied" so the init routine won't override it
-            initDefaults.markApplied(account)
+            initDefaults.markApplied(account, KompaktSyncService.CALENDAR)
         }
     }
 
@@ -485,7 +487,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     fun syncNow() {
         viewModelScope.launch(ioDispatcher) {
             // select the primary calendar before enqueuing, else a "Sync now" right after linking syncs nothing
-            initDefaults.ensureApplied(account)
+            initDefaults.ensureApplied(account, KompaktSyncService.CALENDAR)
 
             // manual syncs skip the worker's constraints, so guard here: critically low storage → show the
             // "Your storage is full" message, don't start a sync that would only fail

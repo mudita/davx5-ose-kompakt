@@ -8,6 +8,7 @@ import android.accounts.Account
 import android.accounts.AccountManager
 import android.content.Context
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
+import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.sync.SyncDataType
 import at.bitfire.synctools.util.setAndVerifyUserData
 import dagger.Binds
@@ -50,9 +51,12 @@ interface KompaktAccountSettings {
 
     fun observeReauthNeeded(account: Account, emitInitial: Boolean = true): Flow<Boolean>
 
-    fun getDefaultsAppliedVersion(account: Account): Int?
+    fun getDefaultsAppliedVersion(account: Account, service: KompaktSyncService): Int?
 
-    suspend fun setDefaultsApplied(account: Account, version: Int)
+    suspend fun setDefaultsApplied(account: Account, service: KompaktSyncService, version: Int)
+
+    /** The marker written before it was split per service, which meant "calendar defaults applied". */
+    fun getLegacyDefaultsAppliedVersion(account: Account): Int?
 
     /**
      * The stored sync interval in seconds, or `null` when nothing is stored.
@@ -120,11 +124,17 @@ class KompaktAccountSettingsImpl @Inject constructor(
     override fun observeReauthNeeded(account: Account, emitInitial: Boolean) =
         observe(account, AccountSettings.KEY_NEEDS_REAUTH, emitInitial).map { it == FLAG_SET }
 
-    override fun getDefaultsAppliedVersion(account: Account) =
+    override fun getDefaultsAppliedVersion(account: Account, service: KompaktSyncService) =
+        get(account, defaultsAppliedKey(service))?.toIntOrNull()
+
+    override suspend fun setDefaultsApplied(account: Account, service: KompaktSyncService, version: Int) =
+        putRaw(account, defaultsAppliedKey(service), version.toString())
+
+    override fun getLegacyDefaultsAppliedVersion(account: Account) =
         get(account, KEY_DEFAULTS_APPLIED)?.toIntOrNull()
 
-    override suspend fun setDefaultsApplied(account: Account, version: Int) =
-        putRaw(account, KEY_DEFAULTS_APPLIED, version.toString())
+    private fun defaultsAppliedKey(service: KompaktSyncService) =
+        "${KEY_DEFAULTS_APPLIED}_${service.name.lowercase()}"
 
     override fun getSyncInterval(account: Account, dataType: SyncDataType) =
         get(account, intervalKey(dataType))?.toLongOrNull()

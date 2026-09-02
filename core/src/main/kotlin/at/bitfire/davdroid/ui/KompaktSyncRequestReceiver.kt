@@ -10,6 +10,7 @@ import android.content.Intent
 import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.repository.DavSyncStatsRepository
 import at.bitfire.davdroid.sync.KompaktInitDefaults
+import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.sync.worker.SyncWorkerManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -76,7 +77,7 @@ class KompaktSyncRequestReceiver : BroadcastReceiver() {
                     // empty no-op — skip it (a later trigger syncs once discovery/selection completes).
                     // Note: this gates all authorities on the calendar defaults, which is correct while
                     // the Kompakt flow only ever auto-selects the primary calendar (no address books).
-                    if (initDefaults.ensureApplied(account, awaitDiscovery = false) != KompaktInitDefaults.Outcome.NOT_READY)
+                    if (initDefaults.ensureApplied(account, KompaktSyncService.CALENDAR, awaitDiscovery = false) != KompaktInitDefaults.Outcome.NOT_READY)
                         syncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)
                 }
             } finally {
