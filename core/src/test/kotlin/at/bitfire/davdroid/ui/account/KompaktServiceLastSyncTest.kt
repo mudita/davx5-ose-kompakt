@@ -37,7 +37,7 @@ class KompaktServiceLastSyncTest {
 
     @Test
     fun reportsPendingBeforeTheFirstValue() = runTest {
-        every { serviceRepository.getCalDavServiceFlow(account.name) } returns flowOf(serviceRow(7L))
+        every { serviceRepository.getServiceFlow(account.name, KompaktSyncService.CALENDAR.serviceType) } returns flowOf(serviceRow(7L))
         every { syncStatsRepository.lastSyncFlow(7L, SyncDataType.EVENTS) } returns flowOf(500L)
 
         assertEquals(
@@ -48,7 +48,7 @@ class KompaktServiceLastSyncTest {
 
     @Test
     fun readsTheServicesOwnRowAndDataType() = runTest {
-        every { serviceRepository.getCardDavServiceFlow(account.name) } returns flowOf(serviceRow(9L))
+        every { serviceRepository.getServiceFlow(account.name, KompaktSyncService.CONTACTS.serviceType) } returns flowOf(serviceRow(9L))
         every { syncStatsRepository.lastSyncFlow(9L, SyncDataType.CONTACTS) } returns flowOf(1_200L)
 
         assertEquals(
@@ -61,7 +61,7 @@ class KompaktServiceLastSyncTest {
     @Test
     fun neverSyncedWhenNoCollectionIsSelected() = runTest {
         // MAX over zero rows is NULL, so the shipping Contacts configuration needs no special case.
-        every { serviceRepository.getCardDavServiceFlow(account.name) } returns flowOf(serviceRow(9L))
+        every { serviceRepository.getServiceFlow(account.name, KompaktSyncService.CONTACTS.serviceType) } returns flowOf(serviceRow(9L))
         every { syncStatsRepository.lastSyncFlow(9L, SyncDataType.CONTACTS) } returns flowOf(null)
 
         assertEquals(
@@ -73,7 +73,7 @@ class KompaktServiceLastSyncTest {
     @Test
     fun neverSyncedWhenTheAccountHasNoServiceRow() = runTest {
         // The one case the query cannot answer, because there is no service id to ask about.
-        every { serviceRepository.getCardDavServiceFlow(account.name) } returns flowOf(null)
+        every { serviceRepository.getServiceFlow(account.name, KompaktSyncService.CONTACTS.serviceType) } returns flowOf(null)
 
         assertEquals(
             listOf(Reported.Pending, Reported.Value<Long?>(null)),

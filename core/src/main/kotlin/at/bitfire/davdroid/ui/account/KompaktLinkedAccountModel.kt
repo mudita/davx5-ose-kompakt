@@ -29,7 +29,6 @@ import at.bitfire.davdroid.sync.KompaktInitDefaults
 import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.sync.KompaktStartSyncUseCase
 import at.bitfire.davdroid.sync.KompaktSyncWork
-import at.bitfire.davdroid.sync.serviceFlow
 import at.bitfire.davdroid.sync.KompaktStorage
 import at.bitfire.davdroid.sync.SyncConditions
 import at.bitfire.davdroid.util.broadcastReceiverFlow
@@ -159,17 +158,14 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     // Reported at the source: the first query is asynchronous, so "not yet known" must be
     // distinguishable from "not syncing" — wrapping a fabricated `false` afterwards would not be.
     // Pending counts as syncing, or a just-tapped sync shows nothing until its worker starts.
-    private val syncing: Map<KompaktSyncService, StateFlow<Reported<Boolean>>> =
-        KompaktSyncService.entries.associateWith { service ->
-            accountProgress(account, serviceRepository.serviceFlow(account, service), listOf(service.dataType))
-                .map<AccountProgress, Reported<Boolean>> { Reported.Value(it != AccountProgress.Idle) }
-                .distinctUntilChanged()
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Reported.Pending)
-        }
-
-    /** `true` only once an active Calendar sync has been reported. */
-    private val syncingNow: Flow<Boolean> =
-        syncing.getValue(KompaktSyncService.CALENDAR).map { it is Reported.Value && it.value }
+    private fun syncingOf(service: KompaktSyncService): Flow<Reported<Boolean>> =
+        accountProgress(
+            account,
+            serviceRepository.getServiceFlow(account.name, service.serviceType),
+            listOf(service.dataType)
+        )
+            .map<AccountProgress, Reported<Boolean>> { Reported.Value(it != AccountProgress.Idle) }
+            .distinctUntilChanged()
 
     private val _syncFailed = MutableStateFlow(false)
 
@@ -274,10 +270,10 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         // its network constraint (retrying) and the "Loading data…" loader would otherwise hang forever.
         // Cancel it and show the "No internet connection" message instead. Debounced to ignore brief blips.
         viewModelScope.launch {
-            combine(syncingNow, networkAvailable) { active, online -> active && !online }
+            combine(_trackedSync, networkAvailable) { tracked, online -> tracked != null && !online }
                 .distinctUntilChanged()
                 .collectLatest { offlineWhileSyncing ->
-                    if (!offlineWhileSyncing || _trackedSync.value == null)
+                    if (!offlineWhileSyncing)
                         return@collectLatest
                     delay(OFFLINE_GRACE_MS.milliseconds)     // let a short network blip recover on its own
                     _trackedSync.value = null   // stop tracking first so the cancel isn't reported as a result
@@ -301,7 +297,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         KompaktSyncService.entries.associateWith { service ->
             combine(
                 switchOf(service),
-                syncing.getValue(service),
+                syncingOf(service),
                 lastSyncOf(service),
                 failedOf(service),
                 ::serviceSyncState
@@ -358,7 +354,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             viewModelScope.launch(ioDispatcher) {
                 if (initDefaults.appliedVersion(account, service) >= KompaktInitDefaults.DEFAULTS_VERSION)
                     return@launch
-                serviceRepository.serviceFlow(account, service).filterNotNull().collectLatest { serviceRow ->
+                serviceRepository.getServiceFlow(account.name, service.serviceType).filterNotNull().collectLatest { serviceRow ->
                     if (initDefaults.appliedVersion(account, service) >= KompaktInitDefaults.DEFAULTS_VERSION)
                         return@collectLatest
                     val outcome = initDefaults.maybeApply(account, service, serviceRow.id)

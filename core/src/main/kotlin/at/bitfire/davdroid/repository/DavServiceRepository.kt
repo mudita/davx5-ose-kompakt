@@ -26,6 +26,9 @@ class DavServiceRepository @Inject constructor(
     suspend fun getByAccountAndType(name: String, @ServiceType serviceType: String): Service? =
         dao.getByAccountAndType(name, serviceType)
 
+    fun getServiceFlow(accountName: String, @ServiceType serviceType: String) =
+        dao.getByAccountAndTypeFlow(accountName, serviceType)
+
     fun getCalDavServiceFlow(accountName: String) =
         dao.getByAccountAndTypeFlow(accountName, Service.TYPE_CALDAV)
 

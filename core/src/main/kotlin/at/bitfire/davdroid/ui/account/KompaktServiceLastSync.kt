@@ -8,7 +8,6 @@ import android.accounts.Account
 import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.repository.DavSyncStatsRepository
 import at.bitfire.davdroid.sync.KompaktSyncService
-import at.bitfire.davdroid.sync.serviceFlow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -25,7 +24,7 @@ class KompaktServiceLastSync @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     internal fun observe(account: Account, service: KompaktSyncService): Flow<Reported<Long?>> =
-        serviceRepository.serviceFlow(account, service)
+        serviceRepository.getServiceFlow(account.name, service.serviceType)
             .flatMapLatest { serviceRow ->
                 if (serviceRow == null)
                     flowOf<Reported<Long?>>(Reported.Value(null))

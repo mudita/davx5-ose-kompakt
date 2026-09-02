@@ -235,15 +235,11 @@ A `null` `AuthState`, an unparseable one and one with no `scopeSet` all answer `
 conservative direction: it can hide a grant the user actually has, and the user recovers by re-consenting;
 the opposite default would enqueue a sync into a 403 and the D1 deletion chain.
 
-And the service-row lookup, shared by the liveness flow and `KompaktServiceLastSync`. An extension on
-the upstream repository, kept in this file so no upstream file is edited for it:
-
-```kotlin
-internal fun DavServiceRepository.serviceFlow(account: Account, service: KompaktSyncService) = when (service) {
-    KompaktSyncService.CALENDAR -> getCalDavServiceFlow(account.name)
-    KompaktSyncService.CONTACTS -> getCardDavServiceFlow(account.name)
-}
-```
+The service-row lookup shared by the liveness flow and `KompaktServiceLastSync` is
+`DavServiceRepository.getServiceFlow(accountName, serviceType)`. `ServiceDao.getByAccountAndTypeFlow`
+is already general; the repository merely lacked a flow accessor for it, exposing only two
+type-specific wrappers. A Kompakt-side `when` over those two would have carried no logic — it would
+have re-implemented by dispatch what the query already does by parameter.
 
 ### `sync/KompaktServiceToggle.kt` — the persisted toggle
 
@@ -814,13 +810,14 @@ Contacts row live, per-service disable confirmation), `ui/KompaktSyncRequestRece
 `core/.../network/KompaktOAuthGoogle.kt` gains one companion constant, `SCOPE_CONTACTS`. It is a Kompakt
 file, and the constant is not added to its requested `SCOPES` array.
 
-**Three upstream edits, all pure appends, none changing existing behaviour:**
+**Four upstream edits, all pure appends, none changing existing behaviour:**
 
 | File | Edit | Why a new file cannot express it |
 |---|---|---|
 | `sync/worker/SyncWorkerManager.kt` | drop one `private` keyword | the method is the fork's own addition (SHP-1046) |
 | `db/SyncStatsDao.kt` | one `@Query` returning `Flow<Long?>` | Room accepts a query only on a DAO |
 | `repository/DavSyncStatsRepository.kt` | one passthrough | nothing outside a repository touches a DAO here |
+| `repository/DavServiceRepository.kt` | one accessor, `getServiceFlow(accountName, serviceType)` | the DAO's flow is already general; only the repository lacked a general accessor |
 
 No schema change and no migration — the query is a `SELECT`, and `AppDatabase` already exposes
 `syncStatsDao()`, so neither the database class nor a Room version is affected.
