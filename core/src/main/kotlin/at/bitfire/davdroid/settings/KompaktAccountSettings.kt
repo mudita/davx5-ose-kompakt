@@ -189,8 +189,7 @@ class KompaktAccountSettingsImpl @Inject constructor(
 
 }
 
-// A corrupt stored value reads as "no authorization" rather than throwing, because the linked-account
-// screen resolves this while composing.
+// Null rather than a throw: the linked-account screen resolves this while composing.
 internal fun authStateOf(json: String?): AuthState? =
     json?.let {
         try {

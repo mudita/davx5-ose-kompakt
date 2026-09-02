@@ -20,6 +20,7 @@ interface KompaktServiceToggle {
     /** Safe on the main thread, so a screen's first frame is correct without waiting. */
     fun isOn(account: Account, service: KompaktSyncService): Boolean
 
+
     fun observe(account: Account, service: KompaktSyncService): Flow<Boolean>
 
     suspend fun set(account: Account, service: KompaktSyncService, on: Boolean)
@@ -37,8 +38,8 @@ class KompaktServiceToggleImpl @Inject constructor(
     override fun observe(account: Account, service: KompaktSyncService) =
         accountSettings.observeSyncInterval(account, service.dataType).map { toggleOn(it) }
 
-    // Goes through the seam rather than storing the value, because AccountSettings.setSyncInterval also
-    // reschedules the periodic worker and the content-triggered sync, and both are required behaviour.
+    // Through the seam, not a raw write: setSyncInterval also reschedules the periodic worker and the
+    // content trigger.
     override suspend fun set(account: Account, service: KompaktSyncService, on: Boolean) =
         accountSettings.setSyncInterval(
             account,

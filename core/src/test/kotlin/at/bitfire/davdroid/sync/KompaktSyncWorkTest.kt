@@ -34,9 +34,8 @@ class KompaktSyncWorkTest {
 
         assertEquals(id, syncWork.enqueue(account, KompaktSyncService.CONTACTS, manual = true))
 
-        // withArg rather than passing the account by value: MockK matches arguments with
-        // equals/hashCode, which android.accounts.Account does not have outside an Android runtime.
-        // assertSame is the stronger check anyway -- it rejects a rebuilt Account with the same name.
+        // withArg, not the account by value: MockK matches on equals/hashCode, which Account lacks
+        // outside an Android runtime.
         verify {
             syncWorkerManager.enqueueOneTimeReturningId(
                 withArg { assertSame(account, it) },
@@ -44,7 +43,7 @@ class KompaktSyncWorkTest {
                 manual = true
             )
         }
-        // Never the all-authorities call: that fans out over SyncDataType.entries and ignores toggles.
+        // Never the all-authorities call: it fans out over SyncDataType.entries and ignores toggles.
         verify(exactly = 0) {
             syncWorkerManager.enqueueOneTimeAllAuthorities(any(), any(), any(), any(), any())
         }

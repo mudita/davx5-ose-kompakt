@@ -12,7 +12,6 @@ import at.bitfire.davdroid.repository.DavServiceRepository
 import kotlinx.coroutines.flow.Flow
 import net.openid.appauth.AuthState
 
-/** The services a Kompakt user can switch on and off. */
 enum class KompaktSyncService(
     val dataType: SyncDataType,
     @ServiceType val serviceType: String,
@@ -33,8 +32,8 @@ enum class KompaktSyncService(
 
 }
 
-// An unknown grant answers false, so a service whose consent cannot be proven is never synced: the
-// alternative reaches Google as a 403, which deletes the home set and then the local collections.
+// An unproven grant answers false: syncing one anyway reaches Google as a 403, which deletes the home
+// set and the collections under it.
 internal fun KompaktSyncService.isConsented(authState: AuthState?): Boolean =
     authState?.scopeSet?.contains(scope) == true
 

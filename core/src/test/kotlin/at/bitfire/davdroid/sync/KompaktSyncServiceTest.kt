@@ -16,8 +16,7 @@ import org.junit.Test
 
 class KompaktSyncServiceTest {
 
-    // AuthState is mocked rather than built: its constructors need android.net.Uri, which is not
-    // available to a plain JVM test, and the rule under test reads nothing but the granted scopes.
+    // Mocked, not built: AuthState's constructors parse android.net.Uri, which a plain JVM test lacks.
     private fun authStateGranting(scopes: Set<String>?) = mockk<AuthState> {
         every { scopeSet } returns scopes
     }
