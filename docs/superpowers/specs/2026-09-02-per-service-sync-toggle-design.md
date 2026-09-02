@@ -828,29 +828,40 @@ No schema change and no migration — the query is a `SELECT`, and `AppDatabase`
 
 In `core`. `app-ose` has no unit tests and a root `testOseDebugUnitTest` runs nothing.
 
-The pure rules carry the acceptance criteria and test with no mocks and no Robolectric:
-`toggleOn`, `isConsented`, `kompaktSyncSwitch`, `appliedVersionOf`.
+**No Robolectric.** A unit test that needs it is not written; the behaviour it would have covered is
+verified on a device instead. This is a deliberate constraint, and it decides what is testable here:
+a plain JVM test sees `android.*` only as stubs, and `android.accounts.Account`'s constructor stores
+nothing, so `name` and `type` read back as null. Anything whose subject touches an `Account` — the
+toggle seam, eligibility, the start-sync use case, the switch writer, the last-sync composition —
+therefore has no unit test.
 
-The ordering-sensitive rules are what the seam tests must pin, because they are the ones that look
-correct in any order:
+What is covered is the pure rules, which is where the acceptance criteria actually live, and they test
+with no mocks and no Android at all:
 
-- `setEnabled(false)` persists **before** it cancels, and the tracked id is cleared **before** either.
-- `setEnabled(true)` persists **before** the sync is triggered.
-- `KompaktStartSyncUseCase` applies defaults **before** it reads eligibility — the fresh-account case
-  where reading first would enqueue nothing.
-- `enabledServices` excludes a service that is switched on but has lost consent.
-- `enabledServices` excludes a service with no `Service` row.
-- switching a service on does **not** enqueue when that service is ineligible — the AC 9 path goes
-  through the same use case as the button.
-- marking Calendar's defaults applied does not mark Contacts'.
-- **`KompaktServiceLastSync` emits `Reported.Value(null)`, not nothing, when the account has no
-  `Service` row** for that type — the branch above the query, which is the one case the SQL cannot
-  cover. The no-collections-selected case is `MAX` over zero rows and needs no guard.
-- `KompaktServiceLastSync` emits `Reported.Pending` before its first value, so *not loaded yet* stays
-  distinguishable from *never synced*.
+| Rule | Pins |
+|---|---|
+| `toggleOn(intervalSeconds)` | an absent key and the manual sentinel both read as off, so an unconfigured account is never reported as on |
+| `KompaktSyncService.isConsented(authState)` | an unproven grant answers false, which is the guard in front of the 403 deletion chain |
+| `kompaktSyncSwitch(consented, on)` | consent vetoes, the interval decides |
+| `appliedVersionOf(perService, legacy, service)` | the stored-marker migration — the legacy key counts for Calendar and nothing else |
+| `KompaktSyncService.entries` | two services, and `TASKS` is not one of them |
 
-`kotlinx-coroutines-test` is in the version catalog and in `core`'s `androidTestImplementation` but not
-its `testImplementation`; moving it in is a one-line change to an already-present artifact.
+**What that leaves unverified by the suite, and where it moves to.** These are the ordering rules, and
+they are exactly the ones that look correct in any order, so they need naming even though no test
+holds them:
+
+- `setEnabled(false)` persists **before** it cancels; the tracked id is cleared **before** either.
+- `KompaktStartSyncUseCase` applies defaults **before** it reads eligibility.
+- It is the only caller of `KompaktSyncWork.enqueue`, so no enqueue path skips the eligibility filter.
+- `enabledServices` excludes a service that is switched on but has lost consent, and one with no
+  `Service` row.
+- Marking one service's defaults applied does not mark the other's.
+- `KompaktServiceLastSync` emits `Reported.Pending` before its first value and `Reported.Value(null)`
+  when there is no `Service` row.
+
+Each is listed under *To verify on device*. The eligibility guard and the marker migration are the two
+worth exercising first, because both are silent when wrong: the first deletes data, the second skips
+setup on an account that already exists.
 
 ---
 
