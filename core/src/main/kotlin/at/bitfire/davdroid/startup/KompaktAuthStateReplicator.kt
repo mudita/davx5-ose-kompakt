@@ -4,18 +4,13 @@
 
 package at.bitfire.davdroid.startup
 
-import android.accounts.Account
-import android.content.Context
-import android.content.Intent
-import android.util.Log
-import at.bitfire.davdroid.BuildConfig
 import at.bitfire.davdroid.di.qualifier.ApplicationScope
 import at.bitfire.davdroid.di.qualifier.DefaultDispatcher
 import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.settings.KompaktAccountSettings
 import at.bitfire.davdroid.startup.StartupPlugin.Companion.PRIORITY_DEFAULT
 import at.bitfire.davdroid.ui.KompaktAuthState
-import dagger.hilt.android.qualifiers.ApplicationContext
+import at.bitfire.davdroid.ui.KompaktAuthStatePublisher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -36,9 +31,9 @@ import javax.inject.Inject
  * the broadcast a convenience, so a consumer that missed one still reads the state on its next query.
  */
 class KompaktAuthStateReplicator @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val accountRepository: AccountRepository,
     private val kompaktAccountSettings: KompaktAccountSettings,
+    private val publisher: KompaktAuthStatePublisher,
     @ApplicationScope private val scope: CoroutineScope,
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher
 ) : StartupPlugin {
@@ -64,7 +59,7 @@ class KompaktAuthStateReplicator @Inject constructor(
                 }
                 .flowOn(defaultDispatcher)
                 .collect { (account, needsReauth) ->
-                    publish(account, needsReauth)
+                    publisher.publish(account, needsReauth)
                 }
         }
     }
@@ -75,18 +70,5 @@ class KompaktAuthStateReplicator @Inject constructor(
     }
 
     override fun priorityAsync() = PRIORITY_DEFAULT
-
-    private fun publish(account: Account, needsReauth: Boolean) {
-        if (BuildConfig.DEBUG)
-            Log.i(KompaktAuthState.ACTION_AUTH_STATE_CHANGED, "Notifying auth state change: account=${account.name}, needsReauth=$needsReauth")
-
-        val intent = Intent(KompaktAuthState.ACTION_AUTH_STATE_CHANGED).apply {
-            putExtra(KompaktAuthState.EXTRA_ACCOUNT_NAME, account.name)
-            putExtra(KompaktAuthState.EXTRA_NEEDS_REAUTH, if (needsReauth) 1 else 0)
-        }
-        context.sendBroadcast(intent, KompaktAuthState.PERMISSION)
-
-        context.contentResolver.notifyChange(KompaktAuthState.CONTENT_URI, null)
-    }
 
 }
