@@ -303,8 +303,10 @@ with no account, `KompaktLinkedAccountScreen` with one. Linking: `KompaktLoginAc
 `KompaktReauthModel`. Errors and dialogs: `KompaktMessageSheet`, `KompaktModalSheet`. Behind the UI:
 the upstream sync engine (`SyncWorker` / `BaseSyncWorker`) plus `KompaktInitDefaults`.
 
-Only CalDAV is part of this flow — `KompaktLoginFinalizeModel` and `KompaktInitDefaults` look up a
-`Service.TYPE_CALDAV` service and nothing else. Contacts sync is not in the shipped path.
+Only CalDAV is part of this flow — `KompaktLoginFinalizeModel` looks up a `Service.TYPE_CALDAV` service
+and nothing else, and only the calendar scope is requested, so no CardDAV service is ever created.
+`KompaktInitDefaults` and the linked-account screen are per-service and will drive Contacts once that
+scope is, but contacts sync is not in the shipped path today.
 
 ### From other apps — by design
 
@@ -313,12 +315,6 @@ The deliberate entry points are `Kompakt`-prefixed and specified in
 and `ACTION_REAUTH`, `KompaktSyncRequestReceiver`, `KompaktLogoutRequestReceiver` and
 `KompaktAuthStateProvider`. Consumed by the calendar app, and covered by the public-API rule in
 *Won't do*.
-
-`KompaktAccountsActivity` used to also honour Android's standard `Intent.ACTION_SYNC`, opening with a
-sync already requested. It no longer does: the request bypassed the per-service sync toggles and
-synchronized every data type, and the action was never declared in an intent filter, so nothing
-advertised it. Don't reintroduce it — a sync request from another app is `REQUEST_SYNC`, which is
-specified in [`docs/app-integration.md`](docs/app-integration.md) and honours the toggles.
 
 ### Upstream's UI has no user route on this device
 
