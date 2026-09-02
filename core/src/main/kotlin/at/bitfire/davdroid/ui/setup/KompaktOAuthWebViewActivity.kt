@@ -200,7 +200,6 @@ class KompaktOAuthWebViewActivity : ComponentActivity() {
      * authorization happens in [KompaktOAuthWebViewActivity] rather than Custom Tabs.
      */
     class Contract : ActivityResultContract<AuthorizationRequest, AuthorizationResponse?>() {
-
         override fun createIntent(context: Context, input: AuthorizationRequest) =
             Intent(context, KompaktOAuthWebViewActivity::class.java)
                 .putExtra(EXTRA_AUTH_URL, input.toUri().toString())

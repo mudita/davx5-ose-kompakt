@@ -17,7 +17,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -64,13 +63,11 @@ object KompaktGoogleLogin : LoginType {
             }
         }
 
-        val authContract = remember { model.authorizationContract() }
-        val authRequestContract = rememberLauncherForActivityResult(authContract) { authResponse ->
-            if (authResponse != null) {
+        val authRequestContract = rememberLauncherForActivityResult(model.authorizationContract()) { authResponse ->
+            if (authResponse != null)
                 model.authenticate(authResponse)
-            } else {
+            else
                 model.authCodeFailed()
-            }
         }
 
         val launchSignIn = {
