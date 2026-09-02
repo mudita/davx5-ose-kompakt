@@ -700,6 +700,17 @@ dead switch behind real consent, and it is inert with respect to data loss.
 
 **Address-book selection needs its own ticket, and D1–D3 must be closed first.** That is the
 prerequisite, not a nice-to-have — the first sync after a selection is exactly the case D2 describes.
+All three were still open in this tree when this branch was written: `HomeSetRefresher` deletes a home
+set on 403 without rethrowing, `Syncer.sync` calls `updateCollections` with no guard for an absent
+service row, and `AddressBookSyncer` swallows every exception and still reports the sync complete.
+
+**The ordering matters, and it is not the obvious one.** On this branch the Contacts toggle cannot be
+turned on at all — no `carddav` scope is requested, so the switch reads `ConsentMissing` and enabling it
+is a no-op. SHP-1159 changes that: consent becomes real, a CardDAV service row appears, and the toggle
+starts working. From that moment until address-book selection lands, Contacts looks operable, schedules
+a worker, and syncs **nothing** — silently, because D3 reports a swallowed failure as success. That
+window is the thing to plan around: it is a product-visible gap opened by a ticket that is already in
+review, not by this one.
 
 ---
 

@@ -138,9 +138,11 @@ class KompaktInitDefaults @Inject constructor(
                 }
             }
 
-            // No address book is selected. Selecting one creates a local address book that the syncer
-            // then deletes, with its pending changes, on any run where the database set comes back
-            // empty -- which a narrowed scope produces.
+            // Selects nothing yet, so contacts sync processes no collections. Selecting an address
+            // book is the remaining work, and it must not land first: selection is what creates the
+            // local address book, and the syncer deletes local collections -- with their pending
+            // changes -- on any run where the database set comes back empty, which a 403 from a
+            // narrowed scope produces.
             KompaktSyncService.CONTACTS -> { /* interval only */ }
         }
 
