@@ -13,13 +13,13 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import io.mockk.verify
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import net.openid.appauth.AuthState
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -39,6 +39,8 @@ class KompaktAccountSettingsTest {
     private val otherAccount = mockk<Account>()
 
     private val userData = mutableMapOf<Pair<Account, String>, String?>()
+
+    private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var accountSettings: AccountSettings
     private lateinit var settings: KompaktAccountSettingsImpl
@@ -61,11 +63,10 @@ class KompaktAccountSettingsTest {
         val factory = mockk<AccountSettings.Factory>()
         every { factory.create(any(), any()) } returns accountSettings
 
-        // Unconfined so a write reaches its collector inline, without kotlinx-coroutines-test.
         settings = KompaktAccountSettingsImpl(
             context = mockk<Context>(relaxed = true),
             accountSettingsFactory = factory,
-            ioDispatcher = Dispatchers.Unconfined
+            ioDispatcher = testDispatcher
         )
     }
 
@@ -74,13 +75,15 @@ class KompaktAccountSettingsTest {
         unmockkStatic(AccountManager::class)
     }
 
-    private fun <T> CoroutineScope.collect(flow: Flow<T>): List<T> =
+    // Unconfined so the collector subscribes before the first write and receives each announcement
+    // inline; backgroundScope cancels it when the test ends.
+    private fun <T> TestScope.collect(flow: Flow<T>): List<T> =
         mutableListOf<T>().also { seen ->
-            launch(Dispatchers.Unconfined) { flow.toList(seen) }
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { flow.toList(seen) }
         }
 
     @Test
-    fun reauthNeeded_roundTrips() = runBlocking {
+    fun reauthNeeded_roundTrips() = runTest(testDispatcher) {
         assertFalse(settings.getReauthNeeded(account))
 
         settings.setReauthNeeded(account, true)
@@ -93,7 +96,7 @@ class KompaktAccountSettingsTest {
     // KompaktAuthStateProvider publishes this key by testing it against "1", and the calendar app
     // reads that, so the stored representation is part of the cross-app contract.
     @Test
-    fun reauthNeeded_storesFlagAndClearsToNull() = runBlocking {
+    fun reauthNeeded_storesFlagAndClearsToNull() = runTest(testDispatcher) {
         settings.setReauthNeeded(account, true)
         assertEquals("1", userData[account to AccountSettings.KEY_NEEDS_REAUTH])
 
@@ -102,59 +105,54 @@ class KompaktAccountSettingsTest {
     }
 
     @Test
-    fun observeReauthNeeded_emitsInitialThenChanges() = runBlocking {
+    fun observeReauthNeeded_emitsInitialThenChanges() = runTest(testDispatcher) {
         val seen = collect(settings.observeReauthNeeded(account))
 
         settings.setReauthNeeded(account, true)
         settings.setReauthNeeded(account, false)
 
         assertEquals(listOf(false, true, false), seen)
-        coroutineContext.cancelChildren()
     }
 
     @Test
-    fun observeReauthNeeded_withoutInitial_emitsOnlyChanges() = runBlocking {
+    fun observeReauthNeeded_withoutInitial_emitsOnlyChanges() = runTest(testDispatcher) {
         val seen = collect(settings.observeReauthNeeded(account, emitInitial = false))
 
         settings.setReauthNeeded(account, true)
 
         assertEquals(listOf(true), seen)
-        coroutineContext.cancelChildren()
     }
 
     @Test
-    fun observe_ignoresOtherAccounts() = runBlocking {
+    fun observe_ignoresOtherAccounts() = runTest(testDispatcher) {
         val seen = collect(settings.observeReauthNeeded(account, emitInitial = false))
 
         settings.setReauthNeeded(otherAccount, true)
 
         assertEquals(emptyList<Boolean>(), seen)
-        coroutineContext.cancelChildren()
     }
 
     @Test
-    fun observe_ignoresOtherKeys() = runBlocking {
+    fun observe_ignoresOtherKeys() = runTest(testDispatcher) {
         val seen = collect(settings.observeReauthNeeded(account, emitInitial = false))
 
         settings.setDefaultsApplied(account, 3)
 
         assertEquals(emptyList<Boolean>(), seen)
-        coroutineContext.cancelChildren()
     }
 
     @Test
-    fun observe_doesNotAnnounceAWriteThatChangesNothing() = runBlocking {
+    fun observe_doesNotAnnounceAWriteThatChangesNothing() = runTest(testDispatcher) {
         settings.setReauthNeeded(account, true)
         val seen = collect(settings.observeReauthNeeded(account, emitInitial = false))
 
         settings.setReauthNeeded(account, true)
 
         assertEquals(emptyList<Boolean>(), seen)
-        coroutineContext.cancelChildren()
     }
 
     @Test
-    fun defaultsAppliedVersion_roundTripsAndRejectsGarbage() = runBlocking {
+    fun defaultsAppliedVersion_roundTripsAndRejectsGarbage() = runTest(testDispatcher) {
         assertNull(settings.getDefaultsAppliedVersion(account))
 
         settings.setDefaultsApplied(account, 7)
@@ -172,7 +170,7 @@ class KompaktAccountSettingsTest {
     }
 
     @Test
-    fun setSyncInterval_delegatesAndAnnouncesTheStoredValue() = runBlocking {
+    fun setSyncInterval_delegatesAndAnnouncesTheStoredValue() = runTest(testDispatcher) {
         every { accountSettings.setSyncInterval(SyncDataType.EVENTS, 900) } answers {
             userData[account to AccountSettings.KEY_SYNC_INTERVAL_CALENDARS] = "900"
             true
@@ -183,11 +181,10 @@ class KompaktAccountSettingsTest {
 
         verify { accountSettings.setSyncInterval(SyncDataType.EVENTS, 900) }
         assertEquals(listOf(null, 900L), seen)
-        coroutineContext.cancelChildren()
     }
 
     @Test
-    fun updateAuthState_delegatesToAccountSettings() = runBlocking {
+    fun updateAuthState_delegatesToAccountSettings() = runTest(testDispatcher) {
         val authState = mockk<AuthState>(relaxed = true)
 
         settings.updateAuthState(account, authState)
