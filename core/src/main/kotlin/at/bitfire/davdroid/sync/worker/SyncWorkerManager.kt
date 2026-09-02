@@ -149,7 +149,7 @@ class SyncWorkerManager @Inject constructor(
      * Like [enqueueOneTime], but returns the id of the run that will execute — the freshly enqueued
      * request, or an already-pending one — so a caller can observe that specific run.
      */
-    private fun enqueueOneTimeReturningId(
+    fun enqueueOneTimeReturningId(
         account: Account,
         dataType: SyncDataType,
         manual: Boolean = false,
