@@ -36,6 +36,14 @@ internal fun serviceSyncState(
     status = syncStatus(syncing, lastSync, failed)
 )
 
+// Consent only vetoes: a scope granted during a re-auth brings no service, no discovery and no
+// interval with it, so the interval is what separates On from Off.
+internal fun kompaktSyncSwitch(consented: Boolean, on: Boolean): KompaktSyncSwitch = when {
+    !consented -> KompaktSyncSwitch.ConsentMissing
+    on -> KompaktSyncSwitch.On
+    else -> KompaktSyncSwitch.Off
+}
+
 // The status is deliberately independent of the switch, so a switched-off service keeps the last-sync
 // time it earned; the cell decides not to show it.
 private fun syncStatus(
