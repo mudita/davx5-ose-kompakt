@@ -88,6 +88,16 @@ python3 move_frontitude_files.py              # or ./gradlew :frontitude:moveFro
 The pull writes a flat `values/strings.xml` plus per-locale `values/strings-<locale>.xml`; the script
 moves each into its `values-<locale>/` directory. Then use the key via `RFrontitude.string.<key>`.
 
+The source is the Frontitude **Settings** project, which carries the copy for every settings-related
+screen on Kompakt — so a pull brings back far more keys than this app uses, and that set keeps
+growing as other Kompakt settings work lands. The script therefore filters before it moves: any line
+matching nothing in `frontitude/keys_to_filter.py` is dropped, and only the keys listed there
+survive. The Settings app's own `resources` module filters the same project the same way.
+
+**Adding a string therefore takes two edits**: the `RFrontitude.string.<key>` reference, and the key
+in `keys_to_filter.py`. Miss the second and the next pull quietly drops the string again, breaking
+the build at that reference.
+
 If the string genuinely doesn't exist in Frontitude yet, hard-code it at the call site with a
 `// TODO:` so it can be added and replaced later.
 

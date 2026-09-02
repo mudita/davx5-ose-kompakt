@@ -222,7 +222,7 @@ private fun KompaktLinkAccountScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
                         TextMMD(
-                            text = stringResource(RFrontitude.string.calendar_accountsync_body_connectwithyourmaingoogle),
+                            text = stringResource(RFrontitude.string.settings_twowaygoogle_body_synchronizeyourcalendarandcontacts),
                             style = KompaktTypography500.bodyMedium,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
