@@ -11,4 +11,6 @@ plugins {
     alias(libs.plugins.hilt) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.mikepenz.aboutLibraries.android) apply false
+
+    id("kover.aggregation")
 }
