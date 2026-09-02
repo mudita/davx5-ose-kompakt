@@ -1,0 +1,32 @@
+core/src/main/kotlin/at/bitfire/davdroid/sync/worker/BaseSyncWorker.kt
+  90a9cf2b9fc06857 21,52-55,206-214
+core/src/main/kotlin/at/bitfire/davdroid/startup/KompaktAuthStateReplicator.kt
+  90a9cf2b9fc06857 5,12-29,32-33,35-37,39-45,47-78
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktReauthModel.kt
+  90a9cf2b9fc06857 14,43,107-109
+core/src/main/kotlin/at/bitfire/davdroid/di/KompaktStartupPluginsModule.kt
+  90a9cf2b9fc06857 1-25
+docs/kompakt-testing.md
+  90a9cf2b9fc06857 222-223
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "98ea7f820d7276742f3171282ffe40c473bdf355",
+  "prompts": {
+    "90a9cf2b9fc06857": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f0ddfd8d-f435-4751-9714-6b34ba979bb8",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 39,
+      "accepted_lines": 305,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/68f85ba2a26228f4c87ae66f9803e432255357b8a0370cd3ae18a430463d724b"
+    }
+  }
+}
