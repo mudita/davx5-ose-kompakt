@@ -5,6 +5,7 @@
 package at.bitfire.davdroid.ui.setup
 
 import android.accounts.Account
+import android.accounts.AccountManager
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,6 +15,8 @@ import at.bitfire.davdroid.di.qualifier.IoDispatcher
 import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
 import at.bitfire.davdroid.sync.KompaktInitDefaults
+import at.bitfire.davdroid.sync.SyncDataType
+import at.bitfire.davdroid.ui.account.KompaktLinkedAccountModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
@@ -53,11 +56,16 @@ class KompaktLoginFinalizeModel @Inject constructor(
         if (_ready.value)
             return
         viewModelScope.launch(ioDispatcher) {
+            // This account has just been through the combined consent screen, so whatever it granted
+            // there was a deliberate choice — it must never get the "you can also sync Contacts" nudge,
+            // which exists only for accounts linked back when Contacts couldn't be granted at all.
+            suppressContactsDiscoveryNudge(account)
+
             val services = listOf(Service.TYPE_CALDAV, Service.TYPE_CARDDAV)
                 .mapNotNull { type -> serviceRepository.getByAccountAndType(account.name, type) }
 
             if (services.any { service -> service.type == Service.TYPE_CARDDAV })
-                initDefaults.applyContactsSyncInterval(account)
+                initDefaults.applySyncInterval(account, SyncDataType.CONTACTS)
 
             if (services.isNotEmpty())
                 withTimeoutOrNull(DISCOVERY_WAIT_MS.milliseconds) {
@@ -67,6 +75,15 @@ class KompaktLoginFinalizeModel @Inject constructor(
                             .first { succeeded -> succeeded }
                 }
             _ready.value = true
+        }
+    }
+
+    private fun suppressContactsDiscoveryNudge(account: Account) {
+        try {
+            AccountManager.get(context)
+                .setUserData(account, KompaktLinkedAccountModel.KEY_CONTACTS_DISCOVERY_NUDGE_SHOWN, "1")
+        } catch (_: Exception) {
+            // Worst case the nudge shows once for a freshly linked account; not worth failing setup over.
         }
     }
 

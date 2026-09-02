@@ -56,4 +56,37 @@ class KompaktOAuthGoogleTest {
         )
     }
 
+    @Test
+    fun `signIn with a reduced scope set requests only that scope`() {
+        val request = oAuthGoogle.signIn(
+            email = null,
+            customClientId = "test.apps.googleusercontent.com",
+            scopes = setOf(KompaktOAuthGoogle.SCOPE_CONTACTS, "openid", "email")
+        )
+
+        assertEquals(
+            setOf(KompaktOAuthGoogle.SCOPE_CONTACTS, "openid", "email"),
+            request.scopeSet
+        )
+    }
+
+    @Test
+    fun `signIn with includeGrantedScopes sets Google's incremental-auth parameter`() {
+        val request = oAuthGoogle.signIn(
+            email = null,
+            customClientId = "test.apps.googleusercontent.com",
+            scopes = setOf(KompaktOAuthGoogle.SCOPE_CONTACTS, "openid", "email"),
+            includeGrantedScopes = true
+        )
+
+        assertEquals("true", request.additionalParameters?.get("include_granted_scopes"))
+    }
+
+    @Test
+    fun `signIn without includeGrantedScopes sets no incremental-auth parameter`() {
+        val request = oAuthGoogle.signIn(email = null, customClientId = "test.apps.googleusercontent.com")
+
+        assertEquals(null, request.additionalParameters?.get("include_granted_scopes"))
+    }
+
 }

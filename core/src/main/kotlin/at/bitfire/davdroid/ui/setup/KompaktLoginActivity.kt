@@ -31,44 +31,68 @@ class KompaktLoginActivity @Inject constructor() : AppCompatActivity() {
          * (refreshes the OAuth token, keeping all local data) instead of linking a new account.
          */
         const val EXTRA_REAUTH_ACCOUNT_NAME = "reauthAccountName"
+
+        /**
+         * If set alongside [EXTRA_ADD_CONSENT_SERVICE_TYPE], the activity requests only that missing
+         * service's consent for the named, already-linked account, instead of linking a new account or
+         * re-authorizing the whole account.
+         */
+        const val EXTRA_ADD_CONSENT_ACCOUNT_NAME = "addConsentAccountName"
+
+        /** [at.bitfire.davdroid.db.Service.TYPE_CALDAV] or [at.bitfire.davdroid.db.Service.TYPE_CARDDAV] — see [EXTRA_ADD_CONSENT_ACCOUNT_NAME]. */
+        const val EXTRA_ADD_CONSENT_SERVICE_TYPE = "addConsentServiceType"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val addConsentAccountName = intent.getStringExtra(EXTRA_ADD_CONSENT_ACCOUNT_NAME)
+        val addConsentServiceType = intent.getStringExtra(EXTRA_ADD_CONSENT_SERVICE_TYPE)
         val reauthAccountName = intent.getStringExtra(EXTRA_REAUTH_ACCOUNT_NAME)
-        if (reauthAccountName != null) {
-            val account = Account(reauthAccountName, getString(R.string.account_type))
-            setContent {
-                KompaktReauthScreen(
-                    account = account,
-                    onNavUp = { onBackPressedDispatcher.onBackPressed() },
-                    onFinish = { switched ->
-                        // RESULT_OK only when a new account was linked (the switch), mirroring the
-                        // normal login flow; a same-account refresh leaves the default RESULT_CANCELED
-                        if (switched)
-                            setResult(RESULT_OK)
-                        finish()
-                    }
-                )
-            }
-            return
-        }
-
-        val (initialLoginType, skipLoginTypePage) = loginTypesProvider.intentToInitialLoginType(intent)
 
         setContent {
-            KompaktLoginScreen(
-                initialLoginType = initialLoginType,
-                skipLoginTypePage = skipLoginTypePage,
-                initialLoginInfo = LoginActivity.loginInfoFromIntent(intent),
-                onNavUp = { onBackPressedDispatcher.onBackPressed() },
-                onFinish = { newAccount ->
-                    if (newAccount != null)
-                        setResult(RESULT_OK)
-                    finish()
+            when {
+                addConsentAccountName != null && addConsentServiceType != null -> {
+                    val account = Account(addConsentAccountName, getString(R.string.account_type))
+                    KompaktAddConsentScreen(
+                        account = account,
+                        serviceType = addConsentServiceType,
+                        onNavUp = { onBackPressedDispatcher.onBackPressed() },
+                        onFinish = { finish() }     // RESULT_CANCELED (default) either way — the caller
+                                                     // re-reads state reactively, it doesn't need a result code
+                    )
                 }
-            )
+
+                reauthAccountName != null -> {
+                    val account = Account(reauthAccountName, getString(R.string.account_type))
+                    KompaktReauthScreen(
+                        account = account,
+                        onNavUp = { onBackPressedDispatcher.onBackPressed() },
+                        onFinish = { switched ->
+                            // RESULT_OK only when a new account was linked (the switch), mirroring the
+                            // normal login flow; a same-account refresh leaves the default RESULT_CANCELED
+                            if (switched)
+                                setResult(RESULT_OK)
+                            finish()
+                        }
+                    )
+                }
+
+                else -> {
+                    val (initialLoginType, skipLoginTypePage) = loginTypesProvider.intentToInitialLoginType(intent)
+                    KompaktLoginScreen(
+                        initialLoginType = initialLoginType,
+                        skipLoginTypePage = skipLoginTypePage,
+                        initialLoginInfo = LoginActivity.loginInfoFromIntent(intent),
+                        onNavUp = { onBackPressedDispatcher.onBackPressed() },
+                        onFinish = { newAccount ->
+                            if (newAccount != null)
+                                setResult(RESULT_OK)
+                            finish()
+                        }
+                    )
+                }
+            }
         }
     }
 

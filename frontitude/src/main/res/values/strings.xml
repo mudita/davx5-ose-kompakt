@@ -5,6 +5,9 @@
   <string name="calendar_accountsync_body_connectwithyourmaingoogle">Connect with your main Google calendar and share events</string>
   <string name="calendar_accountsync_button_synchronizenow">Synchronize now</string>
   <string name="calendar_accountsync_dialog_body_csyncnowtoimportyour">Sync now to import your events to %s</string>
+  <!-- TODO: placeholder copy, not yet reviewed by Frontitude -->
+  <string name="calendar_accountsync_dialog_body_needsadditionalpermissioncalendar">You\'ll need to grant an additional permission to sync your Calendar with this Google account.</string>
+  <string name="calendar_accountsync_dialog_body_needsadditionalpermissioncontacts">You\'ll need to grant an additional permission to sync your Contacts with this Google account.</string>
   <string name="calendar_accountsync_dialog_body_nothingwillsyncronizewith">Nothing will synchronize with your Google account unless you sync manually</string>
   <string name="calendar_accountsync_dialog_body_signintogoogleagainto">Sign in to Google again to continue Google calendar sync</string>
   <string name="calendar_accountsync_dialog_body_thiswillalsodeleteitfrom">This will also delete it from Google calendar when synchronised</string>
@@ -21,6 +24,9 @@
   <string name="calendar_accountsync_dialog_h1_calendaroptions">Calendar options</string>
   <string name="calendar_accountsync_dialog_h1_deleterepeatedevent">Delete repeated event\?</string>
   <string name="calendar_accountsync_dialog_h1_disableautosync">Disable auto sync\?</string>
+  <!-- TODO: placeholder copy, not yet reviewed by Frontitude -->
+  <string name="calendar_accountsync_dialog_h1_enablecalendarsync">Enable Calendar sync\?</string>
+  <string name="calendar_accountsync_dialog_h1_enablecontactssync">Enable Contacts sync\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Link a Google account</string>
   <string name="calendar_accountsync_dialog_h1_signinneeded">Sign in needed</string>
   <string name="calendar_accountsync_dialog_h1_unlinkaccount">Unlink account\?</string>
@@ -97,6 +103,8 @@
   <string name="common_dialog_button_close">Close</string>
   <string name="common_dialog_button_continueediting">Continue editing</string>
   <string name="common_dialog_button_discardchanges">Discard changes</string>
+  <!-- TODO: placeholder copy, not yet reviewed by Frontitude -->
+  <string name="common_dialog_button_enable">Enable</string>
   <string name="common_dialog_button_later">Later</string>
   <string name="common_dialog_button_tryagain">Try again</string>
   <string name="common_dialog_h1_discardchanges">Discard changes\?</string>

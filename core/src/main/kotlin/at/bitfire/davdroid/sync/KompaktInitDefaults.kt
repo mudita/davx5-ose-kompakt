@@ -135,14 +135,13 @@ class KompaktInitDefaults @Inject constructor(
         Outcome.APPLIED
     }
 
-    // Creating the CardDAV service makes upstream fall back to its four-hour DEFAULT_SYNC_INTERVAL for
-    // contacts; the Kompakt interval has to replace it before that periodic worker outlives setup.
-    fun applyContactsSyncInterval(account: Account) {
+    // Creating a service makes upstream fall back to its four-hour DEFAULT_SYNC_INTERVAL for that data
+    // type; the Kompakt interval has to replace it before that periodic worker outlives setup.
+    fun applySyncInterval(account: Account, dataType: SyncDataType) {
         try {
-            accountSettingsFactory.create(account)
-                .setSyncInterval(SyncDataType.CONTACTS, AUTO_SYNC_INTERVAL_SECONDS)
+            accountSettingsFactory.create(account).setSyncInterval(dataType, AUTO_SYNC_INTERVAL_SECONDS)
         } catch (e: Exception) {
-            logger.log(Level.WARNING, "Couldn't set contacts sync interval for $account", e)
+            logger.log(Level.WARNING, "Couldn't set $dataType sync interval for $account", e)
         }
     }
 

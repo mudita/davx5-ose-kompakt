@@ -44,6 +44,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
 import com.mudita.frontitude.R as RFrontitude
+import at.bitfire.davdroid.db.Service
 import at.bitfire.davdroid.ui.KompaktTypography900
 import at.bitfire.davdroid.ui.account.KompaktLinkedAccountModel.ReauthPhase
 import at.bitfire.davdroid.ui.composable.KompaktFramedIcon
@@ -63,7 +64,9 @@ data class KompaktLinkedAccountActions(
     val onConsumeDialog: () -> Unit = {},
     val onFailureClick: () -> Unit = {},
     val onAccountLinkedDialogDismiss: () -> Unit = {},
-    val onReauthorize: () -> Unit = {}
+    val onReauthorize: () -> Unit = {},
+    val onGrantConsent: (serviceType: String) -> Unit = {},
+    val onContactsDiscoveryNudgeShown: () -> Unit = {}
 )
 
 /**
@@ -92,7 +95,7 @@ fun KompaktLinkedAccountScreen(
     // re-read the persisted re-auth flag and re-check free storage whenever the screen comes to the
     // foreground, so a background auth failure or a low-storage condition surfaces its message immediately
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        model.refreshNeedsReauth()
+        model.refreshPersistedState()
         model.refreshStorageState()
     }
 
@@ -117,6 +120,20 @@ fun KompaktLinkedAccountScreen(
         )
     }
 
+    val addConsentLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        // No result to read: KompaktAddConsentModel.apply() already notified the authStateChanges
+        // ContentObserver before this activity finished, so calendar/contactsSwitch have re-read by now.
+    }
+    val onGrantConsent = { serviceType: String ->
+        addConsentLauncher.launch(
+            Intent(context, KompaktLoginActivity::class.java)
+                .putExtra(KompaktLoginActivity.EXTRA_ADD_CONSENT_ACCOUNT_NAME, account.name)
+                .putExtra(KompaktLoginActivity.EXTRA_ADD_CONSENT_SERVICE_TYPE, serviceType)
+        )
+    }
+
     LaunchedEffect(state.reauthPhase) {
         if (state.reauthPhase == ReauthPhase.PENDING_LAUNCH) {
             model.onReauthLaunchStarted()
@@ -135,7 +152,9 @@ fun KompaktLinkedAccountScreen(
                 onConsumeDialog = model::consumeDialog,
                 onFailureClick = model::consumeDialog,
                 onAccountLinkedDialogDismiss = onAccountLinkedDialogDismiss,
-                onReauthorize = onReauthorize
+                onReauthorize = onReauthorize,
+                onGrantConsent = onGrantConsent,
+                onContactsDiscoveryNudgeShown = model::contactsDiscoveryNudgeShown
             ),
             showAccountLinkedDialog = showAccountLinkedDialog
         )
@@ -155,6 +174,8 @@ fun KompaktLinkedAccountContent(
 ) {
     var showUnlinkDialog by remember { mutableStateOf(false) }
     var showDisableCalendarDialog by remember { mutableStateOf(false) }
+    var showCalendarConsentDialog by remember { mutableStateOf(false) }
+    var showContactsConsentDialog by remember { mutableStateOf(false) }
 
     KompaktTheme {
         Scaffold(
@@ -217,8 +238,12 @@ fun KompaktLinkedAccountContent(
                     title = stringResource(RFrontitude.string.common_label_calendar),
                     state = state.calendar,
                     onCheckedChange = { enabled ->
-                        if (enabled) actions.onToggleCalendar(true)
-                        else showDisableCalendarDialog = true
+                        when {
+                            enabled && state.calendar.switch == KompaktSyncSwitch.ConsentMissing ->
+                                showCalendarConsentDialog = true
+                            enabled -> actions.onToggleCalendar(true)
+                            else -> showDisableCalendarDialog = true
+                        }
                     },
                     onFailureClick = actions.onFailureClick,
                     showDivider = true
@@ -227,7 +252,13 @@ fun KompaktLinkedAccountContent(
                 KompaktServiceSyncCell(
                     title = stringResource(R.string.kompakt_label_contacts),
                     state = state.contacts,
-                    onCheckedChange = { /* SHP-1151 */ },
+                    onCheckedChange = { enabled ->
+                        when {
+                            enabled && state.contacts.switch == KompaktSyncSwitch.ConsentMissing ->
+                                showContactsConsentDialog = true
+                            else -> { /* SHP-1156 */ }
+                        }
+                    },
                     onFailureClick = actions.onFailureClick
                 )
             }
@@ -263,6 +294,51 @@ fun KompaktLinkedAccountContent(
             },
             dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
             onDismiss = { showDisableCalendarDialog = false }
+        )
+    }
+
+    if (showCalendarConsentDialog) {
+        KompaktModalSheet(
+            onDismissRequest = { showCalendarConsentDialog = false },
+            title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_enablecalendarsync),
+            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_needsadditionalpermissioncalendar),
+            confirmLabel = stringResource(RFrontitude.string.common_dialog_button_enable),
+            onConfirm = {
+                showCalendarConsentDialog = false
+                actions.onGrantConsent(Service.TYPE_CALDAV)
+            },
+            dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
+            onDismiss = { showCalendarConsentDialog = false }
+        )
+    }
+
+    if (showContactsConsentDialog) {
+        KompaktModalSheet(
+            onDismissRequest = { showContactsConsentDialog = false },
+            title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_enablecontactssync),
+            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_needsadditionalpermissioncontacts),
+            confirmLabel = stringResource(RFrontitude.string.common_dialog_button_enable),
+            onConfirm = {
+                showContactsConsentDialog = false
+                actions.onGrantConsent(Service.TYPE_CARDDAV)
+            },
+            dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
+            onDismiss = { showContactsConsentDialog = false }
+        )
+    }
+
+    if (state.showContactsDiscoveryNudge) {
+        KompaktModalSheet(
+            onDismissRequest = actions.onContactsDiscoveryNudgeShown,
+            title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_enablecontactssync),
+            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_needsadditionalpermissioncontacts),
+            confirmLabel = stringResource(RFrontitude.string.common_dialog_button_enable),
+            onConfirm = {
+                actions.onContactsDiscoveryNudgeShown()
+                actions.onGrantConsent(Service.TYPE_CARDDAV)
+            },
+            dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
+            onDismiss = actions.onContactsDiscoveryNudgeShown
         )
     }
 

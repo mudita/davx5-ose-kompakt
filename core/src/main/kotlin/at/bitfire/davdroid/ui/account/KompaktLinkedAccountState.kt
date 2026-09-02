@@ -11,7 +11,8 @@ data class KompaktLinkedAccountState(
     val calendar: KompaktServiceSyncState,
     val contacts: KompaktServiceSyncState,
     val dialog: KompaktLinkedAccountDialog? = null,
-    val reauthPhase: ReauthPhase = ReauthPhase.SHOW_CONTENT
+    val reauthPhase: ReauthPhase = ReauthPhase.SHOW_CONTENT,
+    val showContactsDiscoveryNudge: Boolean = false
 )
 
 enum class KompaktLinkedAccountDialog { AuthError, OutOfStorage, NoInternet, SyncFailed }

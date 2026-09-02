@@ -21,6 +21,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import at.bitfire.davdroid.db.Service
+import at.bitfire.davdroid.db.ServiceType
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
 import at.bitfire.davdroid.network.KompaktGrantedServices
 import at.bitfire.davdroid.repository.AccountRepository
@@ -108,29 +109,18 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     companion object {
         /** Grace period before treating "offline while syncing" as a lost connection (ignores brief blips). */
         const val OFFLINE_GRACE_MS = 2_000L
+
+        /**
+         * AccountManager user-data key: "1" once the one-time Contacts discovery nudge is settled for
+         * this account — either because it was shown and dismissed, or because the account never needed
+         * it. Linking writes it up front (see [KompaktLoginFinalizeModel]), so only an account created
+         * before Contacts sync was offerable is ever eligible: anyone who linked through the combined
+         * consent screen already made that choice and has nothing to discover.
+         */
+        const val KEY_CONTACTS_DISCOVERY_NUDGE_SHOWN = "kompakt_contacts_discovery_nudge_shown"
     }
 
     private val email: String = account.name
-
-
-    // calendar sync switch (mirrored in memory; this screen is the only writer of the EVENTS interval)
-
-    private val _calendarSwitch = MutableStateFlow(
-        if (readAutoSyncEnabled()) KompaktSyncSwitch.On else KompaktSyncSwitch.Off
-    )
-
-    // AccountSettings throws when constructed on the main thread, so the seed reads the raw key.
-    // Equivalent to getSyncInterval(EVENTS): an absent key falls back to DEFAULT_SYNC_INTERVAL (4h),
-    // which never equals AUTO_SYNC_INTERVAL_SECONDS either.
-    private fun readAutoSyncEnabled(): Boolean =
-        try {
-            AccountManager.get(context)
-                .getUserData(account, AccountSettings.KEY_SYNC_INTERVAL_CALENDARS)
-                ?.toLongOrNull() == KompaktInitDefaults.AUTO_SYNC_INTERVAL_SECONDS
-        } catch (e: Exception) {
-            logger.log(Level.WARNING, "Couldn't read sync interval for $account", e)
-            false
-        }
 
 
     // primary calendar + last synchronization time
@@ -254,11 +244,11 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         _showOutOfStorage.value = KompaktStorage.isStorageLow(context)
     }
 
-    // needsReauth (persistent, account-global; KEY_NEEDS_REAUTH) is written only by the sync worker
-    // (HTTP 401 / clean sync) and the re-auth flow — this ViewModel only reads it, re-reading via a
-    // ContentObserver for worker-driven transitions (incl. background/periodic), refreshNeedsReauth
-    // (resume / re-auth result), and (re)subscription.
-    private val reauthRefresh = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    // Shared "force an immediate re-read" trigger for everything derived from persisted per-account
+    // state — needsReauth, calendarSwitch, contactsSwitch — used whenever this screen changes that
+    // state itself (setCalendarSync, a completed re-auth) or needs to refresh ahead of the next
+    // authStateChanges ContentObserver notification (resume, (re)subscription).
+    private val forceRefresh = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
     private val authStateChanges = callbackFlow {
         val observer = object : ContentObserver(null) {
@@ -269,7 +259,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }
 
     private val needsReauth: StateFlow<Boolean> =
-        merge(authStateChanges, reauthRefresh)
+        merge(authStateChanges, forceRefresh)
             .onStart { emit(Unit) }
             .map { withContext(ioDispatcher) { readNeedsReauth() } }
             .distinctUntilChanged()
@@ -282,9 +272,32 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             false
         }
 
-    /** Force an immediate re-read of the persisted flag (call on resume / after the re-auth flow). */
-    fun refreshNeedsReauth() {
-        reauthRefresh.tryEmit(Unit)
+    /** Forces an immediate re-read of everything derived from persisted per-account state. */
+    fun refreshPersistedState() {
+        forceRefresh.tryEmit(Unit)
+    }
+
+    private fun readContactsDiscoveryNudgeShown(): Boolean =
+        try {
+            AccountManager.get(context).getUserData(account, KEY_CONTACTS_DISCOVERY_NUDGE_SHOWN) == "1"
+        } catch (_: Exception) {
+            true    // fail closed: never nag on a read error
+        }
+
+    // In-memory mirror of the persisted flag, updated the moment the nudge is dismissed. Dismissing it
+    // doesn't change calendarSwitch/contactsSwitch, so it would never reach the authStateChanges/
+    // forceRefresh-driven combine below (and distinctUntilChanged would swallow a same-value re-derive
+    // anyway) — without this, the nudge could reappear after being dismissed, within the same session.
+    private val _contactsDiscoveryNudgeShown = MutableStateFlow(readContactsDiscoveryNudgeShown())
+
+    /** Marks the one-time Contacts discovery nudge as shown so it never appears again for this account. */
+    fun contactsDiscoveryNudgeShown() {
+        _contactsDiscoveryNudgeShown.value = true
+        try {
+            AccountManager.get(context).setUserData(account, KEY_CONTACTS_DISCOVERY_NUDGE_SHOWN, "1")
+        } catch (e: Exception) {
+            logger.log(Level.WARNING, "Couldn't mark the Contacts discovery nudge shown for $account", e)
+        }
     }
 
     // Blank the screen while redirecting into the OAuth flow so it and the "Account not linked" dialog
@@ -303,7 +316,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }
 
     fun onReauthResult() {
-        refreshNeedsReauth()
+        refreshPersistedState()
         _reauthPhase.value = ReauthPhase.SHOW_CONTENT
     }
 
@@ -365,50 +378,69 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     // the single state channel
 
-    // Same re-read triggers as needsReauth: both are facts about the persisted AuthState, which only
-    // the sync worker and the re-auth flow ever write.
-    private val contactsSwitch: StateFlow<KompaktSyncSwitch> =
-        merge(authStateChanges, reauthRefresh)
+    // Shared derivation for both service toggles: consent alone would report On for a scope granted
+    // during re-auth, where no service, no discovery and no interval follow — so the interval, not the
+    // scope, decides between On and Off. Re-derives on the same triggers as needsReauth: both are facts
+    // about the persisted AuthState or the sync interval, which only the sync worker, this screen and
+    // the add-consent flow ever write.
+    private fun deriveSwitch(@ServiceType type: String, intervalKey: String): StateFlow<KompaktSyncSwitch> =
+        merge(authStateChanges, forceRefresh)
             .onStart { emit(Unit) }
-            .map { withContext(ioDispatcher) { readContactsSwitch() } }
+            .map { withContext(ioDispatcher) { readSwitch(type, intervalKey) } }
             .distinctUntilChanged()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), readContactsSwitch())
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), readSwitch(type, intervalKey))
 
-    // Consent alone would report On for a scope granted during re-auth, where no service, no discovery
-    // and no interval follow — so the interval, not the scope, decides between On and Off.
-    private fun readContactsSwitch(): KompaktSyncSwitch = when {
-        !readContactsConsent() -> KompaktSyncSwitch.ConsentMissing
-        readContactsAutoSyncEnabled() -> KompaktSyncSwitch.On
+    private fun readSwitch(@ServiceType type: String, intervalKey: String): KompaktSyncSwitch = when {
+        !readConsent(type) -> KompaktSyncSwitch.ConsentMissing
+        readAutoSyncEnabled(intervalKey) -> KompaktSyncSwitch.On
         else -> KompaktSyncSwitch.Off
     }
 
-    private fun readContactsConsent(): Boolean =
+    private fun readConsent(@ServiceType type: String): Boolean =
         try {
             val authState = AccountManager.get(context)
                 .getUserData(account, AccountSettings.KEY_AUTH_STATE)
                 ?.let { json -> AuthState.jsonDeserialize(json) }
-            Service.TYPE_CARDDAV in KompaktGrantedServices.fromAuthState(authState)
+            type in KompaktGrantedServices.fromAuthState(authState)
         } catch (e: Exception) {
             logger.log(Level.WARNING, "Couldn't read the stored authorization for $account", e)
             false
         }
 
-    private fun readContactsAutoSyncEnabled(): Boolean =
+    // AccountSettings throws when constructed on the main thread, so this reads the raw key. An absent
+    // key falls back to DEFAULT_SYNC_INTERVAL (4h), which never equals AUTO_SYNC_INTERVAL_SECONDS either.
+    private fun readAutoSyncEnabled(intervalKey: String): Boolean =
         try {
             AccountManager.get(context)
-                .getUserData(account, AccountSettings.KEY_SYNC_INTERVAL_ADDRESSBOOKS)
+                .getUserData(account, intervalKey)
                 ?.toLongOrNull() == KompaktInitDefaults.AUTO_SYNC_INTERVAL_SECONDS
         } catch (e: Exception) {
-            logger.log(Level.WARNING, "Couldn't read contacts sync interval for $account", e)
+            logger.log(Level.WARNING, "Couldn't read sync interval for $account", e)
             false
         }
+
+    private val contactsSwitch: StateFlow<KompaktSyncSwitch> =
+        deriveSwitch(Service.TYPE_CARDDAV, AccountSettings.KEY_SYNC_INTERVAL_ADDRESSBOOKS)
+
+    private val calendarSwitch: StateFlow<KompaktSyncSwitch> =
+        deriveSwitch(Service.TYPE_CALDAV, AccountSettings.KEY_SYNC_INTERVAL_CALENDARS)
 
     private val contactsState: Flow<KompaktServiceSyncState> = contactsSwitch.map { switch ->
         KompaktServiceSyncState(switch = switch, status = KompaktSyncStatus.NeverSynced)
     }
 
+    // A one-time nudge for an existing Calendar-only user discovering Contacts sync is now available;
+    // never applies the other direction (a Calendar-missing account can only come from a fresh
+    // partial-grant link, where the user already saw the consent screen at that time).
+    private val showContactsDiscoveryNudge: Flow<Boolean> =
+        combine(calendarSwitch, contactsSwitch, _contactsDiscoveryNudgeShown) { calendar, contacts, shown ->
+            calendar != KompaktSyncSwitch.ConsentMissing &&
+                contacts == KompaktSyncSwitch.ConsentMissing &&
+                !shown
+        }
+
     private val calendarState: Flow<KompaktServiceSyncState> = combine(
-        _calendarSwitch,
+        calendarSwitch,
         syncing,
         lastSync,
         _syncFailed,
@@ -427,14 +459,16 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         calendarState,
         contactsState,
         dialog,
-        _reauthPhase
-    ) { calendar, contacts, dialog, phase ->
+        _reauthPhase,
+        showContactsDiscoveryNudge
+    ) { calendar, contacts, dialog, phase, showNudge ->
         KompaktLinkedAccountState(
             email = email,
             calendar = calendar,
             contacts = contacts,
             dialog = dialog,
-            reauthPhase = phase
+            reauthPhase = phase,
+            showContactsDiscoveryNudge = showNudge
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialState())
 
@@ -442,7 +476,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     // read synchronously rather than defaulted.
     private fun initialState() = KompaktLinkedAccountState(
         email = email,
-        calendar = KompaktServiceSyncState(_calendarSwitch.value, KompaktSyncStatus.Resolving),
+        calendar = KompaktServiceSyncState(calendarSwitch.value, KompaktSyncStatus.Resolving),
         contacts = KompaktServiceSyncState(contactsSwitch.value, KompaktSyncStatus.NeverSynced),
         dialog = linkedAccountDialog(
             authError = readNeedsReauth(),
@@ -450,7 +484,10 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             noInternet = false,
             syncFailed = false
         ),
-        reauthPhase = _reauthPhase.value
+        reauthPhase = _reauthPhase.value,
+        showContactsDiscoveryNudge = calendarSwitch.value != KompaktSyncSwitch.ConsentMissing &&
+            contactsSwitch.value == KompaktSyncSwitch.ConsentMissing &&
+            !_contactsDiscoveryNudgeShown.value
     )
 
 
@@ -459,7 +496,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     init {
         // seed the toggle state from the persisted sync interval
         viewModelScope.launch(ioDispatcher) {
-            refreshAutoSyncToggle()
+            refreshPersistedState()
         }
 
         // Select the primary calendar (once, after discovery) so automatic sync triggers — e.g. the
@@ -480,28 +517,14 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
                     outcome = initDefaults.maybeApply(account, service.id)
                 }
                 if (outcome == KompaktInitDefaults.Outcome.APPLIED)
-                    refreshAutoSyncToggle()   // reflect the auto-sync default enabled on first setup
+                    refreshPersistedState()   // reflect the auto-sync default enabled on first setup
             }
-        }
-    }
-
-    /** Re-reads the persisted EVENTS sync interval and updates the calendar switch. */
-    private suspend fun refreshAutoSyncToggle() {
-        try {
-            val interval = accountSettingsFactory.create(account).getSyncInterval(SyncDataType.EVENTS)
-            _calendarSwitch.value =
-                if (interval == KompaktInitDefaults.AUTO_SYNC_INTERVAL_SECONDS) KompaktSyncSwitch.On
-                else KompaktSyncSwitch.Off
-        } catch (e: Exception) {
-            logger.log(Level.WARNING, "Couldn't read sync interval for $account", e)
         }
     }
 
     // actions
 
     fun setCalendarSync(enabled: Boolean) {
-        // optimistic
-        _calendarSwitch.value = if (enabled) KompaktSyncSwitch.On else KompaktSyncSwitch.Off
         viewModelScope.launch(ioDispatcher) {
             try {
                 accountSettingsFactory.create(account).setSyncInterval(
@@ -513,6 +536,9 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             }
             // an explicit user choice counts as "defaults applied" so the init routine won't override it
             initDefaults.markApplied(account)
+            // calendarSwitch is derived, not written to directly — force it to re-read the interval we
+            // just set, instead of waiting for some unrelated authStateChanges event
+            refreshPersistedState()
         }
     }
 
@@ -528,7 +554,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         viewModelScope.launch(ioDispatcher) {
             // select the primary calendar before enqueuing, else a "Sync now" right after linking syncs nothing
             if (initDefaults.ensureApplied(account) == KompaktInitDefaults.Outcome.APPLIED)
-                refreshAutoSyncToggle()
+                refreshPersistedState()
 
             // manual syncs skip the worker's constraints, so guard here: critically low storage → show the
             // "Your storage is full" message, don't start a sync that would only fail

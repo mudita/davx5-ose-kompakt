@@ -20,13 +20,6 @@ class KompaktOAuthGoogle @Inject constructor(
     private val logger: Logger
 ) {
 
-    private val SCOPES = arrayOf(
-        SCOPE_CALENDAR,                                 // CalDAV
-        SCOPE_CONTACTS,                                 // CardDAV
-        "openid",
-        "email"                                         // needed to extract email from ID token
-    )
-
     fun baseUri(googleAccount: String): URI =
         URI("https", "apidata.googleusercontent.com", "/caldav/v2/$googleAccount/user", null)
 
@@ -35,21 +28,50 @@ class KompaktOAuthGoogle @Inject constructor(
         "https://oauth2.googleapis.com/token".toUri()
     )
 
-    fun signIn(email: String?, customClientId: String?): AuthorizationRequest {
+    /**
+     * @param scopes defaults to Calendar + Contacts + `openid`/`email` (a full new-link or re-auth
+     * request). [KompaktAddConsentModel][at.bitfire.davdroid.ui.setup.KompaktAddConsentModel] passes a
+     * single data scope here to request only the missing permission.
+     * @param includeGrantedScopes sets Google's `include_granted_scopes` request parameter, so the
+     * returned token's granted-scope set is the union of every scope previously granted to this user
+     * for this OAuth client plus whatever this request grants — required whenever [scopes] is a subset,
+     * so applying the result never looks like the other service's consent was revoked.
+     */
+    fun signIn(
+        email: String?,
+        customClientId: String?,
+        scopes: Set<String> = setOf(SCOPE_CALENDAR, SCOPE_CONTACTS, "openid", "email"),
+        includeGrantedScopes: Boolean = false
+    ): AuthorizationRequest {
         logger.info("Google OAuth signing-key index: ${KompaktGoogleOAuthClients.clientIndex(context)}")
-        return AuthorizationRequest.Builder(
+        val builder = AuthorizationRequest.Builder(
             serviceConfig,
             customClientId ?: KompaktGoogleOAuthClients.clientId(context),
             ResponseTypeValues.CODE,
             oAuthIntegration.redirectUri
         )
-            .setScopes(*SCOPES)
+            .setScopes(scopes)
             .setLoginHint(email)
-            .build()
+        if (includeGrantedScopes)
+            builder.setAdditionalParameters(mapOf("include_granted_scopes" to "true"))
+        return builder.build()
     }
 
     companion object {
         const val SCOPE_CALENDAR = "https://www.googleapis.com/auth/calendar"
         const val SCOPE_CONTACTS = "https://www.googleapis.com/auth/carddav"
+
+        /** Extracts the `email` claim from an OIDC ID token's JWT payload, or `null` if absent/unparseable. */
+        fun parseEmailFromIdToken(idToken: String): String? = try {
+            val payloadBase64 = idToken.split(".").getOrNull(1) ?: return null
+            val payloadBytes = android.util.Base64.decode(
+                payloadBase64,
+                android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+            )
+            val payloadJson = org.json.JSONObject(String(payloadBytes, Charsets.UTF_8))
+            payloadJson.optString("email").takeIf { it.isNotBlank() }
+        } catch (_: Exception) {
+            null
+        }
     }
 }
