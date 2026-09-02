@@ -1,0 +1,28 @@
+core/src/test/kotlin/at/bitfire/davdroid/ui/account/KompaktSyncSwitchTest.kt
+  2434bc169f91a3a5 10
+docs/superpowers/specs/2026-09-02-per-service-sync-toggle-design.md
+  2434bc169f91a3a5 831-864
+docs/superpowers/plans/2026-09-02-per-service-sync-toggle.md
+  2434bc169f91a3a5 303-306,308,310,312-313,315-319,321-323,325-327,2159-2160,2162-2166
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "f5225db2fea2f9433a604086d0fa63f98eb98c6c",
+  "prompts": {
+    "2434bc169f91a3a5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d426cd3a-bbea-470e-baa2-5bff24092beb",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 91,
+      "total_deletions": 732,
+      "accepted_lines": 1071,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/7d0b3cb4dd676482713649efc71d2276346c4d1aedb642f722a571204fe82ed8"
+    }
+  }
+}
