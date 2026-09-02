@@ -89,10 +89,9 @@ fun KompaktLinkedAccountScreen(
 ) {
     val state by model.state.collectAsStateWithLifecycle()
 
-    // re-read the persisted re-auth flag and re-check free storage whenever the screen comes to the
-    // foreground, so a background auth failure or a low-storage condition surfaces its message immediately
+    // Free storage has no change notification, so re-check it whenever the screen comes to the
+    // foreground. The re-auth flag is observed instead.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        model.refreshNeedsReauth()
         model.refreshStorageState()
     }
 

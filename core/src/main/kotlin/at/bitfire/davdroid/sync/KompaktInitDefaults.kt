@@ -5,7 +5,6 @@
 package at.bitfire.davdroid.sync
 
 import android.accounts.Account
-import android.accounts.AccountManager
 import android.content.Context
 import androidx.work.WorkInfo
 import at.bitfire.davdroid.BuildConfig
@@ -14,7 +13,7 @@ import at.bitfire.davdroid.db.Service
 import at.bitfire.davdroid.repository.DavCollectionRepository
 import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
-import at.bitfire.davdroid.settings.AccountSettings
+import at.bitfire.davdroid.settings.KompaktAccountSettings
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
@@ -35,7 +34,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Singleton
 class KompaktInitDefaults @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val accountSettingsFactory: AccountSettings.Factory,
+    private val kompaktAccountSettings: KompaktAccountSettings,
     private val collectionRepository: DavCollectionRepository,
     private val serviceRepository: DavServiceRepository,
     private val logger: Logger
@@ -44,8 +43,6 @@ class KompaktInitDefaults @Inject constructor(
     companion object {
         /** "Auto synchronization" interval: 15 min in debug, once a day in release. */
         val AUTO_SYNC_INTERVAL_SECONDS = if (BuildConfig.DEBUG) 15 * 60L else 24 * 60 * 60L
-
-        const val KEY_DEFAULTS_APPLIED = "kompakt_defaults_applied"
 
         /** Bump to re-run primary-calendar selection once on existing accounts. */
         const val DEFAULTS_VERSION = 2
@@ -68,14 +65,14 @@ class KompaktInitDefaults @Inject constructor(
     /** Applied defaults version for [account] (0 = none / first setup). */
     fun appliedVersion(account: Account): Int =
         try {
-            AccountManager.get(context).getUserData(account, KEY_DEFAULTS_APPLIED)?.toIntOrNull() ?: 0
+            kompaktAccountSettings.getDefaultsAppliedVersion(account) ?: 0
         } catch (_: Exception) {
             DEFAULTS_VERSION   // account gone → treat as up to date so we stop retrying
         }
 
-    fun markApplied(account: Account) {
+    suspend fun markApplied(account: Account) {
         try {
-            AccountManager.get(context).setUserData(account, KEY_DEFAULTS_APPLIED, DEFAULTS_VERSION.toString())
+            kompaktAccountSettings.setDefaultsApplied(account, DEFAULTS_VERSION)
         } catch (e: Exception) {
             logger.log(Level.WARNING, "Couldn't mark Kompakt defaults applied for $account", e)
         }
@@ -126,7 +123,7 @@ class KompaktInitDefaults @Inject constructor(
 
         if (version == 0) {
             try {
-                accountSettingsFactory.create(account).setSyncInterval(SyncDataType.EVENTS, AUTO_SYNC_INTERVAL_SECONDS)
+                kompaktAccountSettings.setSyncInterval(account, SyncDataType.EVENTS, AUTO_SYNC_INTERVAL_SECONDS)
             } catch (e: Exception) {
                 logger.log(Level.WARNING, "Couldn't set automatic sync for $account", e)
             }
@@ -137,10 +134,9 @@ class KompaktInitDefaults @Inject constructor(
 
     // Creating the CardDAV service makes upstream fall back to its four-hour DEFAULT_SYNC_INTERVAL for
     // contacts; the Kompakt interval has to replace it before that periodic worker outlives setup.
-    fun applyContactsSyncInterval(account: Account) {
+    suspend fun applyContactsSyncInterval(account: Account) {
         try {
-            accountSettingsFactory.create(account)
-                .setSyncInterval(SyncDataType.CONTACTS, AUTO_SYNC_INTERVAL_SECONDS)
+            kompaktAccountSettings.setSyncInterval(account, SyncDataType.CONTACTS, AUTO_SYNC_INTERVAL_SECONDS)
         } catch (e: Exception) {
             logger.log(Level.WARNING, "Couldn't set contacts sync interval for $account", e)
         }
