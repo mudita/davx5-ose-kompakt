@@ -26,10 +26,10 @@ import javax.inject.Singleton
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * Selects the account's primary Google calendar for sync (and, on first setup, enables auto-sync),
- * at most once per [DEFAULTS_VERSION]. Every Kompakt auto-sync entry point runs this first: a DAVx5
- * sync only processes collections with `sync=true`, so an auto-sync fired before selection would sync
- * nothing. [Singleton] so the [mutex] serializes concurrent callers.
+ * Selects a service's collections for sync, and enables auto-sync for it unless the user already has a
+ * stored preference, at most once per service per [DEFAULTS_VERSION]. Every Kompakt auto-sync entry
+ * point runs this first: a DAVx5 sync only processes collections with `sync=true`, so an auto-sync
+ * fired before selection would sync nothing. [Singleton] so the [mutex] serializes concurrent callers.
  */
 @Singleton
 class KompaktInitDefaults @Inject constructor(
@@ -109,9 +109,10 @@ class KompaktInitDefaults @Inject constructor(
     }
 
     /**
-     * Selects only the primary calendar for sync and, on the first setup (version 0), enables auto-sync
-     * (a version bump does not, to respect the user's toggle choice). Returns [Outcome.NOT_READY] if the
-     * primary isn't identifiable yet so the caller can retry after discovery.
+     * Selects the service's collections and writes the Kompakt sync interval, the latter only when no
+     * interval is stored — so a user who switched the service off before discovery finished keeps that
+     * choice, and a [DEFAULTS_VERSION] bump re-selects without re-enabling. Returns [Outcome.NOT_READY]
+     * if the selection cannot be made yet, so the caller can retry after discovery.
      */
     suspend fun maybeApply(
         account: Account,

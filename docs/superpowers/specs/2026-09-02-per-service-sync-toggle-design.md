@@ -255,8 +255,8 @@ internal fun toggleOn(intervalSeconds: Long?): Boolean =
 ```
 
 Its only dependency is `KompaktAccountSettings`, from which it inherits both properties that matter.
-`isOn` is a raw user-data read, synchronous and safe on the main thread, so the screen's first frame is
-correct and the switch does not flicker on entry. `set` routes through
+`isOn` is a raw user-data read, cheap enough for any thread — though the screen no longer seeds itself
+from one; see *The switch starts at `Resolving`*. `set` routes through
 `KompaktAccountSettings.setSyncInterval`, which delegates to `AccountSettings.setSyncInterval` — and
 that call is what performs `updateAutomaticSync`, enabling or cancelling the periodic worker and the
 sync framework's content trigger. Those two halves *are* AC 3.1 and AC 6.1; a raw write would satisfy
@@ -389,8 +389,9 @@ class KompaktServiceSwitch @Inject constructor(
 ```
 
 Without this, the derivation and the ordering rules would be written inline in the ViewModel once per
-service — two chances to write them differently. `read` seeds the first frame synchronously; `observe`
-combines `accountSettings.observeAuthState` with `toggle.observe`.
+service — two chances to write them differently. `observe` combines `accountSettings.observeAuthState`
+with `toggle.observe`; `read` is the one-shot form, used only by the `ConsentMissing` guard, which needs
+a value fresher than the rendered one.
 
 `setEnabled` owns the ordering the acceptance criteria actually specify, and nothing else. It does
 **not** trigger the sync for AC 9: that path raises the storage-full and no-connectivity sheets, so it
@@ -535,10 +536,11 @@ failedOf(service)  ──┘   (existing pure fn)              │
 One private function per input:
 
 ```kotlin
-// seeded synchronously, so the first frame is right and the switch does not flicker
+// starts at Resolving; observe settles it, off the main thread
 private fun switchOf(service: KompaktSyncService): StateFlow<KompaktSyncSwitch> =
     switches.observe(account, service)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), switches.read(account, service))
+        .flowOn(ioDispatcher)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), KompaktSyncSwitch.Resolving)
 
 private fun syncingOf(service: KompaktSyncService): Flow<Reported<Boolean>> =
     accountProgress(account, serviceRepository.serviceFlow(account, service), listOf(service.dataType))
@@ -776,8 +778,11 @@ The full action surface:
 ```kotlin
 fun setServiceSync(service: KompaktSyncService, enabled: Boolean) {
     viewModelScope.launch(ioDispatcher) {
-        if (!enabled) _trackedSync.value = null            // AC 7.3/7.4 — before the cancel
-        switches.setEnabled(account, service, enabled)     // persist (+ markApplied), then cancel
+        // a ConsentMissing row renders like Off, so its switch reports an enable — SHP-1151 owns it
+        if (enabled && readSwitch(service) == KompaktSyncSwitch.ConsentMissing) return@launch
+        // only Calendar runs are tracked, so only its toggle may clear the id (AC 7.3/7.4)
+        if (!enabled && service == KompaktSyncService.CALENDAR) _trackedSync.value = null
+        switches.setEnabled(account, service, enabled)     // persist, then cancel
         if (enabled) startSync(listOf(service))            // AC 9
     }
 }
@@ -790,8 +795,9 @@ fun setServiceSync(service: KompaktSyncService, enabled: Boolean) {
 1. **No sync is enqueued for a service that is not consented, switched on, and backed by a `Service`
    row.** A data-loss guard, not hygiene — see `KompaktSyncEligibility`. Structural, not conventional:
    `KompaktStartSyncUseCase` is the only caller of `KompaktSyncWork.enqueue`, and it filters.
-2. **A switch position is never derived from the Room service row** — only from the synchronous interval
-   and auth-state reads, so the first frame is correct and the screen does not flicker on entry.
+2. **A switch position is never derived from the Room service row** — only from the stored interval and
+   auth state. The first frame is *honest* rather than final: it shows `Resolving`, which renders like
+   off, until the stored values arrive. See *The switch starts at `Resolving`* for the trade.
 3. **State resolution performs no writes**, with no exceptions. Losing consent leaves the persisted
    interval alone, and every component that answers a question — the toggle read, the switch derivation,
    eligibility, last-sync — is a pure read. The one component that writes on the way to an outcome,
@@ -900,7 +906,10 @@ holds them:
 
 - `setEnabled(false)` persists **before** it cancels; the tracked id is cleared **before** either.
 - `KompaktStartSyncUseCase` applies defaults **before** it reads eligibility.
-- It is the only caller of `KompaktSyncWork.enqueue`, so no enqueue path skips the eligibility filter.
+- It is the only caller of `KompaktSyncWork.enqueue`, and no Kompakt screen or receiver reaches
+  `SyncWorkerManager.enqueueOneTimeAllAuthorities` — including the `ACTION_SYNC` entry point, which is
+  routed through `syncNow`. Upstream's own screens and the sync widget still call it; they are
+  unreachable on this device (*Reachability on Kompakt*), so they are out of scope rather than exempt.
 - `enabledServices` excludes a service that is switched on but has lost consent, and one with no
   `Service` row.
 - Marking one service's defaults applied does not mark the other's.

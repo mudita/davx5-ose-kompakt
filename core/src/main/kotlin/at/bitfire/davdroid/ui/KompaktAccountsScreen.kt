@@ -64,8 +64,10 @@ fun KompaktAccountsScreen(
     onboarding: Boolean = false,
     onSkip: () -> Unit = onBack,
     model: AccountsViewModel = hiltViewModel(
+        // Never true: upstream's init would sync every authority, ignoring the per-service toggles.
+        // ACTION_SYNC is honoured below instead, through the same filtered path the button uses.
         creationCallback = { factory: AccountsViewModel.Factory ->
-            factory.create(initialSyncAccounts)
+            factory.create(false)
         }
     )
 ) {
@@ -123,6 +125,7 @@ fun KompaktAccountsScreen(
                 onBack = onBack,
                 showAccountLinkedDialog = justLinked,
                 initialReauth = initialReauth,
+                initialSync = initialSyncAccounts,
                 onAccountLinkedDialogDismiss = {
                     justLinked = false
                     switchedFromAccount = null

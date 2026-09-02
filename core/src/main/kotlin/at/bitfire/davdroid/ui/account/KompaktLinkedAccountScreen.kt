@@ -79,6 +79,7 @@ fun KompaktLinkedAccountScreen(
     onAccountLinkedDialogDismiss: () -> Unit = {},
     onAccountSwitched: (oldAccountName: String) -> Unit = {},
     initialReauth: Boolean = false,
+    initialSync: Boolean = false,
     model: KompaktLinkedAccountModel = hiltViewModel(
         // Key by account so switching the linked account (unlink A → link B) builds a fresh
         // ViewModel instead of reusing the cached one for the previous account (SHP-571).
@@ -122,6 +123,14 @@ fun KompaktLinkedAccountScreen(
             model.onReauthLaunchStarted()
             onReauthorize()
         }
+    }
+
+    // Another app opened the screen with ACTION_SYNC. Going through syncNow rather than upstream's
+    // sync-on-init keeps the request inside the per-service filter: a switched-off, unconsented or
+    // unconfigured service is not enqueued. Unit-keyed so a recomposition does not re-request.
+    LaunchedEffect(Unit) {
+        if (initialSync)
+            model.syncNow()
     }
 
     if (state.reauthPhase == ReauthPhase.SHOW_CONTENT) {
