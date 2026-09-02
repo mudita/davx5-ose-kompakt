@@ -12,7 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import at.bitfire.davdroid.network.KompaktGrantedServices
+import at.bitfire.davdroid.R
 import at.bitfire.davdroid.network.KompaktOAuthGoogle
 import at.bitfire.davdroid.network.OAuthIntegration
 import at.bitfire.davdroid.settings.Credentials
@@ -49,15 +49,10 @@ class KompaktGoogleLoginViewModel @AssistedInject constructor(
     }
 
 
-    enum class LoginError {
-        GoogleUnreachable,
-        ConsentRefused
-    }
-
     data class UiState(
         val email: String = "",
         val customClientId: String = "",
-        val error: LoginError? = null,
+        val error: String? = null,
 
         /** login info (set after successful login) */
         val result: LoginInfo? = null
@@ -86,20 +81,13 @@ class KompaktGoogleLoginViewModel @AssistedInject constructor(
         )
 
     fun signInFailed() {
-        uiState = uiState.copy(error = LoginError.GoogleUnreachable)
+        uiState = uiState.copy(error = context.getString(R.string.install_browser))
     }
 
     fun authenticate(authResponse: AuthorizationResponse) {
         viewModelScope.launch {
             try {
                 val authState = oAuthIntegration.authenticate(authService, authResponse)
-
-                if (KompaktGrantedServices.fromAuthState(authState).isEmpty()) {
-                    logger.warning("Authorization granted neither Calendar nor Contacts; not linking")
-                    uiState = uiState.copy(error = LoginError.ConsentRefused)
-                    return@launch
-                }
-
                 val credentials = Credentials(authState = authState)
 
                 // Extract email from ID token (returned because openid+email scopes are requested).
@@ -118,7 +106,7 @@ class KompaktGoogleLoginViewModel @AssistedInject constructor(
                 )
             } catch (e: Exception) {
                 logger.log(Level.WARNING, "Google authentication failed", e)
-                uiState = uiState.copy(error = LoginError.GoogleUnreachable)
+                uiState = uiState.copy(error = e.message)
             }
         }
     }
@@ -135,11 +123,7 @@ class KompaktGoogleLoginViewModel @AssistedInject constructor(
     }
 
     fun authCodeFailed() {
-        uiState = uiState.copy(error = LoginError.GoogleUnreachable)
-    }
-
-    fun consentRefused() {
-        uiState = uiState.copy(error = LoginError.ConsentRefused)
+        uiState = uiState.copy(error = context.getString(R.string.login_oauth_couldnt_obtain_auth_code))
     }
 
     fun resetResult() {

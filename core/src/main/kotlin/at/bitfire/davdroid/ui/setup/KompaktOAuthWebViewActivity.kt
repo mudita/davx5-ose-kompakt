@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.os.ConfigurationCompat
-import net.openid.appauth.AuthorizationException
 import net.openid.appauth.AuthorizationRequest
 import net.openid.appauth.AuthorizationResponse
 
@@ -174,10 +173,8 @@ class KompaktOAuthWebViewActivity : ComponentActivity() {
 
     private fun handleRedirect(request: AuthorizationRequest, uri: Uri) {
         // error response (e.g. user denied access)
-        val error = uri.getQueryParameter("error")
-        if (error != null) {
-            val consentRefused = error == AuthorizationException.AuthorizationRequestErrors.ACCESS_DENIED.error
-            setResult(RESULT_CANCELED, Intent().putExtra(EXTRA_CONSENT_REFUSED, consentRefused))
+        if (uri.getQueryParameter("error") != null) {
+            setResult(RESULT_CANCELED)
             finish()
             return
         }
@@ -204,28 +201,20 @@ class KompaktOAuthWebViewActivity : ComponentActivity() {
      */
     class Contract : ActivityResultContract<AuthorizationRequest, AuthorizationResponse?>() {
 
-        // rememberLauncherForActivityResult's callback only receives the parsed AuthorizationResponse?,
-        // so this rides along on the same Contract instance to tell "access_denied" apart from every
-        // other redirect failure.
-        var consentRefused: Boolean = false
-            private set
-
         override fun createIntent(context: Context, input: AuthorizationRequest) =
             Intent(context, KompaktOAuthWebViewActivity::class.java)
                 .putExtra(EXTRA_AUTH_URL, input.toUri().toString())
                 .putExtra(EXTRA_REDIRECT_URI, input.redirectUri.toString())
                 .putExtra(EXTRA_REQUEST_JSON, input.jsonSerializeString())
 
-        override fun parseResult(resultCode: Int, intent: Intent?): AuthorizationResponse? {
-            consentRefused = intent?.getBooleanExtra(EXTRA_CONSENT_REFUSED, false) == true
-            return intent?.getStringExtra(EXTRA_RESPONSE_JSON)?.let { json ->
+        override fun parseResult(resultCode: Int, intent: Intent?): AuthorizationResponse? =
+            intent?.getStringExtra(EXTRA_RESPONSE_JSON)?.let { json ->
                 try {
                     AuthorizationResponse.jsonDeserialize(json)
                 } catch (_: Exception) {
                     null
                 }
             }
-        }
     }
 
     companion object {
@@ -236,7 +225,6 @@ class KompaktOAuthWebViewActivity : ComponentActivity() {
         private const val EXTRA_REDIRECT_URI = "redirect_uri"
         private const val EXTRA_REQUEST_JSON = "request_json"
         private const val EXTRA_RESPONSE_JSON = "response_json"
-        private const val EXTRA_CONSENT_REFUSED = "consent_refused"
     }
 
 }

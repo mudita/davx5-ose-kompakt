@@ -66,10 +66,10 @@ object KompaktGoogleLogin : LoginType {
 
         val authContract = remember { model.authorizationContract() }
         val authRequestContract = rememberLauncherForActivityResult(authContract) { authResponse ->
-            when {
-                authResponse != null -> model.authenticate(authResponse)
-                authContract.consentRefused -> model.consentRefused()
-                else -> model.authCodeFailed()
+            if (authResponse != null) {
+                model.authenticate(authResponse)
+            } else {
+                model.authCodeFailed()
             }
         }
 
@@ -98,19 +98,11 @@ object KompaktGoogleLogin : LoginType {
             ) {
                 KompaktFramedIcon(painter = painterResource(R.drawable.ic_google_g))
 
-                val error = uiState.error
-                if (error != null) {
-                    // authorization failed (user cancelled, refused every scope, no browser,
-                    // token exchange error): show a message and let the user retry the whole sign-in
+                if (uiState.error != null) {
+                    // authorization failed (e.g. user cancelled, no browser, token exchange error):
+                    // show a message and let the user retry the whole sign-in
                     TextMMD(
-                        text = stringResource(
-                            when (error) {
-                                KompaktGoogleLoginViewModel.LoginError.ConsentRefused ->
-                                    RFrontitude.string.calendar_accountsync_error_h1_couldntsetupyouraccount
-                                KompaktGoogleLoginViewModel.LoginError.GoogleUnreachable ->
-                                    RFrontitude.string.calendar_accountsync_error_h1_couldntconnecttogoogle
-                            }
-                        ),
+                        text = stringResource(RFrontitude.string.calendar_accountsync_error_h1_couldntconnecttogoogle),
                         style = KompaktTypography900.labelMedium,
                         textAlign = TextAlign.Center
                     )
