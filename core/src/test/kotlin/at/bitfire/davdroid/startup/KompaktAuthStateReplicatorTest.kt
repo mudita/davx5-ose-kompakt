@@ -13,7 +13,6 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -29,7 +28,11 @@ class KompaktAuthStateReplicatorTest {
     private val accountA = mockk<Account>()
     private val accountB = mockk<Account>()
 
-    private val accounts = MutableStateFlow<Set<Account>>(emptySet())
+    // A SharedFlow, not a StateFlow: AccountRepository.getAllFlow is a callbackFlow that re-emits
+    // whatever OnAccountsUpdateListener reports, equal sets included, which is the whole reason the
+    // replicator applies distinctUntilChanged. A StateFlow would conflate those repeats itself and
+    // hide it.
+    private val accounts = MutableSharedFlow<Set<Account>>(replay = 1, extraBufferCapacity = 8)
     private val reauthFlows = mutableMapOf<Account, MutableSharedFlow<Boolean>>()
     private val published = mutableListOf<Pair<Account, Boolean>>()
 
@@ -73,6 +76,11 @@ class KompaktAuthStateReplicatorTest {
         advanceUntilIdle()
     }
 
+    private fun TestScope.setAccounts(vararg accounts: Account) {
+        this@KompaktAuthStateReplicatorTest.accounts.tryEmit(accounts.toSet())
+        advanceUntilIdle()
+    }
+
     private fun TestScope.emitReauth(account: Account, needsReauth: Boolean) {
         reauthFlow(account).tryEmit(needsReauth)
         advanceUntilIdle()
@@ -80,7 +88,7 @@ class KompaktAuthStateReplicatorTest {
 
     @Test
     fun publishesAChangeForItsOwnAccount() = runTest {
-        accounts.value = setOf(accountA)
+        setAccounts(accountA)
         startReplicator()
 
         emitReauth(accountA, true)
@@ -90,7 +98,7 @@ class KompaktAuthStateReplicatorTest {
 
     @Test
     fun publishesNothingUntilSomethingChanges() = runTest {
-        accounts.value = setOf(accountA, accountB)
+        setAccounts(accountA, accountB)
 
         startReplicator()
 
@@ -99,7 +107,7 @@ class KompaktAuthStateReplicatorTest {
 
     @Test
     fun publishesEachAccountSeparately() = runTest {
-        accounts.value = setOf(accountA, accountB)
+        setAccounts(accountA, accountB)
         startReplicator()
 
         emitReauth(accountB, true)
@@ -110,22 +118,20 @@ class KompaktAuthStateReplicatorTest {
 
     @Test
     fun subscribesOncePerAccountWhenTheAccountsSetRepeats() = runTest {
-        accounts.value = setOf(accountA)
+        setAccounts(accountA)
         startReplicator()
 
-        accounts.value = setOf(accountA)
-        advanceUntilIdle()
+        setAccounts(accountA)
 
         verify(exactly = 1) { accountSettings.observeReauthNeeded(accountA, false) }
     }
 
     @Test
     fun picksUpAnAccountAddedAfterStart() = runTest {
-        accounts.value = setOf(accountA)
+        setAccounts(accountA)
         startReplicator()
 
-        accounts.value = setOf(accountA, accountB)
-        advanceUntilIdle()
+        setAccounts(accountA, accountB)
         emitReauth(accountB, true)
 
         assertEquals(listOf(accountB to true), published)
@@ -133,11 +139,10 @@ class KompaktAuthStateReplicatorTest {
 
     @Test
     fun stopsPublishingForAnAccountThatIsGone() = runTest {
-        accounts.value = setOf(accountA, accountB)
+        setAccounts(accountA, accountB)
         startReplicator()
 
-        accounts.value = setOf(accountB)
-        advanceUntilIdle()
+        setAccounts(accountB)
         emitReauth(accountA, true)
 
         assertEquals(emptyList<Pair<Account, Boolean>>(), published)
