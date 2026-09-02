@@ -653,8 +653,28 @@ setup on every account that already exists.
 One exhaustive `when (service)` inside `maybeApply` — the one place service-specific behaviour
 legitimately lives, and a compile error if a third service is ever added.
 
-- **CALENDAR** — unchanged: select the primary calendar, and at version 0 write the EVENTS interval.
-- **CONTACTS** — at version 0 write the CONTACTS interval, and **select no address books**.
+- **CALENDAR** — unchanged: select the primary calendar, and write the EVENTS interval.
+- **CONTACTS** — write the CONTACTS interval, and **select no address books**.
+
+**The interval is written only when nothing is stored** — `getSyncInterval(...) == null` — not when the
+marker is 0. The distinction is the whole of the guard: a user who switches a service off before
+discovery finishes has stored the manual sentinel, and a "first setup" test would overwrite it, turning
+the service back on and re-arming its worker. Collection selection sits above this block and still runs
+either way, so respecting the choice costs no setup.
+
+This relies on the **seam's** raw getter, not `AccountSettings.getSyncInterval`, which substitutes the
+four-hour default for an absent key and would make the condition never true. Raw, `null` means the key
+was never written; `-1` is the user's explicit off.
+
+Only two things write that key on this device — `maybeApply` itself and the toggle — so `null` really
+does mean "no preference yet". `AccountSettingsMigration14` is a third writer in principle, and it reads
+through upstream's getter, so it would store the four-hour default over an absent key; it cannot run
+here, because Kompakt accounts are created at the current settings version. Were it ever to run, the
+service would land on upstream's interval and read as **off**, since `toggleOn` compares against
+`AUTO_SYNC_INTERVAL_SECONDS` exactly.
+
+It also makes the method's older promise real rather than incidental: a `DEFAULTS_VERSION` bump
+re-runs selection while leaving the interval alone, which "version 0" only achieved by accident.
 
 ---
 
@@ -937,6 +957,11 @@ seam, has ever run on hardware.
     first frame and then populates. If that reads as a flip rather than as loading, the answer is to seed
     synchronously again and accept the main-thread parse — see *The switch starts at `Resolving`*. This
     is the one deliberate repaint in the design and the only place it can be judged.
+
+13. **A service switched off before its defaults have applied stays off.** Link fresh, switch Calendar
+    off before discovery completes, then let discovery finish and re-enter the screen. The switch must
+    stay off and no periodic worker may appear. This is the one the review caught, and it needs a fresh
+    link — on an account whose defaults have already applied, the path is unreachable.
 
 `docs/kompakt-testing.md` has the recipes.
 
