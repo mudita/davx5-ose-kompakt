@@ -907,9 +907,11 @@ holds them:
 - `setEnabled(false)` persists **before** it cancels; the tracked id is cleared **before** either.
 - `KompaktStartSyncUseCase` applies defaults **before** it reads eligibility.
 - It is the only caller of `KompaktSyncWork.enqueue`, and no Kompakt screen or receiver reaches
-  `SyncWorkerManager.enqueueOneTimeAllAuthorities` — including the `ACTION_SYNC` entry point, which is
-  routed through `syncNow`. Upstream's own screens and the sync widget still call it; they are
-  unreachable on this device (*Reachability on Kompakt*), so they are out of scope rather than exempt.
+  `SyncWorkerManager.enqueueOneTimeAllAuthorities`. `KompaktAccountsActivity`'s undeclared
+  `Intent.ACTION_SYNC` handling did, and is **removed** rather than filtered: it synchronized every data
+  type regardless of the toggles, no intent filter advertised it, and `REQUEST_SYNC` is the specified way
+  for another app to ask. Upstream's own screens and the sync widget still call it and remain unreachable
+  on this device (*Reachability on Kompakt*), so they are out of scope rather than exempt.
 - `enabledServices` excludes a service that is switched on but has lost consent, and one with no
   `Service` row.
 - Marking one service's defaults applied does not mark the other's.

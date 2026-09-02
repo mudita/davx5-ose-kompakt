@@ -314,10 +314,11 @@ and `ACTION_REAUTH`, `KompaktSyncRequestReceiver`, `KompaktLogoutRequestReceiver
 `KompaktAuthStateProvider`. Consumed by the calendar app, and covered by the public-API rule in
 *Won't do*.
 
-One exception to "specified": `KompaktAccountsActivity` also honours Android's standard
-`Intent.ACTION_SYNC` (it opens with a sync already requested). Nothing in this app sends it there, so
-it is reachable only from another app, and `app-integration.md` does not document it. Treat that as a
-documentation gap.
+`KompaktAccountsActivity` used to also honour Android's standard `Intent.ACTION_SYNC`, opening with a
+sync already requested. It no longer does: the request bypassed the per-service sync toggles and
+synchronized every data type, and the action was never declared in an intent filter, so nothing
+advertised it. Don't reintroduce it — a sync request from another app is `REQUEST_SYNC`, which is
+specified in [`docs/app-integration.md`](docs/app-integration.md) and honours the toggles.
 
 ### Upstream's UI has no user route on this device
 
