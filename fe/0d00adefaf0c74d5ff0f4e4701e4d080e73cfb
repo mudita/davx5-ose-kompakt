@@ -1,0 +1,21 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "fe0d00adefaf0c74d5ff0f4e4701e4d080e73cfb",
+  "prompts": {
+    "f436ba4e540f03ac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a1e6d4ac-0908-4a29-a269-2e4e9c32a1a6",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 2282,
+      "total_deletions": 0,
+      "accepted_lines": 2282,
+      "overriden_lines": 0
+    }
+  }
+}

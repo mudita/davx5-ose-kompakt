@@ -1,0 +1,24 @@
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktInitDefaultsTest.kt
+  2db3c68562b12049 10,23,37-38,41,57-59,64,247-382
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "cfe5d67111d9112211fc4639e5e32684bd18aba4",
+  "prompts": {
+    "2db3c68562b12049": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f4510179-a18e-406f-911d-cb87e6994cbc",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 158,
+      "total_deletions": 1,
+      "accepted_lines": 35674,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/0c34f5e2af8c92952e1bbf00ace46ed33edbf2de2013e4b0f52acbb5ac7af178"
+    }
+  }
+}

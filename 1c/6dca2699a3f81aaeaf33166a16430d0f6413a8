@@ -1,0 +1,30 @@
+core/src/test/kotlin/at/bitfire/davdroid/KompaktTestFixtures.kt
+  2db3c68562b12049 1-49
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktSyncServiceTest.kt
+  2db3c68562b12049 8-9,34,41-42,55
+core/src/test/kotlin/at/bitfire/davdroid/ui/account/KompaktServiceSwitchTest.kt
+  2db3c68562b12049 8
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktSyncEligibilityTest.kt
+  2db3c68562b12049 10,53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "1c6dca2699a3f81aaeaf33166a16430d0f6413a8",
+  "prompts": {
+    "2db3c68562b12049": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f4510179-a18e-406f-911d-cb87e6994cbc",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 234,
+      "total_deletions": 23,
+      "accepted_lines": 35733,
+      "overriden_lines": 3,
+      "messages_url": "https://gitai.miquido.dev/cas/3f799a7564d956fb31085b16fb1c5bc1730862dcfd58612469b8da75eef2907d"
+    }
+  }
+}

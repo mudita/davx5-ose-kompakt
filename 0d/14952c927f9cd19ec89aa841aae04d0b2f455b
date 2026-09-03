@@ -1,0 +1,24 @@
+docs/superpowers/specs/2026-09-02-per-service-sync-toggle-design.md
+  2434bc169f91a3a5 402-429,936-939,942-964
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "0d14952c927f9cd19ec89aa841aae04d0b2f455b",
+  "prompts": {
+    "2434bc169f91a3a5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d426cd3a-bbea-470e-baa2-5bff24092beb",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 379,
+      "total_deletions": 58,
+      "accepted_lines": 1645,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/384e40ded13dfd49ca1d858ab1de9f4d81c17bddb963e1f4808b3a3bb7a3c9e6"
+    }
+  }
+}

@@ -1,0 +1,26 @@
+core/build.gradle.kts
+  d52106317ca91cf7 181
+core/src/test/kotlin/at/bitfire/davdroid/settings/KompaktAccountSettingsTest.kt
+  d52106317ca91cf7 19-22,43-44,69,78-80,82,86,99,108,118,127,136,145,155,173,187
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "4481bd84c17546822394889f60dcbfc8d30240b9",
+  "prompts": {
+    "d52106317ca91cf7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f94b97a5-a6ca-46bd-867b-b957dee0f10a",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 290,
+      "total_deletions": 30,
+      "accepted_lines": 209,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/cc49c35ec4be1ac91c59a55aa96e834b6ecf73377dcb0d9f22702702e8f8d110"
+    }
+  }
+}

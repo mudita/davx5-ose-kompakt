@@ -1,0 +1,11 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktServiceSyncState.kt
+  f436ba4e540f03ac 29-34
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountModel.kt
+  90a9cf2b9fc06857 27,83,151-152,154,176,187,195,210-211,275,412
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "da0e7c155994c727ff194753a2f355c1f38fdad0",
+  "prompts": {}
+}
