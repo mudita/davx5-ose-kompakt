@@ -432,11 +432,11 @@ private fun ConsentDialog(
         onDismissRequest = onDismiss,
         title = stringResource(
             if (isCalendar) RFrontitude.string.calendar_accountsync_dialog_h1_enablecalendarsync
-            else RFrontitude.string.calendar_accountsync_dialog_h1_enablecontactssync
+            else RFrontitude.string.calendar_accountsync_dialog_h1_enablecontactsync
         ),
         text = stringResource(
-            if (isCalendar) RFrontitude.string.calendar_accountsync_dialog_body_needsadditionalpermissioncalendar
-            else RFrontitude.string.calendar_accountsync_dialog_body_needsadditionalpermissioncontacts
+            if (isCalendar) RFrontitude.string.calendar_accountsync_dialog_body_sharecalendarandeventsbetween
+            else RFrontitude.string.calendar_accountsync_dialog_body_sharecontactsbetweenyourlinked
         ),
         confirmLabel = stringResource(RFrontitude.string.common_dialog_button_enable),
         onConfirm = {

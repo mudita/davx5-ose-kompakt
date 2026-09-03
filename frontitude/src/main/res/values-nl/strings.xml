@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="calendar_accountsync_dialog_body_nothingwillsynchronizewithyour">Niets synchroniseert met je Google-account</string>
+  <string name="calendar_accountsync_dialog_body_sharecalendarandeventsbetween">Deel agenda en afspraken tussen je gekoppelde Google-account en Kompakt</string>
+  <string name="calendar_accountsync_dialog_body_sharecontactsbetweenyourlinked">Deel contacten tussen je gekoppelde Google-account en Kompakt</string>
   <string name="calendar_accountsync_dialog_body_synchronizenowtoimportyourselected">Synchroniseer nu om je geselecteerde Google-gegevens te importeren</string>
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">Je ziet geen gegevens uit je Google-account meer</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Account koppelen</string>
   <string name="calendar_accountsync_dialog_button_syncnow">Nu synchroniseren</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Account gekoppeld</string>
   <string name="calendar_accountsync_dialog_h1_disablecalendarsync">Synchronisatie van agenda uitschakelen\?</string>
+  <string name="calendar_accountsync_dialog_h1_enablecalendarsync">Synchronisatie van agenda inschakelen\?</string>
+  <string name="calendar_accountsync_dialog_h1_enablecontactsync">Synchronisatie van contacten inschakelen\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Google-account koppelen</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Account verwijderen\?</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagaintocontinue">Koppel je account opnieuw om door te gaan met synchroniseren met Google Agenda</string>
@@ -25,6 +29,7 @@
   <string name="common_button_skip">Sla over</string>
   <string name="common_button_synchronize">Synchroniseren</string>
   <string name="common_dialog_button_cancel">Annuleren</string>
+  <string name="common_dialog_button_enable">Inschakelen</string>
   <string name="common_dialog_button_later">Later</string>
   <string name="common_dialog_button_tryagain">Opnieuw proberen</string>
   <string name="common_error_body_opensettingstocheck">Open de instellingen om te controleren of data en Wi-Fi zijn ingeschakeld</string>

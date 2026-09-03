@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="calendar_accountsync_dialog_body_nothingwillsynchronizewithyour">Nic se nebude synchronizovat s vaším účtem Google</string>
+  <string name="calendar_accountsync_dialog_body_sharecalendarandeventsbetween">Sdílejte kalendář a události mezi svým propojeným účtem Google a Kompaktem</string>
+  <string name="calendar_accountsync_dialog_body_sharecontactsbetweenyourlinked">Sdílejte kontakty mezi svým propojeným účtem Google a Kompaktem</string>
   <string name="calendar_accountsync_dialog_body_synchronizenowtoimportyourselected">Synchronizujte nyní a importujte vybraná data Google</string>
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">Data z vašeho účtu Google již neuvidíte</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Propojit účet</string>
   <string name="calendar_accountsync_dialog_button_syncnow">Synchronizovat nyní</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Účet propojen</string>
   <string name="calendar_accountsync_dialog_h1_disablecalendarsync">Zakázat synchronizaci kalendáře\?</string>
+  <string name="calendar_accountsync_dialog_h1_enablecalendarsync">Povolit synchronizaci kalendáře\?</string>
+  <string name="calendar_accountsync_dialog_h1_enablecontactsync">Povolit synchronizaci kontaktů\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Propojit účet Google</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Odebrat účet\?</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagaintocontinue">Znovu propojte svůj účet pro pokračování v synchronizaci s Kalendářem Google</string>
@@ -25,6 +29,7 @@
   <string name="common_button_skip">Přeskoč</string>
   <string name="common_button_synchronize">Synchronizovat</string>
   <string name="common_dialog_button_cancel">Zrušit</string>
+  <string name="common_dialog_button_enable">Povolit</string>
   <string name="common_dialog_button_later">Později</string>
   <string name="common_dialog_button_tryagain">Zkuste to znovu</string>
   <string name="common_error_body_opensettingstocheck">Otevřete nastavení a zkontrolujte, zda jsou data a Wi-Fi zapnuté</string>
