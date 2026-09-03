@@ -7,6 +7,7 @@ package at.bitfire.davdroid.sync
 import android.content.Context
 import at.bitfire.davdroid.TEST_ACCOUNT_NAME
 import at.bitfire.davdroid.db.Collection
+import at.bitfire.davdroid.db.Service
 import at.bitfire.davdroid.mockAccount
 import at.bitfire.davdroid.repository.DavCollectionRepository
 import at.bitfire.davdroid.repository.DavServiceRepository
@@ -19,6 +20,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import java.util.logging.Logger
@@ -32,8 +34,11 @@ class KompaktInitDefaultsTest {
 
     private val account = mockAccount()
 
+    private val caldavService = Service(id = SERVICE_ID, accountName = EMAIL, type = Service.TYPE_CALDAV)
+
     private lateinit var accountSettings: KompaktAccountSettings
     private lateinit var collectionRepository: DavCollectionRepository
+    private lateinit var serviceRepository: DavServiceRepository
     private lateinit var initDefaults: KompaktInitDefaults
 
     @Before
@@ -49,11 +54,14 @@ class KompaktInitDefaultsTest {
         collectionRepository = mockk(relaxed = true)
         coEvery { collectionRepository.getByService(SERVICE_ID) } returns emptyList()
 
+        serviceRepository = mockk()
+        coEvery { serviceRepository.getByAccountAndType(any(), any()) } returns null
+
         initDefaults = KompaktInitDefaults(
             context = mockk<Context>(relaxed = true),
             kompaktAccountSettings = accountSettings,
             collectionRepository = collectionRepository,
-            serviceRepository = mockk<DavServiceRepository>(relaxed = true),
+            serviceRepository = serviceRepository,
             logger = mockk<Logger>(relaxed = true)
         )
     }
@@ -234,6 +242,142 @@ class KompaktInitDefaultsTest {
 
         assertEquals(KompaktInitDefaults.Outcome.APPLIED, outcome)
         coVerify { accountSettings.setDefaultsApplied(account, KompaktSyncService.CONTACTS, any()) }
+    }
+
+    // appliedVersion
+
+    @Test
+    fun anAccountThatIsGoneCountsAsUpToDate() {
+        // Anything else retries the setup of an account that will never answer again.
+        every { accountSettings.getDefaultsAppliedVersion(any(), any()) } throws
+            IllegalStateException("account gone")
+
+        assertEquals(
+            KompaktInitDefaults.DEFAULTS_VERSION,
+            initDefaults.appliedVersion(account, KompaktSyncService.CALENDAR)
+        )
+    }
+
+
+    // markApplied
+
+    @Test
+    fun aMarkerThatCannotBeWrittenIsNotFatal() = runTest {
+        coEvery { accountSettings.setDefaultsApplied(any(), any(), any()) } throws
+            IllegalStateException("account gone")
+
+        initDefaults.markApplied(account, KompaktSyncService.CALENDAR)
+    }
+
+
+    // ensureApplied
+
+    @Test
+    fun ensureAppliedSkipsAServiceAlreadyAtThisVersion() = runTest {
+        every {
+            accountSettings.getDefaultsAppliedVersion(account, KompaktSyncService.CALENDAR)
+        } returns KompaktInitDefaults.DEFAULTS_VERSION
+
+        val outcome = initDefaults.ensureApplied(account, KompaktSyncService.CALENDAR)
+
+        assertEquals(KompaktInitDefaults.Outcome.ALREADY_APPLIED, outcome)
+        coVerify(exactly = 0) { serviceRepository.getByAccountAndType(any(), any()) }
+    }
+
+    @Test
+    fun ensureAppliedIsNotReadyUntilTheServiceExists() = runTest {
+        val outcome = initDefaults.ensureApplied(account, KompaktSyncService.CALENDAR)
+
+        assertEquals(KompaktInitDefaults.Outcome.NOT_READY, outcome)
+    }
+
+    @Test
+    fun ensureAppliedLooksTheServiceUpByItsOwnType() = runTest {
+        initDefaults.ensureApplied(account, KompaktSyncService.CONTACTS, awaitDiscovery = false)
+
+        coVerify { serviceRepository.getByAccountAndType(EMAIL, Service.TYPE_CARDDAV) }
+    }
+
+    @Test
+    fun ensureAppliedReportsWhatApplyingProduced() = runTest {
+        coEvery { serviceRepository.getByAccountAndType(EMAIL, Service.TYPE_CALDAV) } returns caldavService
+        coEvery { collectionRepository.getByService(SERVICE_ID) } returns listOf(
+            calendar(id = 1, url = "https://caldav.example/user%40example.com/events/")
+        )
+
+        val outcome = initDefaults.ensureApplied(account, KompaktSyncService.CALENDAR)
+
+        assertEquals(KompaktInitDefaults.Outcome.APPLIED, outcome)
+        coVerify { collectionRepository.setSync(1, true) }
+    }
+
+    @Test
+    fun ensureAppliedGivesUpRatherThanBlockingACallerThatCannotWait() = runTest {
+        // A BroadcastReceiver has no lifecycle to block on, so it attempts once and reports that
+        // discovery has not produced a selectable calendar yet.
+        coEvery { serviceRepository.getByAccountAndType(EMAIL, Service.TYPE_CALDAV) } returns caldavService
+
+        val outcome =
+            initDefaults.ensureApplied(account, KompaktSyncService.CALENDAR, awaitDiscovery = false)
+
+        assertEquals(KompaktInitDefaults.Outcome.NOT_READY, outcome)
+    }
+
+
+    // applyContactsSyncInterval
+
+    @Test
+    fun replacesTheUpstreamFallbackIntervalForContacts() = runTest {
+        // Creating the CardDAV service makes upstream fall back to its four-hour default; the Kompakt
+        // interval has to replace it before that periodic worker outlives setup.
+        initDefaults.applyContactsSyncInterval(account)
+
+        coVerify {
+            accountSettings.setSyncInterval(
+                account,
+                SyncDataType.CONTACTS,
+                KompaktInitDefaults.AUTO_SYNC_INTERVAL_SECONDS
+            )
+        }
+    }
+
+    @Test
+    fun aContactsIntervalThatCannotBeWrittenIsNotFatal() = runTest {
+        coEvery { accountSettings.setSyncInterval(any(), any(), any()) } throws
+            IllegalStateException("account gone")
+
+        initDefaults.applyContactsSyncInterval(account)
+    }
+
+
+    // findPrimaryCalendarId
+
+    @Test
+    fun findsThePrimaryCalendarAmongTheServicesCollections() = runTest {
+        coEvery { collectionRepository.getByService(SERVICE_ID) } returns listOf(
+            calendar(id = 1, url = "https://caldav.example/holidays/events/"),
+            calendar(id = 2, url = "https://caldav.example/user%40example.com/events/")
+        )
+
+        assertEquals(2L, initDefaults.findPrimaryCalendarId(account, SERVICE_ID))
+    }
+
+    @Test
+    fun matchesThePrimaryCalendarByDisplayNameWhenTheUrlDoesNot() = runTest {
+        coEvery { collectionRepository.getByService(SERVICE_ID) } returns listOf(
+            calendar(id = 1, url = "https://caldav.example/opaque-id/events/", displayName = EMAIL)
+        )
+
+        assertEquals(1L, initDefaults.findPrimaryCalendarId(account, SERVICE_ID))
+    }
+
+    @Test
+    fun findsNoPrimaryCalendarAmongSecondaryOnes() = runTest {
+        coEvery { collectionRepository.getByService(SERVICE_ID) } returns listOf(
+            calendar(id = 1, url = "https://caldav.example/holidays/events/", displayName = "Holidays")
+        )
+
+        assertNull(initDefaults.findPrimaryCalendarId(account, SERVICE_ID))
     }
 
     private fun calendar(
