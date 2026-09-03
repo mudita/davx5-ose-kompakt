@@ -44,7 +44,7 @@ class KompaktInitDefaults @Inject constructor(
         /** "Auto synchronization" interval: 15 min in debug, once a day in release. */
         val AUTO_SYNC_INTERVAL_SECONDS = if (BuildConfig.DEBUG) 15 * 60L else 24 * 60 * 60L
 
-        /** Bump to re-run primary-calendar selection once on existing accounts. */
+        /** Bump to re-run collection selection once on existing accounts. */
         const val DEFAULTS_VERSION = 2
 
         /** Max time to wait for collection discovery before giving up. */
@@ -52,11 +52,11 @@ class KompaktInitDefaults @Inject constructor(
     }
 
     enum class Outcome {
-        /** Applied now — the primary calendar was (re)selected for this version. */
+        /** Applied now — the service's collections were (re)selected for this version. */
         APPLIED,
         /** Already applied for the current version. */
         ALREADY_APPLIED,
-        /** Primary calendar not identifiable yet; the caller may retry after discovery. */
+        /** The selection cannot be made yet; the caller may retry after discovery. */
         NOT_READY
     }
 
@@ -83,9 +83,9 @@ class KompaktInitDefaults @Inject constructor(
     }
 
     /**
-     * Ensures the primary calendar is selected. When [awaitDiscovery] is true, waits up to
-     * [DISCOVERY_WAIT_MS] for collection discovery if the calendars aren't available yet; callers on a
-     * tight time budget (a BroadcastReceiver) pass false to attempt once without blocking. A fast no-op
+     * Ensures the service's collections are selected. When [awaitDiscovery] is true, waits up to
+     * [DISCOVERY_WAIT_MS] for collection discovery if they aren't available yet; callers on a tight
+     * time budget (a BroadcastReceiver) pass false to attempt once without blocking. A fast no-op
      * once applied.
      */
     suspend fun ensureApplied(
@@ -138,12 +138,19 @@ class KompaktInitDefaults @Inject constructor(
                 }
             }
 
-            // Selects nothing yet, so contacts sync processes no collections. Selecting an address
-            // book is the remaining work, and it must not land first: selection is what creates the
-            // local address book, and the syncer deletes local collections -- with their pending
-            // changes -- on any run where the database set comes back empty, which a 403 from a
-            // narrowed scope produces.
-            KompaktSyncService.CONTACTS -> { /* interval only */ }
+            // Every discovered address book rather than a chosen one: Google exposes a single
+            // `.../lists/default/` per account, so unlike calendars there is no primary to identify
+            // and nothing to leave deselected.
+            KompaktSyncService.CONTACTS -> {
+                val addressBooks = collectionRepository.getByService(serviceId)
+                    .filter { it.type == Collection.TYPE_ADDRESSBOOK }
+                if (addressBooks.isEmpty())
+                    return Outcome.NOT_READY
+
+                for (addressBook in addressBooks)
+                    if (!addressBook.sync)
+                        collectionRepository.setSync(addressBook.id, true)
+            }
         }
 
         // Only when nothing is stored, not when the marker is 0: a user who switched the service off
@@ -157,16 +164,6 @@ class KompaktInitDefaults @Inject constructor(
         }
         markApplied(account, service)
         Outcome.APPLIED
-    }
-
-    // Creating the CardDAV service makes upstream fall back to its four-hour DEFAULT_SYNC_INTERVAL for
-    // contacts; the Kompakt interval has to replace it before that periodic worker outlives setup.
-    suspend fun applyContactsSyncInterval(account: Account) {
-        try {
-            kompaktAccountSettings.setSyncInterval(account, SyncDataType.CONTACTS, AUTO_SYNC_INTERVAL_SECONDS)
-        } catch (e: Exception) {
-            logger.log(Level.WARNING, "Couldn't set contacts sync interval for $account", e)
-        }
     }
 
     suspend fun findPrimaryCalendarId(account: Account, serviceId: Long): Long? =
