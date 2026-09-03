@@ -1,0 +1,22 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "0f385958c2e5ecfe91d819c6a6c1e76770086620",
+  "prompts": {
+    "7f302b002c9588d2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "41db6e58-8651-4467-82e1-74f159725ecb",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 498,
+      "total_deletions": 4,
+      "accepted_lines": 1747,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/eaf3889e55dc0a94059dc8833250dea8a855ce0b95e5450c57574270ff169474"
+    }
+  }
+}
