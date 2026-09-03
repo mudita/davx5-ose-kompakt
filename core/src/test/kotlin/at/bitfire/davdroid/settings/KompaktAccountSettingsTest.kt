@@ -192,4 +192,17 @@ class KompaktAccountSettingsTest {
 
         verify { accountSettings.updateAuthState(authState) }
     }
+
+    @Test
+    fun authStateOf_readsNothingStoredAsNoAuthorization() {
+        assertNull(authStateOf(null))
+    }
+
+    @Test
+    fun authStateOf_readsStoredNonsenseAsNoAuthorization() {
+        // Null rather than a throw: the linked-account screen resolves this while composing, and an
+        // account whose stored authorization cannot be parsed is one that needs re-authorizing, not
+        // one that crashes the screen.
+        assertNull(authStateOf("not json"))
+    }
 }
