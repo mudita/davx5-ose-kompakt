@@ -5,6 +5,7 @@
 package at.bitfire.davdroid.ui.account
 
 import android.accounts.Account
+import at.bitfire.davdroid.mockAuthState
 import at.bitfire.davdroid.network.KompaktOAuthGoogle
 import at.bitfire.davdroid.settings.KompaktAccountSettings
 import at.bitfire.davdroid.sync.KompaktServiceToggle
@@ -52,18 +53,13 @@ class KompaktServiceSwitchTest {
         switch = KompaktServiceSwitch(accountSettings, toggle, syncWork)
     }
 
-    // Mocked, not built: AuthState's constructors parse android.net.Uri, which a plain JVM test lacks.
-    private fun authStateGranting(vararg scopes: String) = mockk<AuthState> {
-        every { scopeSet } returns scopes.toSet()
-    }
-
 
     // read
 
     @Test
     fun readsConsentMissingWhileTheScopeIsUngranted() {
         every { accountSettings.getAuthState(account) } returns
-            authStateGranting(KompaktOAuthGoogle.SCOPE_CALENDAR)
+            mockAuthState(KompaktOAuthGoogle.SCOPE_CALENDAR)
         every { toggle.isOn(account, KompaktSyncService.CONTACTS) } returns true
 
         assertEquals(
@@ -75,7 +71,7 @@ class KompaktServiceSwitchTest {
     @Test
     fun readsTheStoredToggleOnceTheScopeIsGranted() {
         every { accountSettings.getAuthState(account) } returns
-            authStateGranting(KompaktOAuthGoogle.SCOPE_CALENDAR, KompaktOAuthGoogle.SCOPE_CONTACTS)
+            mockAuthState(KompaktOAuthGoogle.SCOPE_CALENDAR, KompaktOAuthGoogle.SCOPE_CONTACTS)
         every { toggle.isOn(account, KompaktSyncService.CALENDAR) } returns true
         every { toggle.isOn(account, KompaktSyncService.CONTACTS) } returns false
 
@@ -90,7 +86,7 @@ class KompaktServiceSwitchTest {
     fun observesNothingUntilBothSourcesHaveReported() = runTest {
         val seen = observe(KompaktSyncService.CALENDAR)
 
-        authStates.emit(authStateGranting(KompaktOAuthGoogle.SCOPE_CALENDAR))
+        authStates.emit(mockAuthState(KompaktOAuthGoogle.SCOPE_CALENDAR))
 
         assertEquals(emptyList<KompaktSyncSwitch>(), seen)
     }
@@ -99,10 +95,10 @@ class KompaktServiceSwitchTest {
     fun reactsToAScopeGrantedByAReauthorization() = runTest {
         val seen = observe(KompaktSyncService.CONTACTS)
 
-        authStates.emit(authStateGranting(KompaktOAuthGoogle.SCOPE_CALENDAR))
+        authStates.emit(mockAuthState(KompaktOAuthGoogle.SCOPE_CALENDAR))
         toggles.emit(true)
         authStates.emit(
-            authStateGranting(KompaktOAuthGoogle.SCOPE_CALENDAR, KompaktOAuthGoogle.SCOPE_CONTACTS)
+            mockAuthState(KompaktOAuthGoogle.SCOPE_CALENDAR, KompaktOAuthGoogle.SCOPE_CONTACTS)
         )
 
         assertEquals(listOf(KompaktSyncSwitch.ConsentMissing, KompaktSyncSwitch.On), seen)
@@ -112,7 +108,7 @@ class KompaktServiceSwitchTest {
     fun reactsToTheToggleBeingSwitched() = runTest {
         val seen = observe(KompaktSyncService.CALENDAR)
 
-        authStates.emit(authStateGranting(KompaktOAuthGoogle.SCOPE_CALENDAR))
+        authStates.emit(mockAuthState(KompaktOAuthGoogle.SCOPE_CALENDAR))
         toggles.emit(true)
         toggles.emit(false)
 
@@ -125,9 +121,9 @@ class KompaktServiceSwitchTest {
         // one, and repeating it repaints a screen that ghosts.
         val seen = observe(KompaktSyncService.CALENDAR)
 
-        authStates.emit(authStateGranting(KompaktOAuthGoogle.SCOPE_CALENDAR))
+        authStates.emit(mockAuthState(KompaktOAuthGoogle.SCOPE_CALENDAR))
         toggles.emit(true)
-        authStates.emit(authStateGranting(KompaktOAuthGoogle.SCOPE_CALENDAR))
+        authStates.emit(mockAuthState(KompaktOAuthGoogle.SCOPE_CALENDAR))
         toggles.emit(true)
 
         assertEquals(listOf(KompaktSyncSwitch.On), seen)

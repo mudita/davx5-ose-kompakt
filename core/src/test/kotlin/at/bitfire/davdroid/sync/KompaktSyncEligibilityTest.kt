@@ -7,6 +7,7 @@ package at.bitfire.davdroid.sync
 import at.bitfire.davdroid.TEST_ACCOUNT_NAME
 import at.bitfire.davdroid.db.Service
 import at.bitfire.davdroid.mockAccount
+import at.bitfire.davdroid.mockAuthState
 import at.bitfire.davdroid.network.KompaktOAuthGoogle
 import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.settings.KompaktAccountSettings
@@ -14,7 +15,6 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import net.openid.appauth.AuthState
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -49,11 +49,8 @@ class KompaktSyncEligibilityTest {
         eligibility = KompaktSyncEligibility(accountSettings, toggle, serviceRepository)
     }
 
-    // Mocked, not built: AuthState's constructors parse android.net.Uri, which a plain JVM test lacks.
     private fun grantScopes(vararg scopes: String) {
-        every { accountSettings.getAuthState(account) } returns mockk<AuthState> {
-            every { scopeSet } returns scopes.toSet()
-        }
+        every { accountSettings.getAuthState(account) } returns mockAuthState(*scopes)
     }
 
     @Test

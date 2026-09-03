@@ -5,21 +5,15 @@
 package at.bitfire.davdroid.sync
 
 import at.bitfire.davdroid.db.Service
+import at.bitfire.davdroid.mockAuthState
+import at.bitfire.davdroid.mockAuthStateWithoutScopes
 import at.bitfire.davdroid.network.KompaktOAuthGoogle
-import io.mockk.every
-import io.mockk.mockk
-import net.openid.appauth.AuthState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class KompaktSyncServiceTest {
-
-    // Mocked, not built: AuthState's constructors parse android.net.Uri, which a plain JVM test lacks.
-    private fun authStateGranting(scopes: Set<String>?) = mockk<AuthState> {
-        every { scopeSet } returns scopes
-    }
 
     @Test
     fun mapsEachServiceToItsDataTypeAndServiceType() {
@@ -37,16 +31,15 @@ class KompaktSyncServiceTest {
 
     @Test
     fun consentedWhenTheScopeIsGranted() {
-        val authState = authStateGranting(setOf(KompaktOAuthGoogle.SCOPE_CALENDAR))
+        val authState = mockAuthState(KompaktOAuthGoogle.SCOPE_CALENDAR)
         assertTrue(KompaktSyncService.CALENDAR.isConsented(authState))
         assertFalse(KompaktSyncService.CONTACTS.isConsented(authState))
     }
 
     @Test
     fun consentedPerServiceWhenBothScopesAreGranted() {
-        val authState = authStateGranting(
-            setOf(KompaktOAuthGoogle.SCOPE_CALENDAR, KompaktOAuthGoogle.SCOPE_CONTACTS)
-        )
+        val authState =
+            mockAuthState(KompaktOAuthGoogle.SCOPE_CALENDAR, KompaktOAuthGoogle.SCOPE_CONTACTS)
         assertTrue(KompaktSyncService.CALENDAR.isConsented(authState))
         assertTrue(KompaktSyncService.CONTACTS.isConsented(authState))
     }
@@ -59,7 +52,7 @@ class KompaktSyncServiceTest {
 
     @Test
     fun notConsentedWhenTheResponseEchoesNoScope() {
-        assertFalse(KompaktSyncService.CALENDAR.isConsented(authStateGranting(null)))
+        assertFalse(KompaktSyncService.CALENDAR.isConsented(mockAuthStateWithoutScopes()))
     }
 
 }
