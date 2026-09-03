@@ -185,11 +185,14 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             )
         }
 
+    private val _confirmDisable = MutableStateFlow<KompaktSyncService?>(null)
+
     private val dialog: Flow<KompaktLinkedAccountDialog?> = combine(
         needsReauth,
         _showOutOfStorage,
         _showNoInternet,
         _syncFailed,
+        _confirmDisable,
         ::linkedAccountDialog
     )
 
@@ -288,6 +291,17 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         _reauthPhase.value = ReauthPhase.SHOW_CONTENT
     }
 
+    /** Switching a service off asks first; the answer arrives via [confirmDisable] or [consumeDialog]. */
+    fun requestDisable(service: KompaktSyncService) {
+        _confirmDisable.value = service
+    }
+
+    fun confirmDisable() {
+        val service = _confirmDisable.value ?: return
+        _confirmDisable.value = null
+        setServiceSync(service, false)
+    }
+
     fun setServiceSync(service: KompaktSyncService, enabled: Boolean) {
         viewModelScope.launch(ioDispatcher) {
             // The cell renders ConsentMissing exactly like Off, so its switch reports an enable.
@@ -322,6 +336,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         _showNoInternet.value = false
         _syncFailed.value = false
         _showOutOfStorage.value = false
+        _confirmDisable.value = null
     }
 
     fun unlink() {
@@ -382,7 +397,8 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             authError = readNeedsReauth(),
             outOfStorage = KompaktStorage.isStorageLow(context),
             noInternet = false,
-            syncFailed = false
+            syncFailed = false,
+            confirmDisable = null
         ),
         reauthPhase = _reauthPhase.value
     )
