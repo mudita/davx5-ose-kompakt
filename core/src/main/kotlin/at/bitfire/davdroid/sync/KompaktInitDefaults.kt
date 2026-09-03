@@ -26,10 +26,10 @@ import javax.inject.Singleton
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * Selects the account's primary Google calendar for sync (and, on first setup, enables auto-sync),
- * at most once per [DEFAULTS_VERSION]. Every Kompakt auto-sync entry point runs this first: a DAVx5
- * sync only processes collections with `sync=true`, so an auto-sync fired before selection would sync
- * nothing. [Singleton] so the [mutex] serializes concurrent callers.
+ * Selects a service's collections for sync, and enables auto-sync for it unless the user already has a
+ * stored preference, at most once per service per [DEFAULTS_VERSION]. Every Kompakt auto-sync entry
+ * point runs this first: a DAVx5 sync only processes collections with `sync=true`, so an auto-sync
+ * fired before selection would sync nothing. [Singleton] so the [mutex] serializes concurrent callers.
  */
 @Singleton
 class KompaktInitDefaults @Inject constructor(
@@ -62,17 +62,21 @@ class KompaktInitDefaults @Inject constructor(
 
     private val mutex = Mutex()
 
-    /** Applied defaults version for [account] (0 = none / first setup). */
-    fun appliedVersion(account: Account): Int =
+    /** Applied defaults version for [account] and [service] (0 = none / first setup). */
+    fun appliedVersion(account: Account, service: KompaktSyncService): Int =
         try {
-            kompaktAccountSettings.getDefaultsAppliedVersion(account) ?: 0
+            appliedVersionOf(
+                perService = kompaktAccountSettings.getDefaultsAppliedVersion(account, service),
+                legacy = kompaktAccountSettings.getLegacyDefaultsAppliedVersion(account),
+                service = service
+            )
         } catch (_: Exception) {
             DEFAULTS_VERSION   // account gone → treat as up to date so we stop retrying
         }
 
-    suspend fun markApplied(account: Account) {
+    suspend fun markApplied(account: Account, service: KompaktSyncService) {
         try {
-            kompaktAccountSettings.setDefaultsApplied(account, DEFAULTS_VERSION)
+            kompaktAccountSettings.setDefaultsApplied(account, service, DEFAULTS_VERSION)
         } catch (e: Exception) {
             logger.log(Level.WARNING, "Couldn't mark Kompakt defaults applied for $account", e)
         }
@@ -84,51 +88,74 @@ class KompaktInitDefaults @Inject constructor(
      * tight time budget (a BroadcastReceiver) pass false to attempt once without blocking. A fast no-op
      * once applied.
      */
-    suspend fun ensureApplied(account: Account, awaitDiscovery: Boolean = true): Outcome {
-        if (appliedVersion(account) >= DEFAULTS_VERSION)
+    suspend fun ensureApplied(
+        account: Account,
+        service: KompaktSyncService,
+        awaitDiscovery: Boolean = true
+    ): Outcome {
+        if (appliedVersion(account, service) >= DEFAULTS_VERSION)
             return Outcome.ALREADY_APPLIED
-        val service = serviceRepository.getByAccountAndType(account.name, Service.TYPE_CALDAV)
+        val serviceRow = serviceRepository.getByAccountAndType(account.name, service.serviceType)
             ?: return Outcome.NOT_READY
-        maybeApply(account, service.id).let { if (it != Outcome.NOT_READY) return it }
+        maybeApply(account, service, serviceRow.id).let { if (it != Outcome.NOT_READY) return it }
         if (!awaitDiscovery)
             return Outcome.NOT_READY
         withTimeoutOrNull(DISCOVERY_WAIT_MS.milliseconds) {
             RefreshCollectionsWorker
-                .existsFlow(context, RefreshCollectionsWorker.workerName(service.id), WorkInfo.State.SUCCEEDED)
+                .existsFlow(context, RefreshCollectionsWorker.workerName(serviceRow.id), WorkInfo.State.SUCCEEDED)
                 .first { succeeded -> succeeded }
         }
-        return maybeApply(account, service.id)
+        return maybeApply(account, service, serviceRow.id)
     }
 
     /**
-     * Selects only the primary calendar for sync and, on the first setup (version 0), enables auto-sync
-     * (a version bump does not, to respect the user's toggle choice). Returns [Outcome.NOT_READY] if the
-     * primary isn't identifiable yet so the caller can retry after discovery.
+     * Selects the service's collections and writes the Kompakt sync interval, the latter only when no
+     * interval is stored — so a user who switched the service off before discovery finished keeps that
+     * choice, and a [DEFAULTS_VERSION] bump re-selects without re-enabling. Returns [Outcome.NOT_READY]
+     * if the selection cannot be made yet, so the caller can retry after discovery.
      */
-    suspend fun maybeApply(account: Account, serviceId: Long): Outcome = mutex.withLock {
-        val version = appliedVersion(account)
+    suspend fun maybeApply(
+        account: Account,
+        service: KompaktSyncService,
+        serviceId: Long
+    ): Outcome = mutex.withLock {
+        val version = appliedVersion(account, service)
         if (version >= DEFAULTS_VERSION)
             return Outcome.ALREADY_APPLIED
-        val calendars = collectionRepository.getByService(serviceId)
-            .filter { it.type == Collection.TYPE_CALENDAR }
-        if (calendars.isEmpty())
-            return Outcome.NOT_READY
-        val primaryId = findPrimaryCalendarId(account, calendars) ?: return Outcome.NOT_READY
 
-        for (calendar in calendars) {
-            val shouldSync = calendar.id == primaryId
-            if (calendar.sync != shouldSync)
-                collectionRepository.setSync(calendar.id, shouldSync)
-        }
+        when (service) {
+            KompaktSyncService.CALENDAR -> {
+                val calendars = collectionRepository.getByService(serviceId)
+                    .filter { it.type == Collection.TYPE_CALENDAR }
+                if (calendars.isEmpty())
+                    return Outcome.NOT_READY
+                val primaryId = findPrimaryCalendarId(account, calendars) ?: return Outcome.NOT_READY
 
-        if (version == 0) {
-            try {
-                kompaktAccountSettings.setSyncInterval(account, SyncDataType.EVENTS, AUTO_SYNC_INTERVAL_SECONDS)
-            } catch (e: Exception) {
-                logger.log(Level.WARNING, "Couldn't set automatic sync for $account", e)
+                for (calendar in calendars) {
+                    val shouldSync = calendar.id == primaryId
+                    if (calendar.sync != shouldSync)
+                        collectionRepository.setSync(calendar.id, shouldSync)
+                }
             }
+
+            // Selects nothing yet, so contacts sync processes no collections. Selecting an address
+            // book is the remaining work, and it must not land first: selection is what creates the
+            // local address book, and the syncer deletes local collections -- with their pending
+            // changes -- on any run where the database set comes back empty, which a 403 from a
+            // narrowed scope produces.
+            KompaktSyncService.CONTACTS -> { /* interval only */ }
         }
-        markApplied(account)
+
+        // Only when nothing is stored, not when the marker is 0: a user who switched the service off
+        // before discovery finished has stored the manual sentinel, and overwriting it here would turn
+        // their choice back on and re-arm the periodic worker.
+        try {
+            if (kompaktAccountSettings.getSyncInterval(account, service.dataType) == null)
+                kompaktAccountSettings.setSyncInterval(account, service.dataType, AUTO_SYNC_INTERVAL_SECONDS)
+        } catch (e: Exception) {
+            logger.log(Level.WARNING, "Couldn't set automatic sync for $account", e)
+        }
+        markApplied(account, service)
         Outcome.APPLIED
     }
 
@@ -170,3 +197,9 @@ class KompaktInitDefaults @Inject constructor(
     }
 
 }
+
+// The pre-split marker meant "calendar defaults applied", so it counts for CALENDAR and nothing else.
+internal fun appliedVersionOf(perService: Int?, legacy: Int?, service: KompaktSyncService): Int =
+    perService
+        ?: legacy?.takeIf { service == KompaktSyncService.CALENDAR }
+        ?: 0

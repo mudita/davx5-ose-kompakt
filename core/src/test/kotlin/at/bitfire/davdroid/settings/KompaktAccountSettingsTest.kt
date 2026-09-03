@@ -7,6 +7,7 @@ package at.bitfire.davdroid.settings
 import android.accounts.Account
 import android.accounts.AccountManager
 import android.content.Context
+import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.sync.SyncDataType
 import io.mockk.every
 import io.mockk.mockk
@@ -136,7 +137,7 @@ class KompaktAccountSettingsTest {
     fun observe_ignoresOtherKeys() = runTest(testDispatcher) {
         val seen = collect(settings.observeReauthNeeded(account, emitInitial = false))
 
-        settings.setDefaultsApplied(account, 3)
+        settings.setDefaultsApplied(account, KompaktSyncService.CALENDAR, 3)
 
         assertEquals(emptyList<Boolean>(), seen)
     }
@@ -153,13 +154,13 @@ class KompaktAccountSettingsTest {
 
     @Test
     fun defaultsAppliedVersion_roundTripsAndRejectsGarbage() = runTest(testDispatcher) {
-        assertNull(settings.getDefaultsAppliedVersion(account))
+        assertNull(settings.getDefaultsAppliedVersion(account, KompaktSyncService.CALENDAR))
 
-        settings.setDefaultsApplied(account, 7)
-        assertEquals(7, settings.getDefaultsAppliedVersion(account))
+        settings.setDefaultsApplied(account, KompaktSyncService.CALENDAR, 7)
+        assertEquals(7, settings.getDefaultsAppliedVersion(account, KompaktSyncService.CALENDAR))
 
-        userData[account to KompaktAccountSettingsImpl.KEY_DEFAULTS_APPLIED] = "not-a-number"
-        assertNull(settings.getDefaultsAppliedVersion(account))
+        userData[account to "${KompaktAccountSettingsImpl.KEY_DEFAULTS_APPLIED}_calendar"] = "not-a-number"
+        assertNull(settings.getDefaultsAppliedVersion(account, KompaktSyncService.CALENDAR))
     }
 
     // Unlike AccountSettings.getSyncInterval, which substitutes a four-hour default and so cannot

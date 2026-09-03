@@ -11,7 +11,9 @@ internal sealed interface Reported<out T> {
     data class Value<out T>(val value: T) : Reported<T>
 }
 
-enum class KompaktSyncSwitch { On, Off, ConsentMissing }
+// Resolving is the position before the stored settings have been read. The screen withholds the row
+// until it settles, so a tap cannot act on a value it does not have yet.
+enum class KompaktSyncSwitch { Resolving, On, Off, ConsentMissing }
 
 sealed interface KompaktSyncStatus {
     data object Resolving : KompaktSyncStatus
@@ -24,7 +26,12 @@ sealed interface KompaktSyncStatus {
 data class KompaktServiceSyncState(
     val switch: KompaktSyncSwitch,
     val status: KompaktSyncStatus
-)
+) {
+
+    val isLoading: Boolean
+        get() = switch == KompaktSyncSwitch.Resolving || status == KompaktSyncStatus.Resolving
+
+}
 
 internal fun serviceSyncState(
     switch: KompaktSyncSwitch,
@@ -35,6 +42,14 @@ internal fun serviceSyncState(
     switch = switch,
     status = syncStatus(syncing, lastSync, failed)
 )
+
+// Consent only vetoes: a scope granted during a re-auth brings no service, no discovery and no
+// interval with it, so the interval is what separates On from Off.
+internal fun kompaktSyncSwitch(consented: Boolean, on: Boolean): KompaktSyncSwitch = when {
+    !consented -> KompaktSyncSwitch.ConsentMissing
+    on -> KompaktSyncSwitch.On
+    else -> KompaktSyncSwitch.Off
+}
 
 // The status is deliberately independent of the switch, so a switched-off service keeps the last-sync
 // time it earned; the cell decides not to show it.

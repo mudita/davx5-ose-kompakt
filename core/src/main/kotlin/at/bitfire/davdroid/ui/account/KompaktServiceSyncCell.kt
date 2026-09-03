@@ -29,25 +29,43 @@ fun KompaktServiceSyncCell(
     modifier: Modifier = Modifier,
     showDivider: Boolean = false
 ) {
-    val syncOn = state.switch == KompaktSyncSwitch.On
     KompaktListCell(
         title = title,
-        subtitle =
-            if (syncOn) statusText(state.status)
-            else stringResource(RFrontitude.string.calendar_accountsync_status_syncisoff),
+        // Only a switch known to be off reports "off". A resolving one reports the pending status
+        // instead: claiming off would be a wrong answer rather than an unfinished one, and taking it
+        // back once the stored value arrives is a repaint that reads as a flip.
+        subtitle = when (state.switch) {
+            KompaktSyncSwitch.Resolving -> statusText(KompaktSyncStatus.Resolving)
+            KompaktSyncSwitch.On -> statusText(state.status)
+            KompaktSyncSwitch.Off, KompaktSyncSwitch.ConsentMissing ->
+                stringResource(RFrontitude.string.calendar_accountsync_status_syncisoff)
+        },
         modifier = modifier,
         leading = {
-            if (syncOn)
-                StatusIcon(status = state.status, onFailureClick = onFailureClick)
-            else
-                Icon(
-                    painter = painterResource(R.drawable.ic_kompakt_sync_off),
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp)
-                )
+            when (state.switch) {
+                KompaktSyncSwitch.Resolving ->
+                    StatusIcon(status = KompaktSyncStatus.Resolving, onFailureClick = onFailureClick)
+
+                KompaktSyncSwitch.On ->
+                    StatusIcon(status = state.status, onFailureClick = onFailureClick)
+
+                KompaktSyncSwitch.Off, KompaktSyncSwitch.ConsentMissing ->
+                    Icon(
+                        painter = painterResource(R.drawable.ic_kompakt_sync_off),
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp)
+                    )
+            }
         },
         trailing = {
-            SwitchMMD(checked = syncOn, onCheckedChange = onCheckedChange)
+            SwitchMMD(
+                checked = state.switch == KompaktSyncSwitch.On,
+                // Not SwitchMMD's `enabled`, which also greys the control: while resolving it should
+                // look normal and simply not act.
+                onCheckedChange = {
+                    if (state.switch != KompaktSyncSwitch.Resolving) onCheckedChange(it)
+                }
+            )
         },
         showDivider = showDivider
     )
@@ -137,7 +155,7 @@ private fun KompaktServiceSyncCell_ConsentMissing_Preview() {
 private fun KompaktServiceSyncCell_Resolving_Preview() {
     KompaktServiceSyncCell(
         "Calendar",
-        cellPreviewState(KompaktSyncSwitch.On, KompaktSyncStatus.Resolving),
+        cellPreviewState(KompaktSyncSwitch.Resolving, KompaktSyncStatus.Resolving),
         {}, {}
     )
 }

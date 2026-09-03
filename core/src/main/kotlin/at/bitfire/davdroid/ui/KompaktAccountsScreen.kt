@@ -58,14 +58,14 @@ import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
  */
 @Composable
 fun KompaktAccountsScreen(
-    initialSyncAccounts: Boolean,
     initialReauth: Boolean = false,
     onBack: () -> Unit,
     onboarding: Boolean = false,
     onSkip: () -> Unit = onBack,
     model: AccountsViewModel = hiltViewModel(
+        // Never true: upstream's init syncs every authority, ignoring the per-service toggles.
         creationCallback = { factory: AccountsViewModel.Factory ->
-            factory.create(initialSyncAccounts)
+            factory.create(false)
         }
     )
 ) {

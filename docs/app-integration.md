@@ -100,6 +100,11 @@ The request is **throttled**: a sync is only enqueued if the last successful syn
 **15 minutes** ago (or no successful sync has ever happened). If a successful sync completed less than 15
 minutes ago, the broadcast is a **no‑op**.
 
+Synchronization is requested **per service**. Each of Calendar and Contacts is enqueued only when the
+user has that service's sync toggle switched on, has granted its Google permission, and that service is
+configured. A service failing any of those is skipped — so a request may now enqueue **nothing at all**,
+even for a linked and otherwise healthy account.
+
 ### Contract
 
 - **Action:** `at.bitfire.davdroid.mudita.action.REQUEST_SYNC`
@@ -119,6 +124,9 @@ minutes ago, the broadcast is a **no‑op**.
 5. An account must be linked. With no linked account the broadcast is a no‑op.
 6. Normal sync conditions still apply afterwards (e.g. connectivity) — the broadcast only *enqueues* a
    manual sync; it does not bypass the lack of a network.
+7. **At least one service must be eligible.** A service is skipped when its sync toggle is off, when the
+   account has not granted that service's Google permission, or when the service is not configured. If
+   no service qualifies, the broadcast is a no‑op and nothing is enqueued.
 
 ### Caller — manifest
 
@@ -136,11 +144,11 @@ context.sendBroadcast(intent)
 
 ### What happens
 
-If at least 15 minutes have passed since the last successful sync,
-`KompaktSyncRequestReceiver` (in DAVx⁵ Mudita) enqueues a one‑time manual sync for every linked
-account via `SyncWorkerManager.enqueueOneTimeAllAuthorities(account, manual = true)` — the same path used
-by the in‑app "Synchronize now" button and the sync widget. The "Last synchronization" timestamp updates
-on successful completion (and is left unchanged on failure).
+If at least 15 minutes have passed since the last successful sync, `KompaktSyncRequestReceiver` (in
+DAVx⁵ Mudita) enqueues a one‑time manual sync for every linked account — but **only for the services
+that qualify** (see condition 7 above), so it may enqueue for one service, both, or neither. This is the
+same path used by the in‑app "Synchronize now" button. The "Last synchronization" timestamp updates on
+successful completion (and is left unchanged on failure).
 
 A **successful** manual sync (this broadcast or the in‑app button) also **pushes the next automatic
 (periodic) sync back by a full interval, counting from now** — so triggering a manual sync resets the

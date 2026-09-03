@@ -41,6 +41,9 @@ class DavSyncStatsRepository @Inject constructor(
     suspend fun getLastSyncTime(): Long? =
         dao.getLastSyncTime()
 
+    fun lastSyncFlow(serviceId: Long, dataType: SyncDataType): Flow<Long?> =
+        dao.lastSyncFlow(serviceId, dataType.name)
+
     suspend fun logSyncTime(collectionId: Long, dataType: SyncDataType, lastSync: Long = System.currentTimeMillis()) {
         dao.insertOrReplace(SyncStats(
             id = 0,
