@@ -255,13 +255,9 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         // modal, so we do NOT enqueue a sync here.
         for (service in KompaktSyncService.entries)
             viewModelScope.launch(ioDispatcher) {
-                if (initDefaults.appliedVersion(account, service) >= KompaktInitDefaults.DEFAULTS_VERSION)
-                    return@launch
                 serviceRepository.getServiceFlow(account.name, service.serviceType)
                     .filterNotNull()
                     .collectLatest { serviceRow ->
-                        if (initDefaults.appliedVersion(account, service) >= KompaktInitDefaults.DEFAULTS_VERSION)
-                            return@collectLatest
                         val outcome = initDefaults.maybeApply(account, service, serviceRow.id)
                         if (outcome == KompaktInitDefaults.Outcome.NOT_READY) {
                             RefreshCollectionsWorker
