@@ -107,6 +107,8 @@ class KompaktInitDefaultsTest {
 
     @Test
     fun theMarkerIsWrittenForTheServiceItRanFor() = runTest {
+        coEvery { collectionRepository.getByService(SERVICE_ID) } returns listOf(addressBook(id = 1))
+
         initDefaults.maybeApply(account, KompaktSyncService.CONTACTS, SERVICE_ID)
 
         coVerify {
@@ -189,14 +191,52 @@ class KompaktInitDefaultsTest {
     }
 
     @Test
-    fun contactsSelectsNoCollectionYet() = runTest {
-        // Selection is what creates the local address book, and the syncer deletes local collections
-        // on a run that finds none in the database — which a 403 from a narrowed scope produces.
+    fun selectsEveryDiscoveredAddressBook() = runTest {
+        // Not a chosen one: Google exposes a single address book per account, so there is no primary
+        // to identify the way there is for calendars.
+        coEvery { collectionRepository.getByService(SERVICE_ID) } returns listOf(
+            addressBook(id = 1),
+            addressBook(id = 2, url = "https://carddav.example/principals/user%40example.com/lists/other/")
+        )
+
         val outcome = initDefaults.maybeApply(account, KompaktSyncService.CONTACTS, SERVICE_ID)
 
         assertEquals(KompaktInitDefaults.Outcome.APPLIED, outcome)
-        coVerify(exactly = 0) { collectionRepository.getByService(any()) }
+        coVerify { collectionRepository.setSync(1, true) }
+        coVerify { collectionRepository.setSync(2, true) }
+    }
+
+    @Test
+    fun leavesAnAddressBookThatIsAlreadySelected() = runTest {
+        coEvery { collectionRepository.getByService(SERVICE_ID) } returns
+            listOf(addressBook(id = 1, sync = true))
+
+        initDefaults.maybeApply(account, KompaktSyncService.CONTACTS, SERVICE_ID)
+
         coVerify(exactly = 0) { collectionRepository.setSync(any(), any()) }
+    }
+
+    @Test
+    fun ignoresCollectionsThatAreNotAddressBooks() = runTest {
+        coEvery { collectionRepository.getByService(SERVICE_ID) } returns listOf(
+            calendar(id = 9, url = "https://caldav.example/user%40example.com/events/")
+        )
+
+        val outcome = initDefaults.maybeApply(account, KompaktSyncService.CONTACTS, SERVICE_ID)
+
+        assertEquals(KompaktInitDefaults.Outcome.NOT_READY, outcome)
+        coVerify(exactly = 0) { collectionRepository.setSync(any(), any()) }
+    }
+
+    @Test
+    fun notReadyBeforeDiscoveryHasFoundAnyAddressBook() = runTest {
+        // Reporting applied here would stamp the marker and store the interval for a selection that
+        // never happened, arming the periodic worker and losing the caller's retry after discovery.
+        val outcome = initDefaults.maybeApply(account, KompaktSyncService.CONTACTS, SERVICE_ID)
+
+        assertEquals(KompaktInitDefaults.Outcome.NOT_READY, outcome)
+        coVerify(exactly = 0) { accountSettings.setDefaultsApplied(any(), any(), any()) }
+        coVerify(exactly = 0) { accountSettings.setSyncInterval(any(), any(), any()) }
     }
 
 
@@ -204,6 +244,8 @@ class KompaktInitDefaultsTest {
 
     @Test
     fun writesTheKompaktIntervalForTheServiceWhenNothingIsStored() = runTest {
+        coEvery { collectionRepository.getByService(SERVICE_ID) } returns listOf(addressBook(id = 1))
+
         initDefaults.maybeApply(account, KompaktSyncService.CONTACTS, SERVICE_ID)
 
         coVerify {
@@ -222,6 +264,7 @@ class KompaktInitDefaultsTest {
         every {
             accountSettings.getSyncInterval(account, SyncDataType.CONTACTS)
         } returns AccountSettings.SYNC_INTERVAL_MANUALLY
+        coEvery { collectionRepository.getByService(SERVICE_ID) } returns listOf(addressBook(id = 1))
 
         val outcome = initDefaults.maybeApply(account, KompaktSyncService.CONTACTS, SERVICE_ID)
 
@@ -237,6 +280,7 @@ class KompaktInitDefaultsTest {
         coEvery {
             accountSettings.setSyncInterval(any(), any(), any())
         } throws IllegalStateException("account gone")
+        coEvery { collectionRepository.getByService(SERVICE_ID) } returns listOf(addressBook(id = 1))
 
         val outcome = initDefaults.maybeApply(account, KompaktSyncService.CONTACTS, SERVICE_ID)
 
@@ -324,32 +368,6 @@ class KompaktInitDefaultsTest {
     }
 
 
-    // applyContactsSyncInterval
-
-    @Test
-    fun replacesTheUpstreamFallbackIntervalForContacts() = runTest {
-        // Creating the CardDAV service makes upstream fall back to its four-hour default; the Kompakt
-        // interval has to replace it before that periodic worker outlives setup.
-        initDefaults.applyContactsSyncInterval(account)
-
-        coVerify {
-            accountSettings.setSyncInterval(
-                account,
-                SyncDataType.CONTACTS,
-                KompaktInitDefaults.AUTO_SYNC_INTERVAL_SECONDS
-            )
-        }
-    }
-
-    @Test
-    fun aContactsIntervalThatCannotBeWrittenIsNotFatal() = runTest {
-        coEvery { accountSettings.setSyncInterval(any(), any(), any()) } throws
-            IllegalStateException("account gone")
-
-        initDefaults.applyContactsSyncInterval(account)
-    }
-
-
     // findPrimaryCalendarId
 
     @Test
@@ -391,6 +409,18 @@ class KompaktInitDefaultsTest {
         type = Collection.TYPE_CALENDAR,
         url = url.toHttpUrl(),
         displayName = displayName,
+        sync = sync
+    )
+
+    private fun addressBook(
+        id: Long,
+        url: String = "https://carddav.example/principals/user%40example.com/lists/default/",
+        sync: Boolean = false
+    ) = Collection(
+        id = id,
+        serviceId = SERVICE_ID,
+        type = Collection.TYPE_ADDRESSBOOK,
+        url = url.toHttpUrl(),
         sync = sync
     )
 
