@@ -147,6 +147,11 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
      */
     private val _showOutOfStorage = MutableStateFlow(KompaktStorage.isStorageLow(context))
 
+    // In-memory mirror of the persisted flag, updated the moment the dialog is dismissed. Dismissing it
+    // doesn't move either switch, so the combine below would never see it change — and without this the
+    // dialog could reappear after being dismissed, within the same session.
+    private val _newContactsConsentShown = MutableStateFlow(readNewContactsConsentShown())
+
     // needsReauth (persistent, account-global; KEY_NEEDS_REAUTH) is written only by the sync worker
     // (HTTP 401 / clean sync) and the re-auth flow, both through KompaktAccountSettings — so this
     // follows the key, including for background and periodic syncs.
@@ -197,14 +202,16 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         serviceStates.getValue(KompaktSyncService.CALENDAR),
         serviceStates.getValue(KompaktSyncService.CONTACTS),
         dialog,
-        _reauthPhase
-    ) { calendar, contacts, dialog, phase ->
+        _reauthPhase,
+        _newContactsConsentShown
+    ) { calendar, contacts, dialog, phase, consentShown ->
         KompaktLinkedAccountState(
             email = email,
             calendar = calendar,
             contacts = contacts,
             dialog = dialog,
-            reauthPhase = phase
+            reauthPhase = phase,
+            showNewContactsConsent = newContactsConsentVisible(calendar.switch, contacts.switch, consentShown)
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialState())
 
@@ -276,6 +283,18 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     /** Re-check live free storage (call on screen entry / resume). */
     fun refreshStorageState() {
         _showOutOfStorage.value = KompaktStorage.isStorageLow(context)
+    }
+
+    /** Marks the one-time new-Contacts-consent dialog as shown so it never appears again for this account. */
+    fun newContactsConsentShown() {
+        _newContactsConsentShown.value = true
+        viewModelScope.launch(ioDispatcher) {
+            try {
+                kompaktAccountSettings.setNewContactsConsentShown(account)
+            } catch (e: Exception) {
+                logger.log(Level.WARNING, "Couldn't mark the new Contacts consent shown for $account", e)
+            }
+        }
     }
 
     fun onReauthLaunchStarted() {
@@ -393,6 +412,13 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         } catch (e: Exception) {
             logger.log(Level.WARNING, "Couldn't read the sync switch for $account", e)
             KompaktSyncSwitch.Off
+        }
+
+    private fun readNewContactsConsentShown(): Boolean =
+        try {
+            kompaktAccountSettings.getNewContactsConsentShown(account)
+        } catch (_: Exception) {
+            true    // fail closed: never nag on a read error
         }
 
     private fun readNeedsReauth(): Boolean =

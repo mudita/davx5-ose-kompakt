@@ -59,6 +59,15 @@ interface KompaktAccountSettings {
     fun getLegacyDefaultsAppliedVersion(account: Account): Int?
 
     /**
+     * Whether this account has been offered Contacts consent — either because the dialog was shown
+     * and answered, or because the account never needed it. Linking sets it up front, so only an
+     * account linked before Contacts sync could be granted at all ever reads false.
+     */
+    fun getNewContactsConsentShown(account: Account): Boolean
+
+    suspend fun setNewContactsConsentShown(account: Account)
+
+    /**
      * The stored sync interval in seconds, or `null` when nothing is stored.
      *
      * Deliberately unlike [AccountSettings.getSyncInterval], which substitutes a four-hour default for
@@ -97,6 +106,8 @@ class KompaktAccountSettingsImpl @Inject constructor(
     companion object {
         const val KEY_DEFAULTS_APPLIED = "kompakt_defaults_applied"
 
+        const val KEY_NEW_CONTACTS_CONSENT_SHOWN = "kompakt_new_contacts_consent_shown"
+
         private const val FLAG_SET = "1"
     }
 
@@ -132,6 +143,12 @@ class KompaktAccountSettingsImpl @Inject constructor(
 
     override fun getLegacyDefaultsAppliedVersion(account: Account) =
         get(account, KEY_DEFAULTS_APPLIED)?.toIntOrNull()
+
+    override fun getNewContactsConsentShown(account: Account) =
+        get(account, KEY_NEW_CONTACTS_CONSENT_SHOWN) == FLAG_SET
+
+    override suspend fun setNewContactsConsentShown(account: Account) =
+        putRaw(account, KEY_NEW_CONTACTS_CONSENT_SHOWN, FLAG_SET)
 
     private fun defaultsAppliedKey(service: KompaktSyncService) =
         "${KEY_DEFAULTS_APPLIED}_${service.name.lowercase()}"

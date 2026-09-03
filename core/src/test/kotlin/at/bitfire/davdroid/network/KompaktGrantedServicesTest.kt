@@ -70,7 +70,10 @@ class KompaktGrantedServicesTest {
     @Test
     fun `fromAuthState resolves granted services across a real AuthState JSON round trip`() {
         // pass a customClientId so the request does not depend on the app's signing certificate
-        val request = oAuthGoogle.signIn(email = null, customClientId = "test.apps.googleusercontent.com")
+        val request = oAuthGoogle.signIn(
+            email = null,
+            customClientId = "test.apps.googleusercontent.com"
+        )
         val response = AuthorizationResponse.Builder(request)
             .setScopes(KompaktOAuthGoogle.SCOPE_CALENDAR, KompaktOAuthGoogle.SCOPE_CONTACTS)
             .build()

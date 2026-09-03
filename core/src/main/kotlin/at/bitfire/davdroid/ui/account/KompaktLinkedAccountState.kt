@@ -11,7 +11,8 @@ data class KompaktLinkedAccountState(
     val calendar: KompaktServiceSyncState,
     val contacts: KompaktServiceSyncState,
     val dialog: KompaktLinkedAccountDialog? = null,
-    val reauthPhase: ReauthPhase = ReauthPhase.SHOW_CONTENT
+    val reauthPhase: ReauthPhase = ReauthPhase.SHOW_CONTENT,
+    val showNewContactsConsent: Boolean = false
 ) {
 
     val isLoading: Boolean
@@ -20,6 +21,19 @@ data class KompaktLinkedAccountState(
 }
 
 enum class KompaktLinkedAccountDialog { AuthError, OutOfStorage, NoInternet, SyncFailed }
+
+// Deliberately one-directional: a missing Calendar consent can only come from a partial grant at link
+// time, where the user already saw the choice. [alreadyShown] is what separates such an account from one
+// linked before Contacts sync could be granted at all — linking sets it up front.
+internal fun newContactsConsentVisible(
+    calendar: KompaktSyncSwitch,
+    contacts: KompaktSyncSwitch,
+    alreadyShown: Boolean
+): Boolean =
+    calendar != KompaktSyncSwitch.Resolving &&
+        calendar != KompaktSyncSwitch.ConsentMissing &&
+        contacts == KompaktSyncSwitch.ConsentMissing &&
+        !alreadyShown
 
 internal fun linkedAccountDialog(
     authError: Boolean,

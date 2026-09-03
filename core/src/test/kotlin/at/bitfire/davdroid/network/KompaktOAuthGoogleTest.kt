@@ -33,7 +33,10 @@ class KompaktOAuthGoogleTest {
     @Test
     fun `signIn request uses PKCE with S256`() {
         // pass a customClientId so the request does not depend on the app's signing certificate
-        val request = oAuthGoogle.signIn(email = null, customClientId = "test.apps.googleusercontent.com")
+        val request = oAuthGoogle.signIn(
+            email = null,
+            customClientId = "test.apps.googleusercontent.com"
+        )
 
         assertNotNull("code_verifier must be set (PKCE)", request.codeVerifier)
         assertNotNull("code_challenge must be set (PKCE)", request.codeVerifierChallenge)
@@ -41,19 +44,26 @@ class KompaktOAuthGoogleTest {
     }
 
     @Test
-    fun `signIn request asks for the Calendar and Contacts scopes`() {
-        // pass a customClientId so the request does not depend on the app's signing certificate
-        val request = oAuthGoogle.signIn(email = null, customClientId = "test.apps.googleusercontent.com")
+    fun `every request asks for both data scopes and the sign-in scopes`() {
+        // Asserted against literals, not the constants the set is built from — comparing it to
+        // SCOPE_CONTACTS would still pass if Contacts were dropped, silently taking Contacts sync out
+        // of every link. Equality also pins that nothing else creeps into the request.
+        val request = oAuthGoogle.signIn(
+            email = null,
+            customClientId = "test.apps.googleusercontent.com"
+        )
 
         assertEquals(
             setOf(
-                KompaktOAuthGoogle.SCOPE_CALENDAR,
-                KompaktOAuthGoogle.SCOPE_CONTACTS,
+                "https://www.googleapis.com/auth/calendar",
+                "https://www.googleapis.com/auth/carddav",
                 "openid",
                 "email"
             ),
             request.scopeSet
         )
     }
+
+
 
 }

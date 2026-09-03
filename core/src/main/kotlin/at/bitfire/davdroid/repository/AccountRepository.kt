@@ -123,6 +123,27 @@ class AccountRepository @Inject constructor(
         return account
     }
 
+    /**
+     * Adds one service to an account that **already exists** — the counterpart to [createBlocking],
+     * which only creates a brand-new account. Used to grant a Calendar or Contacts consent the account
+     * didn't have at link time.
+     *
+     * The caller is responsible for confirming no [Service] row of this [type] already exists first
+     * (e.g. via [DavServiceRepository.getByAccountAndType]) — like the `insertOrReplace` it's built on,
+     * a second call for a type that already has a row replaces it, which is never the intended use here.
+     */
+    @WorkerThread
+    fun addServiceBlocking(accountName: String, @ServiceType type: String, info: DavResourceFinder.Configuration.ServiceInfo): Long {
+        val id = insertService(accountName, type, info)
+
+        if (type == Service.TYPE_CARDDAV)
+            accountSettingsFactory.create(fromName(accountName)).setGroupMethod(GroupMethod.GROUP_VCARDS)
+
+        RefreshCollectionsWorker.enqueue(context, id)
+
+        return id
+    }
+
     suspend fun delete(accountName: String): Boolean = withContext(defaultDispatcher) {
         val account = fromName(accountName)
         // remove account directly (bypassing the authenticator, which is our own)

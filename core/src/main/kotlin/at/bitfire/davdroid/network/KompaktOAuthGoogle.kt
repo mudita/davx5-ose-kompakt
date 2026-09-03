@@ -35,6 +35,11 @@ class KompaktOAuthGoogle @Inject constructor(
         "https://oauth2.googleapis.com/token".toUri()
     )
 
+    /**
+     * Always asks for every scope. Asking only for a missing one would be pointless: Google's consent
+     * screen already omits what this user has granted before, so a request for both shows just the one
+     * that's new (verified on a Kompakt).
+     */
     fun signIn(email: String?, customClientId: String?): AuthorizationRequest {
         logger.info("Google OAuth signing-key index: ${KompaktGoogleOAuthClients.clientIndex(context)}")
         return AuthorizationRequest.Builder(
@@ -51,5 +56,18 @@ class KompaktOAuthGoogle @Inject constructor(
     companion object {
         const val SCOPE_CALENDAR = "https://www.googleapis.com/auth/calendar"
         const val SCOPE_CONTACTS = "https://www.googleapis.com/auth/carddav"
+
+        /** Extracts the `email` claim from an OIDC ID token's JWT payload, or `null` if absent/unparseable. */
+        fun parseEmailFromIdToken(idToken: String): String? = try {
+            val payloadBase64 = idToken.split(".").getOrNull(1) ?: return null
+            val payloadBytes = android.util.Base64.decode(
+                payloadBase64,
+                android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+            )
+            val payloadJson = org.json.JSONObject(String(payloadBytes, Charsets.UTF_8))
+            payloadJson.optString("email").takeIf { it.isNotBlank() }
+        } catch (_: Exception) {
+            null
+        }
     }
 }
