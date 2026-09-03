@@ -336,7 +336,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }
 
     fun unlink() {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             accountRepository.delete(account.name)
         }
     }
