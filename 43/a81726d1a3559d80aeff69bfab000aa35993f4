@@ -1,0 +1,24 @@
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktInitDefaultsContactsTest.kt
+  7f302b002c9588d2 1-148
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "43a81726d1a3559d80aeff69bfab000aa35993f4",
+  "prompts": {
+    "7f302b002c9588d2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "41db6e58-8651-4467-82e1-74f159725ecb",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 296,
+      "total_deletions": 0,
+      "accepted_lines": 638,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/ecafae728a2ea621caddfeb0eed5461a5a32a950131af7af19ad68a353e1d34c"
+    }
+  }
+}
