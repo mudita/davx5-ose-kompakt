@@ -1,0 +1,26 @@
+CLAUDE.md
+  7f302b002c9588d2 306-314
+docs/superpowers/specs/2026-09-02-per-service-sync-toggle-design.md
+  7f302b002c9588d2 659-660,708-742,883-887
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "6f7273b66f97fd2bdd009e79040fa5c979c0b0fe",
+  "prompts": {
+    "7f302b002c9588d2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "41db6e58-8651-4467-82e1-74f159725ecb",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 51,
+      "total_deletions": 12,
+      "accepted_lines": 51,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/367dd92e0eebf26eacd1f8c90b88015779f58635f5ef7dce47a47562ee7de45f"
+    }
+  }
+}
