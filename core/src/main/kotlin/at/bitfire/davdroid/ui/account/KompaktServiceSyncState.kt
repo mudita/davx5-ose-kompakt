@@ -11,8 +11,8 @@ internal sealed interface Reported<out T> {
     data class Value<out T>(val value: T) : Reported<T>
 }
 
-// Resolving is the position before the stored settings have been read. It renders like Off and
-// ignores input, so a tap cannot act on a value the screen does not have yet.
+// Resolving is the position before the stored settings have been read. The screen withholds the row
+// until it settles, so a tap cannot act on a value it does not have yet.
 enum class KompaktSyncSwitch { Resolving, On, Off, ConsentMissing }
 
 sealed interface KompaktSyncStatus {

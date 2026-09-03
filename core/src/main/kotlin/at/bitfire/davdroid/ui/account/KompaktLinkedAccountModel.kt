@@ -334,12 +334,11 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     // state sources, one question each
 
     // Starts at Resolving rather than reading the stored settings synchronously: that read parses the
-    // saved authorization, which is not work for the main thread. The cell renders Resolving like Off
-    // and ignores input until the real position arrives.
-    private fun switchOf(service: KompaktSyncService): StateFlow<KompaktSyncSwitch> =
+    // saved authorization, which is not work for the main thread.
+    private fun switchOf(service: KompaktSyncService): Flow<KompaktSyncSwitch> =
         switches.observe(account, service)
             .flowOn(ioDispatcher)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), KompaktSyncSwitch.Resolving)
+            .onStart { emit(KompaktSyncSwitch.Resolving) }
 
     // Reported at the source: the first query is asynchronous, so "not yet known" must stay
     // distinguishable from "not syncing", and combine needs every input to carry a first value.
