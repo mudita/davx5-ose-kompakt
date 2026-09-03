@@ -261,6 +261,8 @@ fun KompaktLinkedAccountContent(
     serviceToDisable?.let { service ->
         KompaktModalSheet(
             onDismissRequest = { serviceToDisable = null },
+            // TODO Contacts reuses the calendar title, which names the wrong service. Needs a
+            //  contacts or service-neutral key from Frontitude (SHP-1156).
             title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_disablecalendarsync),
             text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_nothingwillsynchronizewithyour),
             icon = painterResource(R.drawable.ic_kompakt_alert),
