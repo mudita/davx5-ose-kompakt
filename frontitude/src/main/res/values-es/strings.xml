@@ -7,6 +7,7 @@
   <string name="calendar_accountsync_dialog_button_syncnow">Sincronizar ahora</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Cuenta vinculada</string>
   <string name="calendar_accountsync_dialog_h1_disablecalendarsync">¿Desactivar la sincronización del calendario\?</string>
+  <string name="calendar_accountsync_dialog_h1_disablecontactsync">¿Desactivar la sincronización de contactos\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Vincular una cuenta de Google</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">¿Eliminar cuenta\?</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagaintocontinue">Vincula tu cuenta nuevamente para continuar sincronizando con Google Calendar</string>

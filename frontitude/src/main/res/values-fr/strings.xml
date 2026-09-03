@@ -7,6 +7,7 @@
   <string name="calendar_accountsync_dialog_button_syncnow">Synchroniser maintenant</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Compte lié</string>
   <string name="calendar_accountsync_dialog_h1_disablecalendarsync">Désactiver la synchronisation du calendrier \?</string>
+  <string name="calendar_accountsync_dialog_h1_disablecontactsync">Désactiver la synchronisation des contacts \?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Lier un compte Google</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Supprimer le compte \?</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagaintocontinue">Reliez votre compte à nouveau pour continuer à synchroniser avec l\'agenda Google</string>
