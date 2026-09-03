@@ -34,7 +34,7 @@ fun KompaktServiceSyncCell(
         title = title,
         subtitle =
             if (syncOn) statusText(state.status)
-            else stringResource(R.string.kompakt_status_sync_off),
+            else stringResource(RFrontitude.string.calendar_accountsync_status_syncisoff),
         modifier = modifier,
         leading = {
             if (syncOn)
@@ -60,14 +60,14 @@ private fun statusText(status: KompaktSyncStatus): String = when (status) {
     KompaktSyncStatus.NeverSynced ->
         stringResource(RFrontitude.string.calendar_accountsync_status_notsyncedyet)
 
-    KompaktSyncStatus.Syncing -> stringResource(R.string.kompakt_status_syncing_now)
+    KompaktSyncStatus.Syncing -> stringResource(RFrontitude.string.common_status_synchronizing)
 
     is KompaktSyncStatus.Synced ->
-        stringResource(R.string.kompakt_status_last_sync, status.lastSync)
+        stringResource(RFrontitude.string.calendar_accountsync_status_lastsync, status.lastSync)
 
     is KompaktSyncStatus.Failed ->
         status.lastSync
-            ?.let { stringResource(R.string.kompakt_status_last_sync, it) }
+            ?.let { stringResource(RFrontitude.string.calendar_accountsync_status_lastsync, it) }
             ?: stringResource(RFrontitude.string.calendar_accountsync_status_notsyncedyet)
 }
 

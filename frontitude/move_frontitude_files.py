@@ -1,8 +1,21 @@
+import io
 import os
 import shutil
 import re
 
+from keys_to_filter import filter_keys
+
 base_dir = os.path.join(".", "src", "main", "res", "values")
+
+
+def filter_files_with_keys(directory, phrases):
+    """Drop every line of every pulled file that matches none of `phrases`."""
+    for filename in os.listdir(directory):
+        path = os.path.join(directory, filename)
+        with io.open(path, "r", encoding="utf-8") as infile:
+            kept = [line for line in infile if any(p in line for p in phrases)]
+        with io.open(path, "w", encoding="utf-8") as outfile:
+            outfile.writelines(kept)
 
 
 def ensure_dir(directory):
@@ -26,6 +39,8 @@ def move_file(file_suffix):
     if os.path.exists(src_path):
         shutil.move(src_path, dest_path)
 
+
+filter_files_with_keys(base_dir, filter_keys)
 
 suffixes = [""]
 for filename in os.listdir(base_dir):

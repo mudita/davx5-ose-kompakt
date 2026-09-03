@@ -178,7 +178,7 @@ fun KompaktLinkedAccountContent(
                         IconButton(onClick = { showUnlinkDialog = true }) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_kompakt_logout),
-                                contentDescription = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_unlinkaccount)
+                                contentDescription = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_removeaccount)
                             )
                         }
                     }
@@ -198,7 +198,7 @@ fun KompaktLinkedAccountContent(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         TextMMD(
-                            text = stringResource(R.string.kompakt_button_synchronize),
+                            text = stringResource(RFrontitude.string.common_button_synchronize),
                             style = KompaktTypography900.labelMedium
                         )
                     }
@@ -225,7 +225,7 @@ fun KompaktLinkedAccountContent(
                 )
 
                 KompaktServiceSyncCell(
-                    title = stringResource(R.string.kompakt_label_contacts),
+                    title = stringResource(RFrontitude.string.common_label_contacts),
                     state = state.contacts,
                     onCheckedChange = { /* SHP-1151 */ },
                     onFailureClick = actions.onFailureClick
@@ -237,10 +237,10 @@ fun KompaktLinkedAccountContent(
     if (showUnlinkDialog) {
         KompaktModalSheet(
             onDismissRequest = { showUnlinkDialog = false },
-            title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_unlinkaccount),
-            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_youwontseecalendarevents),
+            title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_removeaccount),
+            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_youwontseedatafromyourgoogle),
             icon = painterResource(R.drawable.ic_kompakt_alert),
-            confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_unlink),
+            confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_button_removeaccount),
             onConfirm = {
                 showUnlinkDialog = false
                 actions.onUnlink()
@@ -253,8 +253,8 @@ fun KompaktLinkedAccountContent(
     if (showDisableCalendarDialog) {
         KompaktModalSheet(
             onDismissRequest = { showDisableCalendarDialog = false },
-            title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_disableautosync),
-            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_nothingwillsyncronizewith),
+            title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_disablecalendarsync),
+            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_nothingwillsynchronizewithyour),
             icon = painterResource(R.drawable.ic_kompakt_alert),
             confirmLabel = stringResource(RFrontitude.string.common_button_disable),
             onConfirm = {
@@ -270,7 +270,7 @@ fun KompaktLinkedAccountContent(
         KompaktModalSheet(
             onDismissRequest = actions.onAccountLinkedDialogDismiss,
             title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_accountlinked),
-            text = "Synchronize now to import your selected Google data", //TODO fronti
+            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_synchronizenowtoimportyourselected),
             icon = painterResource(R.drawable.ic_kompakt_success),
             confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_syncnow),
             onConfirm = {
