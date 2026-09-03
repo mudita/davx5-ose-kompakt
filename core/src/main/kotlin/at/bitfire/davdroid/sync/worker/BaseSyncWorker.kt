@@ -5,7 +5,6 @@
 package at.bitfire.davdroid.sync.worker
 
 import android.accounts.Account
-import android.accounts.AccountManager
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
@@ -19,7 +18,7 @@ import androidx.work.WorkerParameters
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.push.PushNotificationManager
 import at.bitfire.davdroid.settings.AccountSettings
-import at.bitfire.davdroid.ui.KompaktAuthStateBroadcaster
+import at.bitfire.davdroid.settings.KompaktAccountSettings
 import at.bitfire.davdroid.sync.AddressBookSyncer
 import at.bitfire.davdroid.sync.AutomaticSyncManager
 import at.bitfire.davdroid.sync.CalendarSyncer
@@ -49,6 +48,9 @@ abstract class BaseSyncWorker(
     context: Context,
     private val workerParams: WorkerParameters
 ) : CoroutineWorker(context, workerParams) {
+
+    @Inject
+    lateinit var kompaktAccountSettings: KompaktAccountSettings
 
     @Inject
     lateinit var accountSettingsFactory: AccountSettings.Factory
@@ -200,26 +202,13 @@ abstract class BaseSyncWorker(
         // Kompakt: persist (across process restarts) whether the account's OAuth token needs
         // re-authorization, so the linked-account screen can show the re-auth dialog immediately on
         // app entry — even when the failing sync was a background/periodic one (whose WorkInfo output
-        // isn't retained). Set on HTTP 401, cleared on a clean sync.
-        if (dataType == SyncDataType.EVENTS) {
-            val accountManager = AccountManager.get(applicationContext)
-            val wasNeedingReauth = accountManager.getUserData(account, AccountSettings.KEY_NEEDS_REAUTH) == "1"
-            val nowNeedingReauth = when {
-                syncResult.numAuthExceptions > 0 -> {
-                    accountManager.setUserData(account, AccountSettings.KEY_NEEDS_REAUTH, "1")
-                    true
-                }
-                !syncResult.hasError() -> {
-                    accountManager.setUserData(account, AccountSettings.KEY_NEEDS_REAUTH, null)
-                    false
-                }
-                else -> wasNeedingReauth
+        // isn't retained). Set on HTTP 401, cleared on a clean sync. KompaktAuthStateReplicator
+        // publishes each change to other (same-signed) apps; see docs/app-integration.md.
+        if (dataType == SyncDataType.EVENTS)
+            when {
+                syncResult.numAuthExceptions > 0 -> kompaktAccountSettings.setReauthNeeded(account, true)
+                !syncResult.hasError() -> kompaktAccountSettings.setReauthNeeded(account, false)
             }
-            // Kompakt: on a state transition, notify other (same-signed) apps so they can react
-            // (e.g. prompt re-login). See KompaktAuthState / docs/app-integration.md.
-            if (nowNeedingReauth != wasNeedingReauth)
-                KompaktAuthStateBroadcaster.notifyAuthStateChanged(applicationContext, account, nowNeedingReauth)
-        }
 
         // convert SyncResult from Syncers to worker Data
         val output = Data.Builder()
