@@ -15,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.ui.composable.KompaktTheme
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -26,12 +27,12 @@ import java.util.logging.Logger
 @Composable
 fun KompaktAddConsentScreen(
     account: Account,
-    serviceType: String,
+    service: KompaktSyncService,
     onNavUp: () -> Unit,
     onFinish: () -> Unit,
     model: KompaktAddConsentModel = hiltViewModel(
         creationCallback = { factory: KompaktAddConsentModel.Factory ->
-            factory.create(account, serviceType)
+            factory.create(account, service)
         }
     )
 ) {

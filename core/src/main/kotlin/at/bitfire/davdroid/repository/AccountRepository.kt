@@ -21,6 +21,7 @@ import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
 import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.settings.Credentials
 import at.bitfire.davdroid.sync.AutomaticSyncManager
+import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.sync.SyncDataType
 import at.bitfire.davdroid.sync.TasksAppManager
 import at.bitfire.davdroid.sync.account.AccountsCleanupWorker
@@ -128,15 +129,16 @@ class AccountRepository @Inject constructor(
      * which only creates a brand-new account. Used to grant a Calendar or Contacts consent the account
      * didn't have at link time.
      *
-     * The caller is responsible for confirming no [Service] row of this [type] already exists first
-     * (e.g. via [DavServiceRepository.getByAccountAndType]) — like the `insertOrReplace` it's built on,
-     * a second call for a type that already has a row replaces it, which is never the intended use here.
+     * The caller is responsible for confirming no [Service] row of this [service]'s type already exists
+     * first (e.g. via [DavServiceRepository.getByAccountAndType]) — like the `insertOrReplace` it's built
+     * on, a second call for a type that already has a row replaces it, which is never the intended use
+     * here.
      */
     @WorkerThread
-    fun addServiceBlocking(accountName: String, @ServiceType type: String, info: DavResourceFinder.Configuration.ServiceInfo): Long {
-        val id = insertService(accountName, type, info)
+    fun addServiceBlocking(accountName: String, service: KompaktSyncService, info: DavResourceFinder.Configuration.ServiceInfo): Long {
+        val id = insertService(accountName, service.serviceType, info)
 
-        if (type == Service.TYPE_CARDDAV)
+        if (service == KompaktSyncService.CONTACTS)
             accountSettingsFactory.create(fromName(accountName)).setGroupMethod(GroupMethod.GROUP_VCARDS)
 
         RefreshCollectionsWorker.enqueue(context, id)

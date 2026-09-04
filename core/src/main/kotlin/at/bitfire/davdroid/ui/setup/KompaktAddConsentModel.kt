@@ -9,7 +9,6 @@ import android.accounts.AccountManager
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import at.bitfire.davdroid.db.Service
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
 import at.bitfire.davdroid.network.KompaktGrantedServices
 import at.bitfire.davdroid.network.KompaktOAuthGoogle
@@ -21,7 +20,7 @@ import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.settings.Credentials
 import at.bitfire.davdroid.settings.KompaktAccountSettings
 import at.bitfire.davdroid.sync.KompaktInitDefaults
-import at.bitfire.davdroid.sync.SyncDataType
+import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.ui.KompaktAuthState
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -43,7 +42,7 @@ import java.util.logging.Logger
 
 /**
  * Drives the Kompakt "add a missing Calendar/Contacts consent" flow for an already-linked [account]:
- * requests only the [serviceType] scope the account doesn't have yet, applies it **in place** on
+ * requests only the [service] scope the account doesn't have yet, applies it **in place** on
  * success, and creates the one [at.bitfire.davdroid.db.Service] row that was missing.
  *
  * Unlike [KompaktReauthModel], a different Google account authorizing here is never a switch — see
@@ -53,7 +52,7 @@ import java.util.logging.Logger
 @HiltViewModel(assistedFactory = KompaktAddConsentModel.Factory::class)
 class KompaktAddConsentModel @AssistedInject constructor(
     @Assisted private val account: Account,
-    @Assisted private val serviceType: String,
+    @Assisted private val service: KompaktSyncService,
     @ApplicationContext private val context: Context,
     private val accountRepository: AccountRepository,
     private val authService: AuthorizationService,
@@ -69,7 +68,7 @@ class KompaktAddConsentModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(account: Account, serviceType: String): KompaktAddConsentModel
+        fun create(account: Account, service: KompaktSyncService): KompaktAddConsentModel
     }
 
     sealed interface AddConsentState {
@@ -103,15 +102,11 @@ class KompaktAddConsentModel @AssistedInject constructor(
 
     fun authorizationContract() = KompaktOAuthWebViewActivity.Contract()
 
-    fun signIn(): AuthorizationRequest {
-        require(serviceType == Service.TYPE_CALDAV || serviceType == Service.TYPE_CARDDAV) {
-            "Unsupported service type for an add-consent request: $serviceType"
-        }
-        return oAuthGoogle.signIn(
+    fun signIn(): AuthorizationRequest =
+        oAuthGoogle.signIn(
             email = account.name,
             customClientId = null
         )
-    }
 
     fun signInFailed() {
         _state.value = AddConsentState.Failed
@@ -124,14 +119,14 @@ class KompaktAddConsentModel @AssistedInject constructor(
                 val authState = oAuthIntegration.authenticate(authService, authResponse)
                 val email = authState.lastTokenResponse?.idToken?.let(KompaktOAuthGoogle::parseEmailFromIdToken)
 
-                when (classifyAddConsentResult(account.name, serviceType, readCurrentGrantedServices(), email, authState)) {
+                when (classifyAddConsentResult(account.name, service.serviceType, readCurrentGrantedServices(), email, authState)) {
                     is AddConsentOutcome.Granted -> apply(authState)
                     AddConsentOutcome.AccountMismatch -> {
                         logger.warning("Additional consent was granted for a different Google account; not applying")
                         _state.value = AddConsentState.Failed
                     }
                     AddConsentOutcome.NotGranted -> {
-                        logger.warning("Additional authorization did not grant $serviceType for $account")
+                        logger.warning("Additional authorization did not grant $service for $account")
                         _state.value = AddConsentState.Denied
                     }
                 }
@@ -150,23 +145,25 @@ class KompaktAddConsentModel @AssistedInject constructor(
         // covers re-auth changes only, and this flow doesn't touch KEY_NEEDS_REAUTH.
         context.contentResolver.notifyChange(KompaktAuthState.CONTENT_URI, null)
 
-        if (serviceRepository.getByAccountAndType(account.name, serviceType) == null) {
+        if (serviceRepository.getByAccountAndType(account.name, service.serviceType) == null) {
             val credentials = Credentials(authState = authState)
             val baseUri = oAuthGoogle.baseUri(account.name)
             val config = withContext(ioDispatcher) {
                 resourceFinderFactory.create(baseUri, credentials).findInitialConfiguration()
             }
-            val info = if (serviceType == Service.TYPE_CARDDAV) config.cardDAV else config.calDAV
+            val info = when (service) {
+                KompaktSyncService.CALENDAR -> config.calDAV
+                KompaktSyncService.CONTACTS -> config.cardDAV
+            }
             // info can be null on a transient discovery failure even though the scope was granted —
             // accepted, pre-existing risk class: consent is the source of truth, not service-row
             // existence. Nothing further to do here; the interval below still flips the toggle on,
             // matching how a first-time link already behaves.
             if (info != null)
-                accountRepository.addServiceBlocking(account.name, serviceType, info)
+                accountRepository.addServiceBlocking(account.name, service, info)
         }
 
-        val dataType = if (serviceType == Service.TYPE_CARDDAV) SyncDataType.CONTACTS else SyncDataType.EVENTS
-        initDefaults.applySyncInterval(account, dataType)
+        initDefaults.applySyncInterval(account, service.dataType)
 
         _state.value = AddConsentState.Granted
     }

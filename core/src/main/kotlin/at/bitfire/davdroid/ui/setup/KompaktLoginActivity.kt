@@ -9,6 +9,7 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import at.bitfire.davdroid.R
+import at.bitfire.davdroid.sync.KompaktSyncService
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -40,7 +41,11 @@ class KompaktLoginActivity @Inject constructor() : AppCompatActivity() {
          */
         const val EXTRA_ADD_CONSENT_ACCOUNT_NAME = "addConsentAccountName"
 
-        /** [at.bitfire.davdroid.db.Service.TYPE_CALDAV] or [at.bitfire.davdroid.db.Service.TYPE_CARDDAV] — see [EXTRA_ADD_CONSENT_ACCOUNT_NAME]. */
+        /**
+         * [at.bitfire.davdroid.db.Service.TYPE_CALDAV] or [at.bitfire.davdroid.db.Service.TYPE_CARDDAV]
+         * ([KompaktSyncService.serviceType]) — see [EXTRA_ADD_CONSENT_ACCOUNT_NAME]. Any other value is
+         * treated as absent, the same as when the extra is missing.
+         */
         const val EXTRA_ADD_CONSENT_SERVICE_TYPE = "addConsentServiceType"
     }
 
@@ -48,16 +53,17 @@ class KompaktLoginActivity @Inject constructor() : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         val addConsentAccountName = intent.getStringExtra(EXTRA_ADD_CONSENT_ACCOUNT_NAME)
-        val addConsentServiceType = intent.getStringExtra(EXTRA_ADD_CONSENT_SERVICE_TYPE)
+        val addConsentService = intent.getStringExtra(EXTRA_ADD_CONSENT_SERVICE_TYPE)
+            ?.let { serviceType -> KompaktSyncService.entries.find { it.serviceType == serviceType } }
         val reauthAccountName = intent.getStringExtra(EXTRA_REAUTH_ACCOUNT_NAME)
 
         setContent {
             when {
-                addConsentAccountName != null && addConsentServiceType != null -> {
+                addConsentAccountName != null && addConsentService != null -> {
                     val account = Account(addConsentAccountName, getString(R.string.account_type))
                     KompaktAddConsentScreen(
                         account = account,
-                        serviceType = addConsentServiceType,
+                        service = addConsentService,
                         onNavUp = { onBackPressedDispatcher.onBackPressed() },
                         onFinish = { finish() }     // RESULT_CANCELED (default) either way — the caller
                                                      // re-reads state reactively, it doesn't need a result code
