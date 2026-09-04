@@ -33,9 +33,10 @@ class KompaktLoginActivity @Inject constructor() : AppCompatActivity() {
         const val EXTRA_REAUTH_ACCOUNT_NAME = "reauthAccountName"
 
         /**
-         * If set alongside [EXTRA_ADD_CONSENT_SERVICE_TYPE], the activity requests only that missing
-         * service's consent for the named, already-linked account, instead of linking a new account or
-         * re-authorizing the whole account.
+         * If set alongside [EXTRA_ADD_CONSENT_SERVICE_TYPE], the activity applies [EXTRA_ADD_CONSENT_SERVICE_TYPE]'s
+         * missing consent to the named, already-linked account, instead of linking a new account or
+         * re-authorizing the whole account. Every scope is requested, not just the missing one — see
+         * [at.bitfire.davdroid.network.KompaktOAuthGoogle.signIn].
          */
         const val EXTRA_ADD_CONSENT_ACCOUNT_NAME = "addConsentAccountName"
 

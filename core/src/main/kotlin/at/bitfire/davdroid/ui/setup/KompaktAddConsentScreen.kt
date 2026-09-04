@@ -67,7 +67,10 @@ fun KompaktAddConsentScreen(
     }
 }
 
-/** The Google OAuth step: launches the reduced-scope request and classifies the result. */
+/**
+ * The Google OAuth step: launches the request — every scope, not just the missing one, see
+ * [at.bitfire.davdroid.network.KompaktOAuthGoogle.signIn] — and classifies the result.
+ */
 @Composable
 private fun AddConsentOAuth(
     model: KompaktAddConsentModel,
