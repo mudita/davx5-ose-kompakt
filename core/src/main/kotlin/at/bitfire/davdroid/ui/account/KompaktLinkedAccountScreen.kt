@@ -320,14 +320,6 @@ fun KompaktLinkedAccountContent(
         )
     }
 
-    if (state.showNewContactsConsent) {
-        ConsentDialog(
-            service = KompaktSyncService.CONTACTS,
-            onDismiss = actions.onNewContactsConsentShown,
-            onGrantConsent = actions.onGrantConsent
-        )
-    }
-
     if (showAccountLinkedDialog) {
         KompaktModalSheet(
             onDismissRequest = actions.onAccountLinkedDialogDismiss,
@@ -391,6 +383,13 @@ fun KompaktLinkedAccountContent(
                 },
                 dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
                 onDismiss = actions.onConsumeDialog
+            )
+
+        KompaktLinkedAccountDialog.NewContactsConsent ->
+            ConsentDialog(
+                service = KompaktSyncService.CONTACTS,
+                onDismiss = actions.onNewContactsConsentShown,
+                onGrantConsent = actions.onGrantConsent
             )
 
         null -> {}

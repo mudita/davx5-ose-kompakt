@@ -11,8 +11,7 @@ data class KompaktLinkedAccountState(
     val calendar: KompaktServiceSyncState,
     val contacts: KompaktServiceSyncState,
     val dialog: KompaktLinkedAccountDialog? = null,
-    val reauthPhase: ReauthPhase = ReauthPhase.SHOW_CONTENT,
-    val showNewContactsConsent: Boolean = false
+    val reauthPhase: ReauthPhase = ReauthPhase.SHOW_CONTENT
 ) {
 
     val isLoading: Boolean
@@ -20,7 +19,7 @@ data class KompaktLinkedAccountState(
 
 }
 
-enum class KompaktLinkedAccountDialog { AuthError, OutOfStorage, NoInternet, SyncFailed }
+enum class KompaktLinkedAccountDialog { AuthError, OutOfStorage, NoInternet, SyncFailed, NewContactsConsent }
 
 // No Calendar guard: linking always sets [alreadyShown] up front (KompaktLoginFinalizeModel does it
 // unconditionally), so any account old enough for Calendar to still read ConsentMissing already has
@@ -31,15 +30,19 @@ internal fun newContactsConsentVisible(
 ): Boolean =
     contacts == KompaktSyncSwitch.ConsentMissing && !alreadyShown
 
+// One field, so at most one sheet renders — newContactsConsent is checked last: it is a dismissible
+// offer, not an error, so any of the other four locks it out rather than stacking behind it.
 internal fun linkedAccountDialog(
     authError: Boolean,
     outOfStorage: Boolean,
     noInternet: Boolean,
-    syncFailed: Boolean
+    syncFailed: Boolean,
+    newContactsConsent: Boolean
 ): KompaktLinkedAccountDialog? = when {
     authError -> KompaktLinkedAccountDialog.AuthError
     outOfStorage -> KompaktLinkedAccountDialog.OutOfStorage
     noInternet -> KompaktLinkedAccountDialog.NoInternet
     syncFailed -> KompaktLinkedAccountDialog.SyncFailed
+    newContactsConsent -> KompaktLinkedAccountDialog.NewContactsConsent
     else -> null
 }

@@ -190,11 +190,19 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             )
         }
 
+    // Depends on the CONTACTS service state, not just the persisted flag, so a state that stops
+    // qualifying (consent granted elsewhere) stops offering it without a separate re-check.
+    private val showNewContactsConsent: Flow<Boolean> = combine(
+        serviceStates.getValue(KompaktSyncService.CONTACTS),
+        _newContactsConsentShown
+    ) { contacts, shown -> newContactsConsentVisible(contacts.switch, shown) }
+
     private val dialog: Flow<KompaktLinkedAccountDialog?> = combine(
         needsReauth,
         _showOutOfStorage,
         _showNoInternet,
         _syncFailed,
+        showNewContactsConsent,
         ::linkedAccountDialog
     )
 
@@ -202,16 +210,14 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         serviceStates.getValue(KompaktSyncService.CALENDAR),
         serviceStates.getValue(KompaktSyncService.CONTACTS),
         dialog,
-        _reauthPhase,
-        _newContactsConsentShown
-    ) { calendar, contacts, dialog, phase, consentShown ->
+        _reauthPhase
+    ) { calendar, contacts, dialog, phase ->
         KompaktLinkedAccountState(
             email = email,
             calendar = calendar,
             contacts = contacts,
             dialog = dialog,
-            reauthPhase = phase,
-            showNewContactsConsent = newContactsConsentVisible(contacts.switch, consentShown)
+            reauthPhase = phase
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialState())
 
@@ -403,7 +409,8 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             authError = readNeedsReauth(),
             outOfStorage = KompaktStorage.isStorageLow(context),
             noInternet = false,
-            syncFailed = false
+            syncFailed = false,
+            newContactsConsent = false
         ),
         reauthPhase = _reauthPhase.value
     )
