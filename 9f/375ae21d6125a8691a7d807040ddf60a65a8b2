@@ -1,0 +1,76 @@
+docs/superpowers/specs/2026-09-02-per-service-sync-toggle-design.md
+  f6364155f5512ab0 1-1011
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountModel.kt
+  f6364155f5512ab0 27,29,31-32,52,71-72,74-76,83,90-94,109-112,115,117,150-155,177-199,202-206,208-211,237,240,244,248-270,274,276-279,281-283,285,287-311,313,315-317,319-325,327-330,334,336-341,343-350,352-371,373-376,379-380,387,390-395,398-402,405-410,413-417,419-421,424-432
+  90a9cf2b9fc06857 30,81-82,88,113,149,156,158,169,171,212-213,314,389
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktServiceSyncState.kt
+  f436ba4e540f03ac 29-34
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountScreen.kt
+  f6364155f5512ab0 46,55,61,93-94,132,157,181,188-190,193,195-206,218-223,226-234,237-240,248-249,251,261,263-267,271-272,275,283,435,439-453
+  90a9cf2b9fc06857 91-92
+  f436ba4e540f03ac 168-170,173,175-180,182,184-186,207-209,211,213-217,369-371
+core/src/test/kotlin/at/bitfire/davdroid/settings/KompaktAccountSettingsTest.kt
+  d52106317ca91cf7 1-9,11-22,24-79,81-136,138-139,141-156,158,161,164-195
+  f436ba4e540f03ac 10,140,157,159-160,162-163
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountState.kt
+  f6364155f5512ab0 15-20
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktServiceSyncCell.kt
+  f436ba4e540f03ac 32,36,42,44,133,148
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktInitDefaults.kt
+  f6364155f5512ab0 16,29-32,37,65-66,68-72,77,79,91-96,98,100,105,108,112-115,117-122,126-146,149-156,158,200-205
+docs/app-integration.md
+  f6364155f5512ab0 103-107,127-129,147-151
+core/src/main/kotlin/at/bitfire/davdroid/settings/KompaktAccountSettings.kt
+  f6364155f5512ab0 62-135
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktReauthModel.kt
+  90a9cf2b9fc06857 42,104-106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "9f375ae21d6125a8691a7d807040ddf60a65a8b2",
+  "prompts": {
+    "90a9cf2b9fc06857": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f0ddfd8d-f435-4751-9714-6b34ba979bb8",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 27,
+      "total_deletions": 41,
+      "accepted_lines": 1,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/7f47dea9aae12e96c79a15493cee525cc8ae14dfeea7312bb4deeb8e9467db18"
+    },
+    "f436ba4e540f03ac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a1e6d4ac-0908-4a29-a269-2e4e9c32a1a6",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 133,
+      "total_deletions": 46,
+      "accepted_lines": 15,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/799d53e6d97aa4e85c7762691ad5bd30a5398f229c5f4ad591817b1299b34b43"
+    },
+    "f6364155f5512ab0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d248f61-12f3-4dde-b581-4508be1b02b1",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 7,
+      "total_deletions": 5,
+      "accepted_lines": 1350,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/4639bce83ffef3c3232ef087fb58894ca8d50026e38a3789e4689fe348f6239a"
+    }
+  }
+}
