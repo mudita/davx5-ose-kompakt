@@ -33,8 +33,17 @@
   <string name="common_error_dialog_h1_storageisfull">Úložiště je plné</string>
   <string name="common_label_calendar">Kalendář</string>
   <string name="common_label_contacts">Kontakty</string>
+  <string name="common_label_fri">Pá</string>
   <string name="common_label_linkedaccount">Propojený účet</string>
+  <string name="common_label_mon">Po</string>
   <string name="common_label_nointernetconnection">Žádné připojení k internetu</string>
+  <string name="common_label_sat">So</string>
+  <string name="common_label_sun">Ne</string>
+  <string name="common_label_thu">Čt</string>
+  <string name="common_label_today">Dnes</string>
+  <string name="common_label_tue">Út</string>
+  <string name="common_label_wed">Stř</string>
+  <string name="common_label_yesterday">Včera</string>
   <string name="common_status_synchronizing">Synchronizace...</string>
   <string name="settings_twowaygoogle_body_synchronizeyourcalendarandcontacts">Synchronizujte kalendář a kontakty s vaším účtem Google</string>
 </resources>

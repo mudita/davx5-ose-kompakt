@@ -98,6 +98,15 @@ survive. The Settings app's own `resources` module filters the same project the 
 in `keys_to_filter.py`. Miss the second and the next pull quietly drops the string again, breaking
 the build at that reference.
 
+An entry matches anywhere in the line, so a key that is the prefix of another key keeps that one too
+— `common_label_sun` alone also keeps `common_label_sunday`. Such entries carry the closing quote
+(`'common_label_sun"'`) to pin them to a single key.
+
+`common_label_*` is a namespace shared across the Kompakt apps and each app pulls its own project, so
+a word this app needs may already exist, translated, in another project — the calendar app's
+"Calendar", the dialer's "Phone", "Messages (SMS)", "Camera". Point design at that copy and ask for
+the key in **Settings**; this app pulls one project and adding a second is not the fix.
+
 If the string genuinely doesn't exist in Frontitude yet, hard-code it at the call site with a
 `// TODO:` so it can be added and replaced later.
 
