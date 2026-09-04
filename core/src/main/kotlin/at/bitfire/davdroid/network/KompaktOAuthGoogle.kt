@@ -59,7 +59,6 @@ class KompaktOAuthGoogle @Inject constructor(
         const val SCOPE_CALENDAR = "https://www.googleapis.com/auth/calendar"
         const val SCOPE_CONTACTS = "https://www.googleapis.com/auth/carddav"
 
-        /** Extracts the `email` claim from an OIDC ID token's JWT payload, or `null` if absent/unparseable. */
         fun parseEmailFromIdToken(idToken: String): String? = try {
             val payloadBase64 = idToken.split(".").getOrNull(1) ?: return null
             val payloadBytes = Base64.decode(

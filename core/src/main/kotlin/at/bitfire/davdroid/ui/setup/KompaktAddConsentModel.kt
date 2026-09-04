@@ -135,9 +135,6 @@ class KompaktAddConsentModel @AssistedInject constructor(
         }
     }
 
-    // Discovery first, then every write together: a recorded grant whose service has no row is
-    // unrecoverable, because the stored scope stops the switch reading ConsentMissing — the only route
-    // back into this flow — while a service-less data type never gets a switch that can turn on.
     private suspend fun apply(authState: AuthState) {
         val existingService = serviceRepository.getByAccountAndType(account.name, service.serviceType)
 

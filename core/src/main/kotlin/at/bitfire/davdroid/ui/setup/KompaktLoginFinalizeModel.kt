@@ -61,9 +61,6 @@ class KompaktLoginFinalizeModel @Inject constructor(
             val services = listOf(Service.TYPE_CALDAV, Service.TYPE_CARDDAV)
                 .mapNotNull { type -> serviceRepository.getByAccountAndType(account.name, type) }
 
-            // No defaults application here: KompaktLinkedAccountModel already runs maybeApply for every
-            // service, unconditionally, the moment its screen is composed — which is where this flow
-            // navigates to next.
             if (services.isNotEmpty())
                 withTimeoutOrNull(DISCOVERY_WAIT_MS.milliseconds) {
                     for (service in services)

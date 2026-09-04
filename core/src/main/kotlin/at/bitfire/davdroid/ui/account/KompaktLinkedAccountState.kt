@@ -31,9 +31,6 @@ sealed interface KompaktLinkedAccountDialog {
     data class ConfirmDisable(val service: KompaktSyncService) : KompaktLinkedAccountDialog
 }
 
-// No Calendar guard: linking always sets [alreadyShown] up front (KompaktLoginFinalizeModel does it
-// unconditionally), so any account old enough for Calendar to still read ConsentMissing already has
-// alreadyShown == true, and !alreadyShown alone already excludes it.
 internal fun newContactsConsentVisible(
     contacts: KompaktSyncSwitch,
     alreadyShown: Boolean

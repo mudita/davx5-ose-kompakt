@@ -57,9 +57,6 @@ class KompaktLoginActivity @Inject constructor() : AppCompatActivity() {
             ?.let { serviceType -> KompaktSyncService.entries.find { it.serviceType == serviceType } }
         val reauthAccountName = intent.getStringExtra(EXTRA_REAUTH_ACCOUNT_NAME)
 
-        // Exactly one of the two add-consent extras set is a malformed intent: reject it rather than
-        // falling through to a full sign-in below, which — unlike this — can replace the account
-        // already linked on a device that holds exactly one.
         if ((addConsentAccountName == null) != (addConsentService == null)) {
             finish()
             return

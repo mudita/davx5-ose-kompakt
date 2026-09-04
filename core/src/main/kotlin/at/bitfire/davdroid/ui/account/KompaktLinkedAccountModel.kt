@@ -161,9 +161,6 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         kompaktAccountSettings.observeReauthNeeded(account)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), readNeedsReauth())
 
-    // Follows the persisted key itself, the same as needsReauth above — dismissing the dialog writes
-    // through kompaktAccountSettings, and this re-reads on that write's own announcement, so no separate
-    // in-memory copy is needed to keep the dialog from reappearing after being dismissed.
     private val newContactsConsentAlreadyShown: StateFlow<Boolean> =
         kompaktAccountSettings.observeNewContactsConsentShown(account)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), readNewContactsConsentShown())
@@ -199,8 +196,6 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             )
         }
 
-    // Depends on the CONTACTS service state, not just the persisted flag, so a state that stops
-    // qualifying (consent granted elsewhere) stops offering it without a separate re-check.
     private val showNewContactsConsent: Flow<Boolean> = combine(
         serviceStates.getValue(KompaktSyncService.CONTACTS),
         newContactsConsentAlreadyShown
@@ -209,8 +204,6 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     private val _requestConsent = MutableStateFlow<KompaktSyncService?>(null)
     private val _confirmDisable = MutableStateFlow<KompaktSyncService?>(null)
 
-    // combine's named-lambda overload caps at 5 flows; these three dialog triggers are folded into one
-    // Triple first so the dialog combine below stays under that limit.
     private val dialogTriggers: Flow<Triple<Boolean, KompaktSyncService?, KompaktSyncService?>> = combine(
         showNewContactsConsent,
         _requestConsent,
@@ -308,7 +301,6 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         _showOutOfStorage.value = KompaktStorage.isStorageLow(context)
     }
 
-    /** Marks the one-time new-Contacts-consent dialog as shown so it never appears again for this account. */
     fun newContactsConsentShown() {
         viewModelScope.launch(ioDispatcher) {
             try {
@@ -474,8 +466,6 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         return true
     }
 
-    // Same shape as KompaktAddConsentModel.discoverService: runInterruptible because DavResourceFinder
-    // relies on thread interruption to notice cancellation.
     private suspend fun discoverService(
         service: KompaktSyncService,
         authState: AuthState
