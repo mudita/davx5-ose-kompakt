@@ -1,0 +1,24 @@
+core/src/test/kotlin/at/bitfire/davdroid/ui/setup/KompaktAddConsentModelTest.kt
+  5ebbd687c064aaa8 1-214
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "089af5d4e92b4d899154bc417584e2ad59f3d8a1",
+  "prompts": {
+    "5ebbd687c064aaa8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "632f9ecc-fabe-4fb9-bc87-26f1a24c8989",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 228,
+      "total_deletions": 14,
+      "accepted_lines": 660,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/24e306c090d489f99c6afa62f0f4f48549ded94425d4c1b79276996afd29ed27"
+    }
+  }
+}
