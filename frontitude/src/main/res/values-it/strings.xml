@@ -33,8 +33,17 @@
   <string name="common_error_dialog_h1_storageisfull">L’archivio è pieno</string>
   <string name="common_label_calendar">Calendario</string>
   <string name="common_label_contacts">Contatti</string>
+  <string name="common_label_fri">Ven</string>
   <string name="common_label_linkedaccount">Account collegato</string>
+  <string name="common_label_mon">Lun</string>
   <string name="common_label_nointernetconnection">Nessuna connessione a Internet</string>
+  <string name="common_label_sat">Sab</string>
+  <string name="common_label_sun">Dom</string>
+  <string name="common_label_thu">Gio</string>
+  <string name="common_label_today">Oggi</string>
+  <string name="common_label_tue">Mar</string>
+  <string name="common_label_wed">Mer</string>
+  <string name="common_label_yesterday">Ieri</string>
   <string name="common_status_synchronizing">Sincronizzazione...</string>
   <string name="settings_twowaygoogle_body_synchronizeyourcalendarandcontacts">Sincronizza calendario e contatti con il tuo account Google</string>
 </resources>
