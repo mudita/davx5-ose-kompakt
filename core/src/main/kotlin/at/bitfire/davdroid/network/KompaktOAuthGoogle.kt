@@ -5,11 +5,13 @@
 package at.bitfire.davdroid.network
 
 import android.content.Context
+import android.util.Base64
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import net.openid.appauth.AuthorizationRequest
 import net.openid.appauth.AuthorizationServiceConfiguration
 import net.openid.appauth.ResponseTypeValues
+import org.json.JSONObject
 import java.net.URI
 import java.util.logging.Logger
 import javax.inject.Inject
@@ -60,11 +62,11 @@ class KompaktOAuthGoogle @Inject constructor(
         /** Extracts the `email` claim from an OIDC ID token's JWT payload, or `null` if absent/unparseable. */
         fun parseEmailFromIdToken(idToken: String): String? = try {
             val payloadBase64 = idToken.split(".").getOrNull(1) ?: return null
-            val payloadBytes = android.util.Base64.decode(
+            val payloadBytes = Base64.decode(
                 payloadBase64,
-                android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+                Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
             )
-            val payloadJson = org.json.JSONObject(String(payloadBytes, Charsets.UTF_8))
+            val payloadJson = JSONObject(String(payloadBytes, Charsets.UTF_8))
             payloadJson.optString("email").takeIf { it.isNotBlank() }
         } catch (_: Exception) {
             null
