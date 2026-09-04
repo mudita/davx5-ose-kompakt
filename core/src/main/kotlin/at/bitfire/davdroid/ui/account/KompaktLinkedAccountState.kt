@@ -43,8 +43,8 @@ internal fun linkedAccountDialog(
     outOfStorage: Boolean,
     noInternet: Boolean,
     syncFailed: Boolean,
-    newContactsConsent: Boolean,
-    requestConsent: KompaktSyncService?
+    newContactsConsent: Boolean = false,
+    requestConsent: KompaktSyncService? = null
 ): KompaktLinkedAccountDialog? = when {
     authError -> KompaktLinkedAccountDialog.AuthError
     outOfStorage -> KompaktLinkedAccountDialog.OutOfStorage
