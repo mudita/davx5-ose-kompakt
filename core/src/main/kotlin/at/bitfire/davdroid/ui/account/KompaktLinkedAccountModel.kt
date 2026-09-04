@@ -207,20 +207,24 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     ) { contacts, shown -> newContactsConsentVisible(contacts.switch, shown) }
 
     private val _requestConsent = MutableStateFlow<KompaktSyncService?>(null)
+    private val _confirmDisable = MutableStateFlow<KompaktSyncService?>(null)
 
-    private val contactsConsentDialog: Flow<Pair<Boolean, KompaktSyncService?>> = combine(
+    // combine's named-lambda overload caps at 5 flows; these three dialog triggers are folded into one
+    // Triple first so the dialog combine below stays under that limit.
+    private val dialogTriggers: Flow<Triple<Boolean, KompaktSyncService?, KompaktSyncService?>> = combine(
         showNewContactsConsent,
-        _requestConsent
-    ) { newOffer, requested -> newOffer to requested }
+        _requestConsent,
+        _confirmDisable
+    ) { newOffer, requested, confirmDisable -> Triple(newOffer, requested, confirmDisable) }
 
     private val dialog: Flow<KompaktLinkedAccountDialog?> = combine(
         needsReauth,
         _showOutOfStorage,
         _showNoInternet,
         _syncFailed,
-        contactsConsentDialog
-    ) { authError, outOfStorage, noInternet, syncFailed, (newContactsConsent, requestConsent) ->
-        linkedAccountDialog(authError, outOfStorage, noInternet, syncFailed, newContactsConsent, requestConsent)
+        dialogTriggers
+    ) { authError, outOfStorage, noInternet, syncFailed, (newContactsConsent, requestConsent, confirmDisable) ->
+        linkedAccountDialog(authError, outOfStorage, noInternet, syncFailed, newContactsConsent, requestConsent, confirmDisable)
     }
 
     val state: StateFlow<KompaktLinkedAccountState> = combine(
@@ -282,13 +286,9 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         // modal, so we do NOT enqueue a sync here.
         for (service in KompaktSyncService.entries)
             viewModelScope.launch(ioDispatcher) {
-                if (initDefaults.appliedVersion(account, service) >= KompaktInitDefaults.DEFAULTS_VERSION)
-                    return@launch
                 serviceRepository.getServiceFlow(account.name, service.serviceType)
                     .filterNotNull()
                     .collectLatest { serviceRow ->
-                        if (initDefaults.appliedVersion(account, service) >= KompaktInitDefaults.DEFAULTS_VERSION)
-                            return@collectLatest
                         val outcome = initDefaults.maybeApply(account, service, serviceRow.id)
                         if (outcome == KompaktInitDefaults.Outcome.NOT_READY) {
                             RefreshCollectionsWorker
@@ -327,6 +327,17 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     fun onReauthResult() {
         _reauthPhase.value = ReauthPhase.SHOW_CONTENT
+    }
+
+    /** Switching a service off asks first; the answer arrives via [confirmDisable] or [consumeDialog]. */
+    fun requestDisable(service: KompaktSyncService) {
+        _confirmDisable.value = service
+    }
+
+    fun confirmDisable() {
+        val service = _confirmDisable.value ?: return
+        _confirmDisable.value = null
+        setServiceSync(service, false)
     }
 
     fun setServiceSync(service: KompaktSyncService, enabled: Boolean) {
@@ -379,10 +390,11 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         _syncFailed.value = false
         _showOutOfStorage.value = false
         _requestConsent.value = null
+        _confirmDisable.value = null
     }
 
     fun unlink() {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             accountRepository.delete(account.name)
         }
     }
@@ -441,7 +453,8 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             noInternet = false,
             syncFailed = false,
             newContactsConsent = false,
-            requestConsent = null
+            requestConsent = null,
+            confirmDisable = null
         ),
         reauthPhase = _reauthPhase.value
     )

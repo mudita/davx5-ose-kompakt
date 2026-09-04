@@ -303,10 +303,10 @@ with no account, `KompaktLinkedAccountScreen` with one. Linking: `KompaktLoginAc
 `KompaktReauthModel`. Errors and dialogs: `KompaktMessageSheet`, `KompaktModalSheet`. Behind the UI:
 the upstream sync engine (`SyncWorker` / `BaseSyncWorker`) plus `KompaktInitDefaults`.
 
-Only CalDAV is part of this flow — `KompaktLoginFinalizeModel` looks up a `Service.TYPE_CALDAV` service
-and nothing else, and only the calendar scope is requested, so no CardDAV service is ever created.
-`KompaktInitDefaults` and the linked-account screen are per-service and will drive Contacts once that
-scope is, but contacts sync is not in the shipped path today.
+Both CalDAV and CardDAV are part of this flow. Both scopes are requested, Google offers each on its own
+consent checkbox, and every step from linking to the linked-account screen is per-service. Refusing a
+service's consent leaves that service with no `Service` row, so it is absent rather than present and
+failing — a service the user declined syncs nothing instead of erroring.
 
 ### From other apps — by design
 

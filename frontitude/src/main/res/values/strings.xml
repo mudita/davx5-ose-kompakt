@@ -9,6 +9,7 @@
   <string name="calendar_accountsync_dialog_button_syncnow">Sync now</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Account linked</string>
   <string name="calendar_accountsync_dialog_h1_disablecalendarsync">Disable calendar sync\?</string>
+  <string name="calendar_accountsync_dialog_h1_disablecontactsync">Disable contact sync\?</string>
   <string name="calendar_accountsync_dialog_h1_enablecalendarsync">Enable calendar sync\?</string>
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Enable contact sync\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Link a Google account</string>

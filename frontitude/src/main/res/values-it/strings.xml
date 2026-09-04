@@ -9,6 +9,7 @@
   <string name="calendar_accountsync_dialog_button_syncnow">Sincronizza ora</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Account collegato</string>
   <string name="calendar_accountsync_dialog_h1_disablecalendarsync">Disattivare la sincronizzazione del calendario\?</string>
+  <string name="calendar_accountsync_dialog_h1_disablecontactsync">Disattivare la sincronizzazione dei contatti\?</string>
   <string name="calendar_accountsync_dialog_h1_enablecalendarsync">Attivare la sincronizzazione del calendario\?</string>
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Attivare la sincronizzazione dei contatti\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Collega un account Google</string>

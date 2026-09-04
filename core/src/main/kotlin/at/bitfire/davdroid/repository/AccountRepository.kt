@@ -150,20 +150,6 @@ class AccountRepository @Inject constructor(
         val account = fromName(accountName)
         // remove account directly (bypassing the authenticator, which is our own)
         try {
-            // Delete synced calendars through the provider *before* removing the account, so the
-            // provider notifies content observers. Removing the account alone lets the platform
-            // CalendarProvider cascade-purge the rows silently (no notifyChange).
-            try {
-                val store = localCalendarStore.get()
-                store.acquireContentProvider(throwOnMissingPermissions = false)?.use { client ->
-                    store.getAll(account, client).forEach { calendar ->
-                        store.delete(calendar)
-                    }
-                }
-            } catch (e: Exception) {
-                logger.log(Level.WARNING, "Couldn't delete calendars for $accountName", e)
-            }
-
             accountManager.removeAccountExplicitly(account)
 
             // delete address books (= address book accounts)

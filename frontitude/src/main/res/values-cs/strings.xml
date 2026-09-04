@@ -9,6 +9,7 @@
   <string name="calendar_accountsync_dialog_button_syncnow">Synchronizovat nyní</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Účet propojen</string>
   <string name="calendar_accountsync_dialog_h1_disablecalendarsync">Zakázat synchronizaci kalendáře\?</string>
+  <string name="calendar_accountsync_dialog_h1_disablecontactsync">Zakázat synchronizaci kontaktů\?</string>
   <string name="calendar_accountsync_dialog_h1_enablecalendarsync">Povolit synchronizaci kalendáře\?</string>
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Povolit synchronizaci kontaktů\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Propojit účet Google</string>

@@ -62,7 +62,7 @@ class KompaktLinkedAccountStateTest {
         // showing when several are pending at once.
         assertEquals(
             KompaktLinkedAccountDialog.AuthError,
-            linkedAccountDialog(authError = true, outOfStorage = true, noInternet = true, syncFailed = true)
+            linkedAccountDialog(authError = true, outOfStorage = true, noInternet = true, syncFailed = true, confirmDisable = null)
         )
     }
 
@@ -70,7 +70,7 @@ class KompaktLinkedAccountStateTest {
     fun aFullDiskOutranksTheNetworkDialogs() {
         assertEquals(
             KompaktLinkedAccountDialog.OutOfStorage,
-            linkedAccountDialog(authError = false, outOfStorage = true, noInternet = true, syncFailed = true)
+            linkedAccountDialog(authError = false, outOfStorage = true, noInternet = true, syncFailed = true, confirmDisable = null)
         )
     }
 
@@ -79,7 +79,7 @@ class KompaktLinkedAccountStateTest {
         // The failure is the symptom of being offline; naming the cause is the more useful of the two.
         assertEquals(
             KompaktLinkedAccountDialog.NoInternet,
-            linkedAccountDialog(authError = false, outOfStorage = false, noInternet = true, syncFailed = true)
+            linkedAccountDialog(authError = false, outOfStorage = false, noInternet = true, syncFailed = true, confirmDisable = null)
         )
     }
 
@@ -87,14 +87,45 @@ class KompaktLinkedAccountStateTest {
     fun aFailedRunIsReportedWhenNothingElseExplainsIt() {
         assertEquals(
             KompaktLinkedAccountDialog.SyncFailed,
-            linkedAccountDialog(authError = false, outOfStorage = false, noInternet = false, syncFailed = true)
+            linkedAccountDialog(authError = false, outOfStorage = false, noInternet = false, syncFailed = true, confirmDisable = null)
         )
     }
 
     @Test
     fun noDialogWhenNothingIsWrong() {
         assertNull(
-            linkedAccountDialog(authError = false, outOfStorage = false, noInternet = false, syncFailed = false)
+            linkedAccountDialog(authError = false, outOfStorage = false, noInternet = false, syncFailed = false, confirmDisable = null)
+        )
+    }
+
+    @Test
+    fun theDisableConfirmationCarriesTheServiceItAsksAbout() {
+        // The sheet names the service from this, rather than the screen remembering which row was tapped.
+        assertEquals(
+            KompaktLinkedAccountDialog.ConfirmDisable(KompaktSyncService.CONTACTS),
+            linkedAccountDialog(
+                authError = false,
+                outOfStorage = false,
+                noInternet = false,
+                syncFailed = false,
+                confirmDisable = KompaktSyncService.CONTACTS
+            )
+        )
+    }
+
+    @Test
+    fun aPendingProblemOutranksTheDisableConfirmation() {
+        // The confirmation is an intent, not a condition: showing it over the auth error would put a
+        // dismissible sheet above one whose dismiss paths are locked on purpose.
+        assertEquals(
+            KompaktLinkedAccountDialog.AuthError,
+            linkedAccountDialog(
+                authError = true,
+                outOfStorage = false,
+                noInternet = false,
+                syncFailed = false,
+                confirmDisable = KompaktSyncService.CALENDAR
+            )
         )
     }
 

@@ -59,6 +59,8 @@ import com.mudita.mmd.components.text.TextMMD
 data class KompaktLinkedAccountActions(
     val onBack: () -> Unit = {},
     val onToggleService: (KompaktSyncService, Boolean) -> Unit = { _, _ -> },
+    val onRequestDisable: (KompaktSyncService) -> Unit = {},
+    val onConfirmDisable: () -> Unit = {},
     val onSyncNow: () -> Unit = {},
     val onUnlink: () -> Unit = {},
     val onConsumeDialog: () -> Unit = {},
@@ -147,6 +149,8 @@ fun KompaktLinkedAccountScreen(
             actions = KompaktLinkedAccountActions(
                 onBack = onBack,
                 onToggleService = model::setServiceSync,
+                onRequestDisable = model::requestDisable,
+                onConfirmDisable = model::confirmDisable,
                 onSyncNow = model::syncNow,
                 onUnlink = model::unlink,
                 onConsumeDialog = model::consumeDialog,
@@ -174,7 +178,6 @@ fun KompaktLinkedAccountContent(
     showAccountLinkedDialog: Boolean
 ) {
     var showUnlinkDialog by remember { mutableStateOf(false) }
-    var serviceToDisable by remember { mutableStateOf<KompaktSyncService?>(null) }
 
     KompaktTheme {
         Scaffold(
@@ -245,7 +248,7 @@ fun KompaktLinkedAccountContent(
                                 enabled && state.calendar.switch == KompaktSyncSwitch.ConsentMissing ->
                                     actions.onRequestConsent(KompaktSyncService.CALENDAR)
                                 enabled -> actions.onToggleService(KompaktSyncService.CALENDAR, true)
-                                else -> serviceToDisable = KompaktSyncService.CALENDAR
+                                else -> actions.onRequestDisable(KompaktSyncService.CALENDAR)
                             }
                         },
                         onFailureClick = actions.onFailureClick,
@@ -260,7 +263,7 @@ fun KompaktLinkedAccountContent(
                                 enabled && state.contacts.switch == KompaktSyncSwitch.ConsentMissing ->
                                     actions.onRequestConsent(KompaktSyncService.CONTACTS)
                                 enabled -> actions.onToggleService(KompaktSyncService.CONTACTS, true)
-                                else -> serviceToDisable = KompaktSyncService.CONTACTS
+                                else -> actions.onRequestDisable(KompaktSyncService.CONTACTS)
                             }
                         },
                         onFailureClick = actions.onFailureClick
@@ -283,24 +286,6 @@ fun KompaktLinkedAccountContent(
             },
             dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
             onDismiss = { showUnlinkDialog = false }
-        )
-    }
-
-    serviceToDisable?.let { service ->
-        KompaktModalSheet(
-            onDismissRequest = { serviceToDisable = null },
-            // TODO Contacts reuses the calendar title, which names the wrong service. Needs a
-            //  contacts or service-neutral key from Frontitude (SHP-1156).
-            title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_disablecalendarsync),
-            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_nothingwillsynchronizewithyour),
-            icon = painterResource(R.drawable.ic_kompakt_alert),
-            confirmLabel = stringResource(RFrontitude.string.common_button_disable),
-            onConfirm = {
-                serviceToDisable = null
-                actions.onToggleService(service, false)
-            },
-            dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
-            onDismiss = { serviceToDisable = null }
         )
     }
 
@@ -381,6 +366,23 @@ fun KompaktLinkedAccountContent(
                 service = KompaktSyncService.CONTACTS,
                 onDismiss = actions.onNewContactsConsentShown,
                 onGrantConsent = actions.onGrantConsent
+            )
+
+        is KompaktLinkedAccountDialog.ConfirmDisable ->
+            KompaktModalSheet(
+                onDismissRequest = actions.onConsumeDialog,
+                title = stringResource(
+                    when (state.dialog.service) {
+                        KompaktSyncService.CALENDAR -> RFrontitude.string.calendar_accountsync_dialog_h1_disablecalendarsync
+                        KompaktSyncService.CONTACTS -> RFrontitude.string.calendar_accountsync_dialog_h1_disablecontactsync
+                    }
+                ),
+                text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_nothingwillsynchronizewithyour),
+                icon = painterResource(R.drawable.ic_kompakt_alert),
+                confirmLabel = stringResource(RFrontitude.string.common_button_disable),
+                onConfirm = actions.onConfirmDisable,
+                dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
+                onDismiss = actions.onConsumeDialog
             )
 
         null -> {}

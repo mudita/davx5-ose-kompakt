@@ -656,7 +656,8 @@ One exhaustive `when (service)` inside `maybeApply` — the one place service-sp
 legitimately lives, and a compile error if a third service is ever added.
 
 - **CALENDAR** — unchanged: select the primary calendar, and write the EVENTS interval.
-- **CONTACTS** — write the CONTACTS interval, and **select no address books**.
+- **CONTACTS** — select every discovered address book, and write the CONTACTS interval. Landed under
+  SHP-1156; the measurements that unblocked it are in *Address-book selection landed* below.
 
 **The interval is written only when nothing is stored** — `getSyncInterval(...) == null` — not when the
 marker is 0. The distinction is the whole of the guard: a user who switches a service off before
@@ -704,12 +705,41 @@ All three were still open in this tree when this branch was written: `HomeSetRef
 set on 403 without rethrowing, `Syncer.sync` calls `updateCollections` with no guard for an absent
 service row, and `AddressBookSyncer` swallows every exception and still reports the sync complete.
 
-**The ordering matters, and it is not the obvious one.** On this branch the Contacts toggle cannot be
-turned on at all — no `carddav` scope is requested, so the switch reads `ConsentMissing` and enabling it
-is a no-op. SHP-1159 changes that: consent becomes real, a CardDAV service row appears, and the toggle
-starts working. From that moment until address-book selection lands, Contacts looks operable, schedules
-a worker, and syncs **nothing** — silently, because D3 reports a swallowed failure as success. That
-window is the thing to plan around: it is a product-visible gap opened by a ticket that is already in
+### Address-book selection landed
+
+Measured on a real Kompakt (2026-09-03, debug build, both consents granted) before SHP-1156 selected
+anything. Two of the three claims above survived; the prerequisite did not.
+
+- **Discovery works.** The `carddav` service, its home set and the `.../lists/default/`
+  `ADDRESS_BOOK` collection are all discovered and stored, at `sync = 0`. Selection really was the
+  only missing piece.
+- **The zero-collection sync is the "fourth cause", not D3.** A contacts run finished in 21 ms with no
+  network call, an all-zero `SyncResult` and `Worker result SUCCESS` — and **no `AddressBookSyncer`
+  line at all**. `syncCollection` is never reached with nothing selected, so the blanket catch is not
+  what produced the success. D3 cannot fire until an address book is selected.
+- **D1 has no route on a fresh link.** Refusing Contacts consent yields `cardDAV = null` and no service
+  row, because the `/.well-known/carddav` probe is scope-gated — with the scope it logs
+  `Found current-user-principal: …/carddav/v1/principals/<email>`, without it nothing. So there is no
+  state where an account holds a CardDAV row that Google answers 403 for. D1 needs a re-auth that
+  *drops* an already-granted scope, which is SHP-1180's subject, not this one's.
+- **D2's trigger was reachable, and this branch closes it.** With Contacts refused, "Sync now" still
+  enqueued CONTACTS; that run succeeded over an absent service row, and `BaseSyncWorker`'s
+  post-manual-success `reschedulePeriodic` then armed a **4 h** CONTACTS periodic worker — because
+  `AccountSettings.getSyncInterval` substitutes `DEFAULT_SYNC_INTERVAL` for an absent key, and
+  `reschedulePeriodic` has no `hasService` check. Every run of that worker hit D2's precondition
+  exactly. `KompaktStartSyncUseCase` removes it at the source: contacts is only enqueued when consented,
+  toggled on and configured, so the run that armed the worker no longer happens.
+
+So selection ships with D1 and D2 both reduced to the re-auth-downgrade case, which belongs with
+SHP-1180 together with D3. Recorded rather than assumed: the rest of this section is the reasoning as
+it stood before the device confirmed it.
+
+**The ordering mattered, and it is now closed.** When this was written the Contacts toggle could not be
+turned on at all — no `carddav` scope was requested, so the switch read `ConsentMissing` and enabling it
+was a no-op. SHP-1159 made consent real, and it is in this branch's history after the rebase, so a
+CardDAV service row now appears and the toggle works. That opened the window this paragraph warned
+about — Contacts operable, a worker scheduled, nothing synced — and SHP-1156 closes it by selecting the
+address book. The window was real while it lasted: a product-visible gap opened by a ticket that was in
 review, not by this one.
 
 ---
@@ -850,7 +880,11 @@ without someone reconciling them; this design is written so that either order wo
 | derives a `contactsSwitch` inline in `KompaktLinkedAccountModel` with raw `AccountManager` reads | **replaces** it with `KompaktServiceSwitch`, which is the same rule with a push channel |
 | leaves the Contacts switch `onCheckedChange = { /* SHP-1151 */ }` | wires it |
 
-The one that needs a human decision is `applyContactsSyncInterval`. Everything else is additive.
+The one that needed a human decision was `applyContactsSyncInterval`. Resolved under SHP-1156: deleted,
+with the CONTACTS interval written by `maybeApply` on the same "only when nothing is stored" terms as
+calendar. Deleting it alone would have dropped contacts to upstream's four-hour default, so it landed
+in the same commit as the selection that made `maybeApply` reach the interval write. Everything else
+was additive.
 
 ---
 

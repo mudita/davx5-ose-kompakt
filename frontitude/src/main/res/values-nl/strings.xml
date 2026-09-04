@@ -9,6 +9,7 @@
   <string name="calendar_accountsync_dialog_button_syncnow">Nu synchroniseren</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Account gekoppeld</string>
   <string name="calendar_accountsync_dialog_h1_disablecalendarsync">Synchronisatie van agenda uitschakelen\?</string>
+  <string name="calendar_accountsync_dialog_h1_disablecontactsync">Synchronisatie van contacten uitschakelen\?</string>
   <string name="calendar_accountsync_dialog_h1_enablecalendarsync">Synchronisatie van agenda inschakelen\?</string>
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Synchronisatie van contacten inschakelen\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Google-account koppelen</string>
