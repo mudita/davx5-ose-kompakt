@@ -218,7 +218,13 @@ class SyncWorkerManager @Inject constructor(
      *
      * @return periodic sync work request for the given arguments
      */
-    fun buildPeriodic(account: Account, dataType: SyncDataType, interval: Long, syncWifiOnly: Boolean): PeriodicWorkRequest {
+    fun buildPeriodic(
+        account: Account,
+        dataType: SyncDataType,
+        interval: Long,
+        syncWifiOnly: Boolean,
+        delayFirstRunBy: Long = 0
+    ): PeriodicWorkRequest {
         val arguments = Data.Builder()
             .putString(INPUT_DATA_TYPE, dataType.toString())
             .putString(INPUT_ACCOUNT_NAME, account.name)
@@ -241,6 +247,7 @@ class SyncWorkerManager @Inject constructor(
             .addTag(commonTag(account, dataType))
             .setInputData(arguments)
             .setConstraints(constraints)
+            .setInitialDelay(delayFirstRunBy, TimeUnit.SECONDS)
             .build()
     }
 
@@ -261,12 +268,17 @@ class SyncWorkerManager @Inject constructor(
     ): Operation {
         logger.fine("Updating periodic worker for account=$account, dataType=$dataType, interval=$interval, syncWifiOnly=$syncWifiOnly, rescheduleFromNow=$rescheduleFromNow")
         val name = PeriodicSyncWorker.workerName(account, dataType)
-        val workRequest = buildPeriodic(account, dataType, interval, syncWifiOnly)
+        val workRequest = buildPeriodic(
+            account, dataType, interval, syncWifiOnly,
+            // WorkManager runs a freshly enqueued periodic worker straight away, so without this the
+            // re-enqueue would sync again on top of the manual sync that asked for the reschedule.
+            delayFirstRunBy = if (rescheduleFromNow) interval else 0
+        )
         return WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             name,
             // UPDATE keeps the existing schedule (just updates interval/constraints for the next iteration);
-            // CANCEL_AND_REENQUEUE restarts the period from now (used to push the next automatic sync back
-            // after a successful manual sync).
+            // CANCEL_AND_REENQUEUE drops it, so the delayed request above becomes the whole schedule and
+            // every following run is counted from now (used after a successful manual sync).
             if (rescheduleFromNow)
                 ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE
             else
