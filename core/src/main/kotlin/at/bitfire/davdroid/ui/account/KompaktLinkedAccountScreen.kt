@@ -66,7 +66,10 @@ data class KompaktLinkedAccountActions(
     val onConsumeDialog: () -> Unit = {},
     val onFailureClick: () -> Unit = {},
     val onAccountLinkedDialogDismiss: () -> Unit = {},
-    val onReauthorize: () -> Unit = {}
+    val onReauthorize: () -> Unit = {},
+    val onGrantConsent: (serviceType: String) -> Unit = {},
+    val onNewContactsConsentShown: () -> Unit = {},
+    val onRequestConsent: (KompaktSyncService) -> Unit = {}
 )
 
 /**
@@ -119,6 +122,20 @@ fun KompaktLinkedAccountScreen(
         )
     }
 
+    val addConsentLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        // No result to read: KompaktAddConsentModel.apply() already notified the authStateChanges
+        // ContentObserver before this activity finished, so calendar/contactsSwitch have re-read by now.
+    }
+    val onGrantConsent = { serviceType: String ->
+        addConsentLauncher.launch(
+            Intent(context, KompaktLoginActivity::class.java)
+                .putExtra(KompaktLoginActivity.EXTRA_ADD_CONSENT_ACCOUNT_NAME, account.name)
+                .putExtra(KompaktLoginActivity.EXTRA_ADD_CONSENT_SERVICE_TYPE, serviceType)
+        )
+    }
+
     LaunchedEffect(state.reauthPhase) {
         if (state.reauthPhase == ReauthPhase.PENDING_LAUNCH) {
             model.onReauthLaunchStarted()
@@ -139,7 +156,10 @@ fun KompaktLinkedAccountScreen(
                 onConsumeDialog = model::consumeDialog,
                 onFailureClick = model::consumeDialog,
                 onAccountLinkedDialogDismiss = onAccountLinkedDialogDismiss,
-                onReauthorize = onReauthorize
+                onReauthorize = onReauthorize,
+                onGrantConsent = onGrantConsent,
+                onNewContactsConsentShown = model::newContactsConsentShown,
+                onRequestConsent = model::requestConsent
             ),
             showAccountLinkedDialog = showAccountLinkedDialog
         )
@@ -224,8 +244,12 @@ fun KompaktLinkedAccountContent(
                         title = stringResource(RFrontitude.string.common_label_calendar),
                         state = state.calendar,
                         onCheckedChange = { enabled ->
-                            if (enabled) actions.onToggleService(KompaktSyncService.CALENDAR, true)
-                            else actions.onRequestDisable(KompaktSyncService.CALENDAR)
+                            when {
+                                enabled && state.calendar.switch == KompaktSyncSwitch.ConsentMissing ->
+                                    actions.onRequestConsent(KompaktSyncService.CALENDAR)
+                                enabled -> actions.onToggleService(KompaktSyncService.CALENDAR, true)
+                                else -> actions.onRequestDisable(KompaktSyncService.CALENDAR)
+                            }
                         },
                         onFailureClick = actions.onFailureClick,
                         showDivider = true
@@ -235,8 +259,12 @@ fun KompaktLinkedAccountContent(
                         title = stringResource(RFrontitude.string.common_label_contacts),
                         state = state.contacts,
                         onCheckedChange = { enabled ->
-                            if (enabled) actions.onToggleService(KompaktSyncService.CONTACTS, true)
-                            else actions.onRequestDisable(KompaktSyncService.CONTACTS)
+                            when {
+                                enabled && state.contacts.switch == KompaktSyncSwitch.ConsentMissing ->
+                                    actions.onRequestConsent(KompaktSyncService.CONTACTS)
+                                enabled -> actions.onToggleService(KompaktSyncService.CONTACTS, true)
+                                else -> actions.onRequestDisable(KompaktSyncService.CONTACTS)
+                            }
                         },
                         onFailureClick = actions.onFailureClick
                     )
@@ -326,6 +354,20 @@ fun KompaktLinkedAccountContent(
                 onDismiss = actions.onConsumeDialog
             )
 
+        is KompaktLinkedAccountDialog.RequestConsent ->
+            ConsentDialog(
+                service = state.dialog.service,
+                onDismiss = actions.onConsumeDialog,
+                onGrantConsent = actions.onGrantConsent
+            )
+
+        KompaktLinkedAccountDialog.NewContactsConsent ->
+            ConsentDialog(
+                service = KompaktSyncService.CONTACTS,
+                onDismiss = actions.onNewContactsConsentShown,
+                onGrantConsent = actions.onGrantConsent
+            )
+
         is KompaktLinkedAccountDialog.ConfirmDisable ->
             KompaktModalSheet(
                 onDismissRequest = actions.onConsumeDialog,
@@ -368,6 +410,34 @@ private fun AccountHeader(email: String) {
             modifier = Modifier.fillMaxWidth()
         )
     }
+}
+
+/** Confirming dismisses too, so an [onDismiss] that records the offer having been made runs on both paths. */
+@Composable
+private fun ConsentDialog(
+    service: KompaktSyncService,
+    onDismiss: () -> Unit,
+    onGrantConsent: (serviceType: String) -> Unit
+) {
+    val isCalendar = service == KompaktSyncService.CALENDAR
+    KompaktModalSheet(
+        onDismissRequest = onDismiss,
+        title = stringResource(
+            if (isCalendar) RFrontitude.string.calendar_accountsync_dialog_h1_enablecalendarsync
+            else RFrontitude.string.calendar_accountsync_dialog_h1_enablecontactsync
+        ),
+        text = stringResource(
+            if (isCalendar) RFrontitude.string.calendar_accountsync_dialog_body_sharecalendarandeventsbetween
+            else RFrontitude.string.calendar_accountsync_dialog_body_sharecontactsbetweenyourlinked
+        ),
+        confirmLabel = stringResource(RFrontitude.string.common_dialog_button_enable),
+        onConfirm = {
+            onDismiss()
+            onGrantConsent(service.serviceType)
+        },
+        dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
+        onDismiss = onDismiss
+    )
 }
 
 

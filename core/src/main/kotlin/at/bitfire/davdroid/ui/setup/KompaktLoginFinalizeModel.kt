@@ -13,6 +13,7 @@ import at.bitfire.davdroid.db.Service
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
 import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
+import at.bitfire.davdroid.settings.KompaktAccountSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
@@ -34,6 +35,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @HiltViewModel
 class KompaktLoginFinalizeModel @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val kompaktAccountSettings: KompaktAccountSettings,
     private val serviceRepository: DavServiceRepository,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
@@ -51,6 +53,11 @@ class KompaktLoginFinalizeModel @Inject constructor(
         if (_ready.value)
             return
         viewModelScope.launch(ioDispatcher) {
+            // This account has just been through the combined consent screen, so whatever it granted
+            // there was a deliberate choice — it must never get the "you can also sync Contacts" prompt,
+            // which exists only for accounts linked back when Contacts couldn't be granted at all.
+            suppressNewContactsConsent(account)
+
             val services = listOf(Service.TYPE_CALDAV, Service.TYPE_CARDDAV)
                 .mapNotNull { type -> serviceRepository.getByAccountAndType(account.name, type) }
 
@@ -62,6 +69,14 @@ class KompaktLoginFinalizeModel @Inject constructor(
                             .first { succeeded -> succeeded }
                 }
             _ready.value = true
+        }
+    }
+
+    private suspend fun suppressNewContactsConsent(account: Account) {
+        try {
+            kompaktAccountSettings.setNewContactsConsentShown(account)
+        } catch (_: Exception) {
+            // Worst case the prompt shows once for a freshly linked account; not worth failing setup over.
         }
     }
 

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="calendar_accountsync_dialog_body_nothingwillsynchronizewithyour">Nulla si sincronizzerà con il tuo account Google</string>
+  <string name="calendar_accountsync_dialog_body_sharecalendarandeventsbetween">Condividi calendario ed eventi tra il tuo account Google collegato e Kompakt</string>
+  <string name="calendar_accountsync_dialog_body_sharecontactsbetweenyourlinked">Condividi i contatti tra il tuo account Google collegato e Kompakt</string>
   <string name="calendar_accountsync_dialog_body_synchronizenowtoimportyourselected">Sincronizza ora per importare i tuoi dati Google selezionati</string>
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">Non vedrai più i dati del tuo account Google</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Collega account</string>
@@ -8,6 +10,8 @@
   <string name="calendar_accountsync_dialog_h1_accountlinked">Account collegato</string>
   <string name="calendar_accountsync_dialog_h1_disablecalendarsync">Disattivare la sincronizzazione del calendario\?</string>
   <string name="calendar_accountsync_dialog_h1_disablecontactsync">Disattivare la sincronizzazione dei contatti\?</string>
+  <string name="calendar_accountsync_dialog_h1_enablecalendarsync">Attivare la sincronizzazione del calendario\?</string>
+  <string name="calendar_accountsync_dialog_h1_enablecontactsync">Attivare la sincronizzazione dei contatti\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Collega un account Google</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Rimuovere l’account\?</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagaintocontinue">Collega nuovamente il tuo account per continuare a sincronizzare con Google Calendar</string>
@@ -26,6 +30,7 @@
   <string name="common_button_skip">Salta</string>
   <string name="common_button_synchronize">Sincronizza</string>
   <string name="common_dialog_button_cancel">Annulla</string>
+  <string name="common_dialog_button_enable">Abilita</string>
   <string name="common_dialog_button_later">Più tardi</string>
   <string name="common_dialog_button_tryagain">Riprova</string>
   <string name="common_error_body_opensettingstocheck">Accedi alle Impostazioni per assicurarti che i dati mobili e il Wi-Fi siano abilitati</string>

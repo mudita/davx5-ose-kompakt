@@ -19,11 +19,14 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
+import at.bitfire.davdroid.network.KompaktOAuthGoogle
 import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.repository.KompaktTimeFormatRepository
+import at.bitfire.davdroid.servicedetection.DavResourceFinder
 import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
 import at.bitfire.davdroid.settings.AccountSettings
+import at.bitfire.davdroid.settings.Credentials
 import at.bitfire.davdroid.settings.KompaktAccountSettings
 import at.bitfire.davdroid.sync.KompaktInitDefaults
 import at.bitfire.davdroid.sync.KompaktStartSyncUseCase
@@ -58,6 +61,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runInterruptible
+import net.openid.appauth.AuthState
 import java.time.Instant
 import java.time.ZoneId
 import java.util.UUID
@@ -84,6 +89,8 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     private val accountRepository: AccountRepository,
     private val accountSettingsFactory: AccountSettings.Factory,
     private val initDefaults: KompaktInitDefaults,
+    private val oAuthGoogle: KompaktOAuthGoogle,
+    private val resourceFinderFactory: DavResourceFinder.Factory,
     private val serviceRepository: DavServiceRepository,
     private val timeFormatRepository: KompaktTimeFormatRepository,
     private val syncConditionsFactory: SyncConditions.Factory,
@@ -154,6 +161,10 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         kompaktAccountSettings.observeReauthNeeded(account)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), readNeedsReauth())
 
+    private val newContactsConsentAlreadyShown: StateFlow<Boolean> =
+        kompaktAccountSettings.observeNewContactsConsentShown(account)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), readNewContactsConsentShown())
+
     private val _reauthPhase = MutableStateFlow(
         if (initialReauth && needsReauth.value) ReauthPhase.PENDING_LAUNCH else ReauthPhase.SHOW_CONTENT
     )
@@ -185,16 +196,29 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             )
         }
 
+    private val showNewContactsConsent: Flow<Boolean> = combine(
+        serviceStates.getValue(KompaktSyncService.CONTACTS),
+        newContactsConsentAlreadyShown
+    ) { contacts, shown -> newContactsConsentVisible(contacts.switch, shown) }
+
+    private val _requestConsent = MutableStateFlow<KompaktSyncService?>(null)
     private val _confirmDisable = MutableStateFlow<KompaktSyncService?>(null)
+
+    private val dialogTriggers: Flow<Triple<Boolean, KompaktSyncService?, KompaktSyncService?>> = combine(
+        showNewContactsConsent,
+        _requestConsent,
+        _confirmDisable
+    ) { newOffer, requested, confirmDisable -> Triple(newOffer, requested, confirmDisable) }
 
     private val dialog: Flow<KompaktLinkedAccountDialog?> = combine(
         needsReauth,
         _showOutOfStorage,
         _showNoInternet,
         _syncFailed,
-        _confirmDisable,
-        ::linkedAccountDialog
-    )
+        dialogTriggers
+    ) { authError, outOfStorage, noInternet, syncFailed, (newContactsConsent, requestConsent, confirmDisable) ->
+        linkedAccountDialog(authError, outOfStorage, noInternet, syncFailed, newContactsConsent, requestConsent, confirmDisable)
+    }
 
     val state: StateFlow<KompaktLinkedAccountState> = combine(
         serviceStates.getValue(KompaktSyncService.CALENDAR),
@@ -277,6 +301,16 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         _showOutOfStorage.value = KompaktStorage.isStorageLow(context)
     }
 
+    fun newContactsConsentShown() {
+        viewModelScope.launch(ioDispatcher) {
+            try {
+                kompaktAccountSettings.setNewContactsConsentShown(account)
+            } catch (e: Exception) {
+                logger.log(Level.WARNING, "Couldn't mark the new Contacts consent shown for $account", e)
+            }
+        }
+    }
+
     fun onReauthLaunchStarted() {
         if (_reauthPhase.value == ReauthPhase.PENDING_LAUNCH) {
             _reauthPhase.value = ReauthPhase.AWAITING_RESULT
@@ -302,10 +336,21 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         viewModelScope.launch(ioDispatcher) {
             // The cell renders ConsentMissing exactly like Off, so its switch reports an enable.
             // Persisting one would arm the periodic worker for a service Google answers 403 for, and
-            // that path never passes the eligibility filter. Requesting the consent is SHP-1151.
-            // Re-read rather than trusting the rendered position, which may be minutes old.
+            // that path never passes the eligibility filter — granting consent is the caller's job,
+            // via the dialog KompaktLinkedAccountScreen shows before this is ever called with
+            // enabled == true for a ConsentMissing service. Re-read rather than trusting the rendered
+            // position, which may be minutes old.
             if (enabled && readSwitch(service) == KompaktSyncSwitch.ConsentMissing)
                 return@launch
+
+            // A plain re-auth requests every scope, so consent for this service can already exist with
+            // no row behind it -- see ensureServiceRow. The switch reads Off, not ConsentMissing, for
+            // exactly that state, so this is the only place left to catch it before arming a worker for
+            // a service that doesn't exist yet.
+            if (enabled && !ensureServiceRow(service)) {
+                logger.warning("Couldn't find a $service for $account; leaving the switch off")
+                return@launch
+            }
 
             // Stop tracking first, so cancelling the run is not reported as its failure. Only Calendar
             // runs are tracked, so another service's toggle must not clear one.
@@ -326,12 +371,17 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         viewModelScope.launch(ioDispatcher) { startSync(KompaktSyncService.entries) }
     }
 
+    fun requestConsent(service: KompaktSyncService) {
+        _requestConsent.value = service
+    }
+
     // The auth error is deliberately not cleared: KEY_NEEDS_REAUTH is cleared only by a successful
     // re-auth, which is why its sheet has every dismiss path locked.
     fun consumeDialog() {
         _showNoInternet.value = false
         _syncFailed.value = false
         _showOutOfStorage.value = false
+        _requestConsent.value = null
         _confirmDisable.value = null
     }
 
@@ -394,10 +444,43 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             outOfStorage = KompaktStorage.isStorageLow(context),
             noInternet = false,
             syncFailed = false,
+            newContactsConsent = false,
+            requestConsent = null,
             confirmDisable = null
         ),
         reauthPhase = _reauthPhase.value
     )
+
+    // Consent-but-no-row is only reachable from a re-auth, never from this screen's own dialog --
+    // KompaktAddConsentModel.apply already runs discovery before that path can persist a grant -- so
+    // discovery here is the exception, not the common case: getByAccountAndType short-circuits it on
+    // every ordinary toggle.
+    private suspend fun ensureServiceRow(service: KompaktSyncService): Boolean {
+        if (serviceRepository.getByAccountAndType(account.name, service.serviceType) != null)
+            return true
+
+        val authState = kompaktAccountSettings.getAuthState(account) ?: return false
+        val discovered = discoverService(service, authState) ?: return false
+        val serviceId = accountRepository.addServiceBlocking(account.name, service, discovered)
+        initDefaults.maybeApply(account, service, serviceId)
+        return true
+    }
+
+    private suspend fun discoverService(
+        service: KompaktSyncService,
+        authState: AuthState
+    ): DavResourceFinder.Configuration.ServiceInfo? {
+        val credentials = Credentials(authState = authState)
+        val config = runInterruptible {
+            resourceFinderFactory
+                .create(oAuthGoogle.baseUri(account.name), credentials)
+                .findInitialConfiguration()
+        }
+        return when (service) {
+            KompaktSyncService.CALENDAR -> config.calDAV
+            KompaktSyncService.CONTACTS -> config.cardDAV
+        }
+    }
 
     private fun readSwitch(service: KompaktSyncService): KompaktSyncSwitch =
         try {
@@ -405,6 +488,13 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         } catch (e: Exception) {
             logger.log(Level.WARNING, "Couldn't read the sync switch for $account", e)
             KompaktSyncSwitch.Off
+        }
+
+    private fun readNewContactsConsentShown(): Boolean =
+        try {
+            kompaktAccountSettings.getNewContactsConsentShown(account)
+        } catch (_: Exception) {
+            true    // fail closed: never nag on a read error
         }
 
     private fun readNeedsReauth(): Boolean =

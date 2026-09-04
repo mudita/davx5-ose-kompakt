@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="calendar_accountsync_dialog_body_nothingwillsynchronizewithyour">Nada se sincronizará com a sua conta Google</string>
+  <string name="calendar_accountsync_dialog_body_sharecalendarandeventsbetween">Partilhe o calendário e os eventos entre a sua conta Google vinculada e o Kompakt</string>
+  <string name="calendar_accountsync_dialog_body_sharecontactsbetweenyourlinked">Partilhe contactos entre a sua conta Google vinculada e o Kompakt</string>
   <string name="calendar_accountsync_dialog_body_synchronizenowtoimportyourselected">Sincronize agora para importar os seus dados Google selecionados</string>
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">Deixará de ver os dados da sua conta Google</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Vincular conta</string>
@@ -8,6 +10,8 @@
   <string name="calendar_accountsync_dialog_h1_accountlinked">Conta vinculada</string>
   <string name="calendar_accountsync_dialog_h1_disablecalendarsync">Desativar sincronização do calendário\?</string>
   <string name="calendar_accountsync_dialog_h1_disablecontactsync">Desativar sincronização de contactos\?</string>
+  <string name="calendar_accountsync_dialog_h1_enablecalendarsync">Ativar sincronização do calendário\?</string>
+  <string name="calendar_accountsync_dialog_h1_enablecontactsync">Ativar sincronização de contactos\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Vincular uma conta Google</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Remover conta\?</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagaintocontinue">Vincule a sua conta novamente para continuar a sincronizar com o Google Calendar</string>
@@ -26,6 +30,7 @@
   <string name="common_button_skip">Ignorar</string>
   <string name="common_button_synchronize">Sincronizar</string>
   <string name="common_dialog_button_cancel">Cancelar</string>
+  <string name="common_dialog_button_enable">Ativar</string>
   <string name="common_dialog_button_later">Mais tarde</string>
   <string name="common_dialog_button_tryagain">Tentar novamente</string>
   <string name="common_error_body_opensettingstocheck">Abrir as definições e verificar se os dados e o Wi-Fi estão ligados</string>

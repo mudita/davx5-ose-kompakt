@@ -21,6 +21,7 @@ import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
 import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.settings.Credentials
 import at.bitfire.davdroid.sync.AutomaticSyncManager
+import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.sync.SyncDataType
 import at.bitfire.davdroid.sync.TasksAppManager
 import at.bitfire.davdroid.sync.account.AccountsCleanupWorker
@@ -123,10 +124,32 @@ class AccountRepository @Inject constructor(
         return account
     }
 
-    suspend fun delete(accountName: String): Boolean {
+    /**
+     * Adds one service to an account that **already exists** — the counterpart to [createBlocking],
+     * which only creates a brand-new account. Used to grant a Calendar or Contacts consent the account
+     * didn't have at link time.
+     *
+     * The caller is responsible for confirming no [Service] row of this [service]'s type already exists
+     * first (e.g. via [DavServiceRepository.getByAccountAndType]) — like the `insertOrReplace` it's built
+     * on, a second call for a type that already has a row replaces it, which is never the intended use
+     * here.
+     */
+    @WorkerThread
+    fun addServiceBlocking(accountName: String, service: KompaktSyncService, info: DavResourceFinder.Configuration.ServiceInfo): Long {
+        val id = insertService(accountName, service.serviceType, info)
+
+        if (service == KompaktSyncService.CONTACTS)
+            accountSettingsFactory.create(fromName(accountName)).setGroupMethod(GroupMethod.GROUP_VCARDS)
+
+        RefreshCollectionsWorker.enqueue(context, id)
+
+        return id
+    }
+
+    suspend fun delete(accountName: String): Boolean = withContext(defaultDispatcher) {
         val account = fromName(accountName)
         // remove account directly (bypassing the authenticator, which is our own)
-        return try {
+        try {
             accountManager.removeAccountExplicitly(account)
 
             // delete address books (= address book accounts)

@@ -93,6 +93,7 @@ class KompaktKoverAggregationPlugin : Plugin<Project> {
                             "*_MembersInjector", "*_MembersInjector\$*",
 
                             "*ScreenKt", "*ScreenKt\$*",
+                            "*Actions", "*Actions\$*",
                             "at.bitfire.davdroid.CoreApp", "at.bitfire.davdroid.CoreApp\$*",
                             "at.bitfire.davdroid.ui.*Activity", "at.bitfire.davdroid.ui.*Activity\$*",
                             "at.bitfire.davdroid.ui.DebugInfoGenerator", "at.bitfire.davdroid.ui.DebugInfoGenerator\$*",
