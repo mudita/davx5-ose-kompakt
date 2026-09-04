@@ -311,8 +311,10 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         viewModelScope.launch(ioDispatcher) {
             // The cell renders ConsentMissing exactly like Off, so its switch reports an enable.
             // Persisting one would arm the periodic worker for a service Google answers 403 for, and
-            // that path never passes the eligibility filter. Requesting the consent is SHP-1151.
-            // Re-read rather than trusting the rendered position, which may be minutes old.
+            // that path never passes the eligibility filter — granting consent is the caller's job,
+            // via the dialog KompaktLinkedAccountScreen shows before this is ever called with
+            // enabled == true for a ConsentMissing service. Re-read rather than trusting the rendered
+            // position, which may be minutes old.
             if (enabled && readSwitch(service) == KompaktSyncSwitch.ConsentMissing)
                 return@launch
 
