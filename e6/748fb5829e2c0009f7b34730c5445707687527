@@ -1,0 +1,26 @@
+CLAUDE.md
+  64b9f3b92aeabf39 169-174
+docs/local-config.md
+  64b9f3b92aeabf39 101-109
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "e6748fb5829e2c0009f7b34730c5445707687527",
+  "prompts": {
+    "64b9f3b92aeabf39": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "74a8f900-f3e2-4572-a852-2de8da7c8522",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 458,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/e0ba79cb0d12c2e788a9932c679eaca1ed3e72ddac14016907b4fc098c784e00"
+    }
+  }
+}

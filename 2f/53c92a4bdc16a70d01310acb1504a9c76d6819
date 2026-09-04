@@ -1,0 +1,25 @@
+CLAUDE.md
+  64b9f3b92aeabf39 169-171
+docs/local-config.md
+  64b9f3b92aeabf39 101-109
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "2f53c92a4bdc16a70d01310acb1504a9c76d6819",
+  "prompts": {
+    "64b9f3b92aeabf39": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "74a8f900-f3e2-4572-a852-2de8da7c8522",
+        "model": "claude-opus-5"
+      },
+      "human_author": null,
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 7,
+      "accepted_lines": 446,
+      "overriden_lines": 0
+    }
+  }
+}
