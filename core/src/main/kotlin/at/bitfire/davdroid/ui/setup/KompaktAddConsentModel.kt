@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runInterruptible
 import net.openid.appauth.AuthState
 import net.openid.appauth.AuthorizationRequest
 import net.openid.appauth.AuthorizationResponse
@@ -169,11 +170,15 @@ class KompaktAddConsentModel @AssistedInject constructor(
         _state.value = AddConsentState.Granted
     }
 
-    private fun discoverService(authState: AuthState): DavResourceFinder.Configuration.ServiceInfo? {
+    private suspend fun discoverService(authState: AuthState): DavResourceFinder.Configuration.ServiceInfo? {
         val credentials = Credentials(authState = authState)
-        val config = resourceFinderFactory
-            .create(oAuthGoogle.baseUri(account.name), credentials)
-            .findInitialConfiguration()
+        // Thread interruption is how DavResourceFinder notices cancellation; without runInterruptible,
+        // cancelling this coroutine leaves the OkHttp calls running to their own timeouts.
+        val config = runInterruptible {
+            resourceFinderFactory
+                .create(oAuthGoogle.baseUri(account.name), credentials)
+                .findInitialConfiguration()
+        }
         return when (service) {
             KompaktSyncService.CALENDAR -> config.calDAV
             KompaktSyncService.CONTACTS -> config.cardDAV
