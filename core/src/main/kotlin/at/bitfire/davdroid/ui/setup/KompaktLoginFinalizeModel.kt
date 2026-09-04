@@ -14,8 +14,6 @@ import at.bitfire.davdroid.di.qualifier.IoDispatcher
 import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
 import at.bitfire.davdroid.settings.KompaktAccountSettings
-import at.bitfire.davdroid.sync.KompaktInitDefaults
-import at.bitfire.davdroid.sync.SyncDataType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
@@ -37,7 +35,6 @@ import kotlin.time.Duration.Companion.milliseconds
 @HiltViewModel
 class KompaktLoginFinalizeModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val initDefaults: KompaktInitDefaults,
     private val kompaktAccountSettings: KompaktAccountSettings,
     private val serviceRepository: DavServiceRepository,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
@@ -64,9 +61,9 @@ class KompaktLoginFinalizeModel @Inject constructor(
             val services = listOf(Service.TYPE_CALDAV, Service.TYPE_CARDDAV)
                 .mapNotNull { type -> serviceRepository.getByAccountAndType(account.name, type) }
 
-            if (services.any { service -> service.type == Service.TYPE_CARDDAV })
-                initDefaults.applySyncInterval(account, SyncDataType.CONTACTS)
-
+            // No defaults application here: KompaktLinkedAccountModel already runs maybeApply for every
+            // service, unconditionally, the moment its screen is composed — which is where this flow
+            // navigates to next.
             if (services.isNotEmpty())
                 withTimeoutOrNull(DISCOVERY_WAIT_MS.milliseconds) {
                     for (service in services)

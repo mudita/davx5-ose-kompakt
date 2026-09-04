@@ -5,8 +5,6 @@
 package at.bitfire.davdroid.ui.setup
 
 import android.accounts.Account
-import android.accounts.AccountManager
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
@@ -16,23 +14,19 @@ import at.bitfire.davdroid.network.OAuthIntegration
 import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.servicedetection.DavResourceFinder
-import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.settings.Credentials
 import at.bitfire.davdroid.settings.KompaktAccountSettings
 import at.bitfire.davdroid.sync.KompaktInitDefaults
 import at.bitfire.davdroid.sync.KompaktSyncService
-import at.bitfire.davdroid.ui.KompaktAuthState
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import net.openid.appauth.AuthState
 import net.openid.appauth.AuthorizationRequest
 import net.openid.appauth.AuthorizationResponse
@@ -42,8 +36,9 @@ import java.util.logging.Logger
 
 /**
  * Drives the Kompakt "add a missing Calendar/Contacts consent" flow for an already-linked [account]:
- * requests only the [service] scope the account doesn't have yet, applies it **in place** on
- * success, and creates the one [at.bitfire.davdroid.db.Service] row that was missing.
+ * re-runs Google authorization, applies the grant **in place** on success, and creates the one
+ * [at.bitfire.davdroid.db.Service] row [service] was missing. Every scope is requested, not just the
+ * missing one — see [KompaktOAuthGoogle.signIn].
  *
  * Unlike [KompaktReauthModel], a different Google account authorizing here is never a switch — see
  * [classifyAddConsentResult] — and unlike a first-time link, discovery for the newly-granted service
@@ -53,7 +48,6 @@ import java.util.logging.Logger
 class KompaktAddConsentModel @AssistedInject constructor(
     @Assisted private val account: Account,
     @Assisted private val service: KompaktSyncService,
-    @ApplicationContext private val context: Context,
     private val accountRepository: AccountRepository,
     private val authService: AuthorizationService,
     private val initDefaults: KompaktInitDefaults,
@@ -89,7 +83,10 @@ class KompaktAddConsentModel @AssistedInject constructor(
          */
         data object Denied : AddConsentState
 
-        /** A technical failure: a different account, or the request/apply step failed. */
+        /**
+         * Something the user can retry: a different Google account, a request or apply step that threw,
+         * or discovery that found no server for the newly granted service.
+         */
         data object Failed : AddConsentState
     }
 
@@ -137,47 +134,54 @@ class KompaktAddConsentModel @AssistedInject constructor(
         }
     }
 
+    // Discovery first, then every write together: a recorded grant whose service has no row is
+    // unrecoverable, because the stored scope stops the switch reading ConsentMissing — the only route
+    // back into this flow — while a service-less data type never gets a switch that can turn on.
     private suspend fun apply(authState: AuthState) {
+        val existingService = serviceRepository.getByAccountAndType(account.name, service.serviceType)
+
+        val serviceId = if (existingService != null) {
+            existingService.id
+        } else {
+            val discovered = discoverService(authState)
+            if (discovered == null) {
+                logger.warning("Discovery found no $service for $account; leaving the grant unrecorded so it can be retried")
+                _state.value = AddConsentState.Failed
+                return
+            }
+            accountRepository.addServiceBlocking(account.name, service, discovered)
+        }
+
         // Through KompaktAccountSettings rather than AccountSettings directly: its change signal is what
         // moves the linked-account switches, and a write around it leaves them showing the old consent.
         kompaktAccountSettings.updateAuthState(account, authState)
-        // Cross-app announcement for the consumers that observe the URI. KompaktAuthStatePublisher
-        // covers re-auth changes only, and this flow doesn't touch KEY_NEEDS_REAUTH.
-        context.contentResolver.notifyChange(KompaktAuthState.CONTENT_URI, null)
+        // The token just obtained carries every scope, so an account parked in the auth-error state is
+        // usable again. This write is also what makes KompaktAuthStateReplicator announce the change to
+        // the other apps on the device.
+        kompaktAccountSettings.setReauthNeeded(account, false)
 
-        if (serviceRepository.getByAccountAndType(account.name, service.serviceType) == null) {
-            val credentials = Credentials(authState = authState)
-            val baseUri = oAuthGoogle.baseUri(account.name)
-            val config = withContext(ioDispatcher) {
-                resourceFinderFactory.create(baseUri, credentials).findInitialConfiguration()
-            }
-            val info = when (service) {
-                KompaktSyncService.CALENDAR -> config.calDAV
-                KompaktSyncService.CONTACTS -> config.cardDAV
-            }
-            // info can be null on a transient discovery failure even though the scope was granted —
-            // accepted, pre-existing risk class: consent is the source of truth, not service-row
-            // existence. Nothing further to do here; the interval below still flips the toggle on,
-            // matching how a first-time link already behaves.
-            if (info != null)
-                accountRepository.addServiceBlocking(account.name, service, info)
-        }
-
-        initDefaults.applySyncInterval(account, service.dataType)
+        // The same primitive every other entry point uses for selection and the Kompakt interval. For a
+        // newly discovered service its collections are already persisted above, so this never waits on
+        // NOT_READY — and unlike a bare interval write, it also selects a primary calendar when this call
+        // is the one that grants Calendar consent, which nothing else in this flow does.
+        initDefaults.maybeApply(account, service, serviceId)
 
         _state.value = AddConsentState.Granted
     }
 
-    private fun readCurrentGrantedServices(): Set<String> =
-        try {
-            val authState = AccountManager.get(context)
-                .getUserData(account, AccountSettings.KEY_AUTH_STATE)
-                ?.let { json -> AuthState.jsonDeserialize(json) }
-            KompaktGrantedServices.fromAuthState(authState)
-        } catch (e: Exception) {
-            logger.log(Level.WARNING, "Couldn't read the current authorization for $account", e)
-            emptySet()
+    private fun discoverService(authState: AuthState): DavResourceFinder.Configuration.ServiceInfo? {
+        val credentials = Credentials(authState = authState)
+        val config = resourceFinderFactory
+            .create(oAuthGoogle.baseUri(account.name), credentials)
+            .findInitialConfiguration()
+        return when (service) {
+            KompaktSyncService.CALENDAR -> config.calDAV
+            KompaktSyncService.CONTACTS -> config.cardDAV
         }
+    }
+
+    private fun readCurrentGrantedServices(): Set<String> =
+        KompaktGrantedServices.fromAuthState(kompaktAccountSettings.getAuthState(account))
 
     /** Retries after [AddConsentState.Failed]: restarts the OAuth step. */
     fun retry() {
