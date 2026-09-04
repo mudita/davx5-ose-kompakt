@@ -1,0 +1,31 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLastSyncFormatter.kt
+  64b9f3b92aeabf39 7-8,11,13-15,17-44
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountModel.kt
+  64b9f3b92aeabf39 81,354-357,360
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLastSyncFormatSource.kt
+  64b9f3b92aeabf39 1-97
+core/src/test/kotlin/at/bitfire/davdroid/ui/account/KompaktLastSyncFormatterTest.kt
+  64b9f3b92aeabf39 11,18-35,51-60,62-63,67-68,72-98,102-125,127-132,135-144
+core/src/test/kotlin/at/bitfire/davdroid/ui/account/KompaktLastSyncFormatSourceTest.kt
+  64b9f3b92aeabf39 1-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "f335fcaa843d39dba5a22915ea25e1acba978dfd",
+  "prompts": {
+    "64b9f3b92aeabf39": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "74a8f900-f3e2-4572-a852-2de8da7c8522",
+        "model": "claude-opus-5"
+      },
+      "human_author": null,
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 7,
+      "accepted_lines": 277,
+      "overriden_lines": 0
+    }
+  }
+}
