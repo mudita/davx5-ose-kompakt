@@ -65,6 +65,9 @@ interface KompaktAccountSettings {
      */
     fun getNewContactsConsentShown(account: Account): Boolean
 
+    /** [getNewContactsConsentShown], re-read on every change. [emitInitial] as in [observeSyncInterval]. */
+    fun observeNewContactsConsentShown(account: Account, emitInitial: Boolean = true): Flow<Boolean>
+
     suspend fun setNewContactsConsentShown(account: Account)
 
     /**
@@ -146,6 +149,9 @@ class KompaktAccountSettingsImpl @Inject constructor(
 
     override fun getNewContactsConsentShown(account: Account) =
         get(account, KEY_NEW_CONTACTS_CONSENT_SHOWN) == FLAG_SET
+
+    override fun observeNewContactsConsentShown(account: Account, emitInitial: Boolean) =
+        observe(account, KEY_NEW_CONTACTS_CONSENT_SHOWN, emitInitial).map { it == FLAG_SET }
 
     override suspend fun setNewContactsConsentShown(account: Account) =
         putRaw(account, KEY_NEW_CONTACTS_CONSENT_SHOWN, FLAG_SET)
