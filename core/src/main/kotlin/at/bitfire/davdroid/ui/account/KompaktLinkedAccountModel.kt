@@ -185,11 +185,14 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             )
         }
 
+    private val _confirmDisable = MutableStateFlow<KompaktSyncService?>(null)
+
     private val dialog: Flow<KompaktLinkedAccountDialog?> = combine(
         needsReauth,
         _showOutOfStorage,
         _showNoInternet,
         _syncFailed,
+        _confirmDisable,
         ::linkedAccountDialog
     )
 
@@ -252,13 +255,9 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         // modal, so we do NOT enqueue a sync here.
         for (service in KompaktSyncService.entries)
             viewModelScope.launch(ioDispatcher) {
-                if (initDefaults.appliedVersion(account, service) >= KompaktInitDefaults.DEFAULTS_VERSION)
-                    return@launch
                 serviceRepository.getServiceFlow(account.name, service.serviceType)
                     .filterNotNull()
                     .collectLatest { serviceRow ->
-                        if (initDefaults.appliedVersion(account, service) >= KompaktInitDefaults.DEFAULTS_VERSION)
-                            return@collectLatest
                         val outcome = initDefaults.maybeApply(account, service, serviceRow.id)
                         if (outcome == KompaktInitDefaults.Outcome.NOT_READY) {
                             RefreshCollectionsWorker
@@ -286,6 +285,17 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     fun onReauthResult() {
         _reauthPhase.value = ReauthPhase.SHOW_CONTENT
+    }
+
+    /** Switching a service off asks first; the answer arrives via [confirmDisable] or [consumeDialog]. */
+    fun requestDisable(service: KompaktSyncService) {
+        _confirmDisable.value = service
+    }
+
+    fun confirmDisable() {
+        val service = _confirmDisable.value ?: return
+        _confirmDisable.value = null
+        setServiceSync(service, false)
     }
 
     fun setServiceSync(service: KompaktSyncService, enabled: Boolean) {
@@ -322,10 +332,11 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         _showNoInternet.value = false
         _syncFailed.value = false
         _showOutOfStorage.value = false
+        _confirmDisable.value = null
     }
 
     fun unlink() {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             accountRepository.delete(account.name)
         }
     }
@@ -382,7 +393,8 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             authError = readNeedsReauth(),
             outOfStorage = KompaktStorage.isStorageLow(context),
             noInternet = false,
-            syncFailed = false
+            syncFailed = false,
+            confirmDisable = null
         ),
         reauthPhase = _reauthPhase.value
     )

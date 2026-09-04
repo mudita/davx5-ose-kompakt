@@ -19,6 +19,7 @@ filter_keys = [
     'calendar_accountsync_dialog_button_syncnow',
     'calendar_accountsync_dialog_h1_accountlinked',
     'calendar_accountsync_dialog_h1_disablecalendarsync',
+    'calendar_accountsync_dialog_h1_disablecontactsync',
     'calendar_accountsync_dialog_h1_linkagoogleaccount',
     'calendar_accountsync_dialog_h1_removeaccount',
     'calendar_accountsync_error_dialog_body_linkyouraccountagaintocontinue',

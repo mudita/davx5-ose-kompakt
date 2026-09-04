@@ -13,7 +13,6 @@ import at.bitfire.davdroid.db.Service
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
 import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
-import at.bitfire.davdroid.sync.KompaktInitDefaults
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
@@ -35,7 +34,6 @@ import kotlin.time.Duration.Companion.milliseconds
 @HiltViewModel
 class KompaktLoginFinalizeModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val initDefaults: KompaktInitDefaults,
     private val serviceRepository: DavServiceRepository,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
@@ -55,9 +53,6 @@ class KompaktLoginFinalizeModel @Inject constructor(
         viewModelScope.launch(ioDispatcher) {
             val services = listOf(Service.TYPE_CALDAV, Service.TYPE_CARDDAV)
                 .mapNotNull { type -> serviceRepository.getByAccountAndType(account.name, type) }
-
-            if (services.any { service -> service.type == Service.TYPE_CARDDAV })
-                initDefaults.applyContactsSyncInterval(account)
 
             if (services.isNotEmpty())
                 withTimeoutOrNull(DISCOVERY_WAIT_MS.milliseconds) {

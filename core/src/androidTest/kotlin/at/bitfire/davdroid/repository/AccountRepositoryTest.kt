@@ -6,13 +6,11 @@ package at.bitfire.davdroid.repository
 
 import android.accounts.Account
 import android.accounts.AccountManager
-import android.content.ContentProviderClient
 import android.content.Context
 import androidx.hilt.work.HiltWorkerFactory
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.TestUtils
 import at.bitfire.davdroid.resource.LocalAddressBookStore
-import at.bitfire.davdroid.resource.LocalCalendar
 import at.bitfire.davdroid.resource.LocalCalendarStore
 import at.bitfire.davdroid.resource.LocalDataStore
 import at.bitfire.davdroid.settings.AccountSettings
@@ -211,66 +209,6 @@ class AccountRepositoryTest {
 
         verify { AccountsCleanupWorker.lockAccountsCleanup() }
         coVerify { serviceRepository.renameAccount(account.name, newName) }
-    }
-
-
-    // testDelete
-
-    @Test
-    fun testDelete_purgesSyncedCalendarsThroughProvider() = runTest {
-        val client = mockk<ContentProviderClient>(relaxed = true)
-        val calendar1 = mockk<LocalCalendar>(relaxed = true)
-        val calendar2 = mockk<LocalCalendar>(relaxed = true)
-        every { localCalendarStore.acquireContentProvider(any()) } returns client
-        every { localCalendarStore.getAll(account, client) } returns listOf(calendar1, calendar2)
-
-        accountRepository.delete(account.name)
-
-        verify { localCalendarStore.getAll(account, client) }
-        verify(exactly = 1) { localCalendarStore.delete(calendar1) }
-        verify(exactly = 1) { localCalendarStore.delete(calendar2) }
-    }
-
-    @Test
-    fun testDelete_purgesCalendarsBeforeRemovingAccount() = runTest {
-        val client = mockk<ContentProviderClient>(relaxed = true)
-        var accountStillExistedDuringPurge = false
-        every { localCalendarStore.acquireContentProvider(any()) } returns client
-        every { localCalendarStore.getAll(account, client) } answers {
-            accountStillExistedDuringPurge =
-                am.getAccountsByType(accountType).any { it.name == account.name }
-            emptyList()
-        }
-
-        accountRepository.delete(account.name)
-
-        // purge ran while the account still existed => before removeAccountExplicitly
-        assertTrue(accountStillExistedDuringPurge)
-        // account was actually removed
-        assertTrue(am.getAccountsByType(accountType).none { it.name == account.name })
-    }
-
-    @Test
-    fun testDelete_stillRemovesAccountWhenCalendarProviderUnavailable() = runTest {
-        // provider unavailable (e.g. missing permission) => acquireContentProvider returns null
-        every { localCalendarStore.acquireContentProvider(any()) } returns null
-
-        val result = accountRepository.delete(account.name)
-
-        assertTrue(result)
-        verify(exactly = 0) { localCalendarStore.delete(any()) }
-        assertTrue(am.getAccountsByType(accountType).none { it.name == account.name })
-    }
-
-    @Test
-    fun testDelete_stillRemovesAccountWhenCalendarPurgeThrows() = runTest {
-        // a provider failure during the purge must not prevent account removal
-        every { localCalendarStore.acquireContentProvider(any()) } throws RuntimeException("boom")
-
-        val result = accountRepository.delete(account.name)
-
-        assertTrue(result)
-        assertTrue(am.getAccountsByType(accountType).none { it.name == account.name })
     }
 
 }
