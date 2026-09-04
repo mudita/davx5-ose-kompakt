@@ -33,8 +33,17 @@
   <string name="common_error_dialog_h1_storageisfull">El almacenamiento está lleno</string>
   <string name="common_label_calendar">Calendario</string>
   <string name="common_label_contacts">Contactos</string>
+  <string name="common_label_fri">Vie</string>
   <string name="common_label_linkedaccount">Cuenta vinculada</string>
+  <string name="common_label_mon">Lun</string>
   <string name="common_label_nointernetconnection">Sin conexión a internet</string>
+  <string name="common_label_sat">Sáb</string>
+  <string name="common_label_sun">Dom</string>
+  <string name="common_label_thu">Jue</string>
+  <string name="common_label_today">Hoy</string>
+  <string name="common_label_tue">Mar</string>
+  <string name="common_label_wed">Mié</string>
+  <string name="common_label_yesterday">Ayer</string>
   <string name="common_status_synchronizing">Sincronizando...</string>
   <string name="settings_twowaygoogle_body_synchronizeyourcalendarandcontacts">Sincroniza el calendario y los contactos con tu cuenta de Google</string>
 </resources>

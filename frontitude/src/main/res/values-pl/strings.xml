@@ -33,8 +33,17 @@
   <string name="common_error_dialog_h1_storageisfull">Pamięć jest pełna</string>
   <string name="common_label_calendar">Kalendarz</string>
   <string name="common_label_contacts">Kontakty</string>
+  <string name="common_label_fri">Pt</string>
   <string name="common_label_linkedaccount">Połączone konto</string>
+  <string name="common_label_mon">Pon</string>
   <string name="common_label_nointernetconnection">Brak połączenia z Internetem</string>
+  <string name="common_label_sat">Sob</string>
+  <string name="common_label_sun">Nd</string>
+  <string name="common_label_thu">Czw</string>
+  <string name="common_label_today">Dzisiaj</string>
+  <string name="common_label_tue">Wt</string>
+  <string name="common_label_wed">Śr</string>
+  <string name="common_label_yesterday">Wczoraj</string>
   <string name="common_status_synchronizing">Synchronizowanie...</string>
   <string name="settings_twowaygoogle_body_synchronizeyourcalendarandcontacts">Synchronizuj kalendarz i kontakty ze swoim kontem Google</string>
 </resources>
