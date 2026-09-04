@@ -1,0 +1,26 @@
+core/src/test/kotlin/at/bitfire/davdroid/network/KompaktGrantedServicesTest.kt
+  5ebbd687c064aaa8 73
+core/src/test/kotlin/at/bitfire/davdroid/network/KompaktOAuthGoogleTest.kt
+  5ebbd687c064aaa8 36,45-46,50-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "4a9a3ce1f04abafab82d8f84eac42307e60f71f1",
+  "prompts": {
+    "5ebbd687c064aaa8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "632f9ecc-fabe-4fb9-bc87-26f1a24c8989",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 12,
+      "total_deletions": 38,
+      "accepted_lines": 438,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/b6ce11762f4821e54ca6798ac5af05cd674904ff60e7bb5af34a5926c8e8cffe"
+    }
+  }
+}
