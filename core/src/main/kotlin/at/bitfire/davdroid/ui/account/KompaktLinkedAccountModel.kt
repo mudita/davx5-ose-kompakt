@@ -19,11 +19,14 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
+import at.bitfire.davdroid.network.KompaktOAuthGoogle
 import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.repository.KompaktTimeFormatRepository
+import at.bitfire.davdroid.servicedetection.DavResourceFinder
 import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
 import at.bitfire.davdroid.settings.AccountSettings
+import at.bitfire.davdroid.settings.Credentials
 import at.bitfire.davdroid.settings.KompaktAccountSettings
 import at.bitfire.davdroid.sync.KompaktInitDefaults
 import at.bitfire.davdroid.sync.KompaktStartSyncUseCase
@@ -58,6 +61,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runInterruptible
+import net.openid.appauth.AuthState
 import java.time.Instant
 import java.time.ZoneId
 import java.util.UUID
@@ -84,6 +89,8 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     private val accountRepository: AccountRepository,
     private val accountSettingsFactory: AccountSettings.Factory,
     private val initDefaults: KompaktInitDefaults,
+    private val oAuthGoogle: KompaktOAuthGoogle,
+    private val resourceFinderFactory: DavResourceFinder.Factory,
     private val serviceRepository: DavServiceRepository,
     private val timeFormatRepository: KompaktTimeFormatRepository,
     private val syncConditionsFactory: SyncConditions.Factory,
@@ -333,6 +340,15 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             if (enabled && readSwitch(service) == KompaktSyncSwitch.ConsentMissing)
                 return@launch
 
+            // A plain re-auth requests every scope, so consent for this service can already exist with
+            // no row behind it -- see ensureServiceRow. The switch reads Off, not ConsentMissing, for
+            // exactly that state, so this is the only place left to catch it before arming a worker for
+            // a service that doesn't exist yet.
+            if (enabled && !ensureServiceRow(service)) {
+                logger.warning("Couldn't find a $service for $account; leaving the switch off")
+                return@launch
+            }
+
             // Stop tracking first, so cancelling the run is not reported as its failure. Only Calendar
             // runs are tracked, so another service's toggle must not clear one.
             if (!enabled && service == KompaktSyncService.CALENDAR)
@@ -429,6 +445,39 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         ),
         reauthPhase = _reauthPhase.value
     )
+
+    // Consent-but-no-row is only reachable from a re-auth, never from this screen's own dialog --
+    // KompaktAddConsentModel.apply already runs discovery before that path can persist a grant -- so
+    // discovery here is the exception, not the common case: getByAccountAndType short-circuits it on
+    // every ordinary toggle.
+    private suspend fun ensureServiceRow(service: KompaktSyncService): Boolean {
+        if (serviceRepository.getByAccountAndType(account.name, service.serviceType) != null)
+            return true
+
+        val authState = kompaktAccountSettings.getAuthState(account) ?: return false
+        val discovered = discoverService(service, authState) ?: return false
+        val serviceId = accountRepository.addServiceBlocking(account.name, service, discovered)
+        initDefaults.maybeApply(account, service, serviceId)
+        return true
+    }
+
+    // Same shape as KompaktAddConsentModel.discoverService: runInterruptible because DavResourceFinder
+    // relies on thread interruption to notice cancellation.
+    private suspend fun discoverService(
+        service: KompaktSyncService,
+        authState: AuthState
+    ): DavResourceFinder.Configuration.ServiceInfo? {
+        val credentials = Credentials(authState = authState)
+        val config = runInterruptible {
+            resourceFinderFactory
+                .create(oAuthGoogle.baseUri(account.name), credentials)
+                .findInitialConfiguration()
+        }
+        return when (service) {
+            KompaktSyncService.CALENDAR -> config.calDAV
+            KompaktSyncService.CONTACTS -> config.cardDAV
+        }
+    }
 
     private fun readSwitch(service: KompaktSyncService): KompaktSyncSwitch =
         try {
