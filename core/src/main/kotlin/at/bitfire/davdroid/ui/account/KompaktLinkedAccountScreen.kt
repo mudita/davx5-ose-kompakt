@@ -66,7 +66,8 @@ data class KompaktLinkedAccountActions(
     val onAccountLinkedDialogDismiss: () -> Unit = {},
     val onReauthorize: () -> Unit = {},
     val onGrantConsent: (serviceType: String) -> Unit = {},
-    val onNewContactsConsentShown: () -> Unit = {}
+    val onNewContactsConsentShown: () -> Unit = {},
+    val onRequestConsent: (KompaktSyncService) -> Unit = {}
 )
 
 /**
@@ -153,7 +154,8 @@ fun KompaktLinkedAccountScreen(
                 onAccountLinkedDialogDismiss = onAccountLinkedDialogDismiss,
                 onReauthorize = onReauthorize,
                 onGrantConsent = onGrantConsent,
-                onNewContactsConsentShown = model::newContactsConsentShown
+                onNewContactsConsentShown = model::newContactsConsentShown,
+                onRequestConsent = model::requestConsent
             ),
             showAccountLinkedDialog = showAccountLinkedDialog
         )
@@ -173,8 +175,6 @@ fun KompaktLinkedAccountContent(
 ) {
     var showUnlinkDialog by remember { mutableStateOf(false) }
     var serviceToDisable by remember { mutableStateOf<KompaktSyncService?>(null) }
-    var showCalendarConsentDialog by remember { mutableStateOf(false) }
-    var showContactsConsentDialog by remember { mutableStateOf(false) }
 
     KompaktTheme {
         Scaffold(
@@ -243,7 +243,7 @@ fun KompaktLinkedAccountContent(
                         onCheckedChange = { enabled ->
                             when {
                                 enabled && state.calendar.switch == KompaktSyncSwitch.ConsentMissing ->
-                                    showCalendarConsentDialog = true
+                                    actions.onRequestConsent(KompaktSyncService.CALENDAR)
                                 enabled -> actions.onToggleService(KompaktSyncService.CALENDAR, true)
                                 else -> serviceToDisable = KompaktSyncService.CALENDAR
                             }
@@ -258,7 +258,7 @@ fun KompaktLinkedAccountContent(
                         onCheckedChange = { enabled ->
                             when {
                                 enabled && state.contacts.switch == KompaktSyncSwitch.ConsentMissing ->
-                                    showContactsConsentDialog = true
+                                    actions.onRequestConsent(KompaktSyncService.CONTACTS)
                                 enabled -> actions.onToggleService(KompaktSyncService.CONTACTS, true)
                                 else -> serviceToDisable = KompaktSyncService.CONTACTS
                             }
@@ -301,22 +301,6 @@ fun KompaktLinkedAccountContent(
             },
             dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
             onDismiss = { serviceToDisable = null }
-        )
-    }
-
-    if (showCalendarConsentDialog) {
-        ConsentDialog(
-            service = KompaktSyncService.CALENDAR,
-            onDismiss = { showCalendarConsentDialog = false },
-            onGrantConsent = actions.onGrantConsent
-        )
-    }
-
-    if (showContactsConsentDialog) {
-        ConsentDialog(
-            service = KompaktSyncService.CONTACTS,
-            onDismiss = { showContactsConsentDialog = false },
-            onGrantConsent = actions.onGrantConsent
         )
     }
 
@@ -383,6 +367,13 @@ fun KompaktLinkedAccountContent(
                 },
                 dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
                 onDismiss = actions.onConsumeDialog
+            )
+
+        is KompaktLinkedAccountDialog.RequestConsent ->
+            ConsentDialog(
+                service = state.dialog.service,
+                onDismiss = actions.onConsumeDialog,
+                onGrantConsent = actions.onGrantConsent
             )
 
         KompaktLinkedAccountDialog.NewContactsConsent ->

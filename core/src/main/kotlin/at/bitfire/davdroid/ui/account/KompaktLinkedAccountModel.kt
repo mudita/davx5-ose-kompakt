@@ -199,14 +199,22 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         newContactsConsentAlreadyShown
     ) { contacts, shown -> newContactsConsentVisible(contacts.switch, shown) }
 
+    private val _requestConsent = MutableStateFlow<KompaktSyncService?>(null)
+
+    private val contactsConsentDialog: Flow<Pair<Boolean, KompaktSyncService?>> = combine(
+        showNewContactsConsent,
+        _requestConsent
+    ) { newOffer, requested -> newOffer to requested }
+
     private val dialog: Flow<KompaktLinkedAccountDialog?> = combine(
         needsReauth,
         _showOutOfStorage,
         _showNoInternet,
         _syncFailed,
-        showNewContactsConsent,
-        ::linkedAccountDialog
-    )
+        contactsConsentDialog
+    ) { authError, outOfStorage, noInternet, syncFailed, (newContactsConsent, requestConsent) ->
+        linkedAccountDialog(authError, outOfStorage, noInternet, syncFailed, newContactsConsent, requestConsent)
+    }
 
     val state: StateFlow<KompaktLinkedAccountState> = combine(
         serviceStates.getValue(KompaktSyncService.CALENDAR),
@@ -344,12 +352,17 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         viewModelScope.launch(ioDispatcher) { startSync(KompaktSyncService.entries) }
     }
 
+    fun requestConsent(service: KompaktSyncService) {
+        _requestConsent.value = service
+    }
+
     // The auth error is deliberately not cleared: KEY_NEEDS_REAUTH is cleared only by a successful
     // re-auth, which is why its sheet has every dismiss path locked.
     fun consumeDialog() {
         _showNoInternet.value = false
         _syncFailed.value = false
         _showOutOfStorage.value = false
+        _requestConsent.value = null
     }
 
     fun unlink() {
@@ -411,7 +424,8 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             outOfStorage = KompaktStorage.isStorageLow(context),
             noInternet = false,
             syncFailed = false,
-            newContactsConsent = false
+            newContactsConsent = false,
+            requestConsent = null
         ),
         reauthPhase = _reauthPhase.value
     )

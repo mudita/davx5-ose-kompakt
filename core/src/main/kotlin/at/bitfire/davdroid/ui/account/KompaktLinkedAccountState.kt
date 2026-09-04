@@ -4,6 +4,7 @@
 
 package at.bitfire.davdroid.ui.account
 
+import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.ui.account.KompaktLinkedAccountModel.ReauthPhase
 
 data class KompaktLinkedAccountState(
@@ -19,7 +20,14 @@ data class KompaktLinkedAccountState(
 
 }
 
-enum class KompaktLinkedAccountDialog { AuthError, OutOfStorage, NoInternet, SyncFailed, NewContactsConsent }
+sealed interface KompaktLinkedAccountDialog {
+    data object AuthError : KompaktLinkedAccountDialog
+    data object OutOfStorage : KompaktLinkedAccountDialog
+    data object NoInternet : KompaktLinkedAccountDialog
+    data object SyncFailed : KompaktLinkedAccountDialog
+    data object NewContactsConsent : KompaktLinkedAccountDialog
+    data class RequestConsent(val service: KompaktSyncService) : KompaktLinkedAccountDialog
+}
 
 // No Calendar guard: linking always sets [alreadyShown] up front (KompaktLoginFinalizeModel does it
 // unconditionally), so any account old enough for Calendar to still read ConsentMissing already has
@@ -30,19 +38,19 @@ internal fun newContactsConsentVisible(
 ): Boolean =
     contacts == KompaktSyncSwitch.ConsentMissing && !alreadyShown
 
-// One field, so at most one sheet renders — newContactsConsent is checked last: it is a dismissible
-// offer, not an error, so any of the other four locks it out rather than stacking behind it.
 internal fun linkedAccountDialog(
     authError: Boolean,
     outOfStorage: Boolean,
     noInternet: Boolean,
     syncFailed: Boolean,
-    newContactsConsent: Boolean
+    newContactsConsent: Boolean,
+    requestConsent: KompaktSyncService?
 ): KompaktLinkedAccountDialog? = when {
     authError -> KompaktLinkedAccountDialog.AuthError
     outOfStorage -> KompaktLinkedAccountDialog.OutOfStorage
     noInternet -> KompaktLinkedAccountDialog.NoInternet
     syncFailed -> KompaktLinkedAccountDialog.SyncFailed
+    requestConsent != null -> KompaktLinkedAccountDialog.RequestConsent(requestConsent)
     newContactsConsent -> KompaktLinkedAccountDialog.NewContactsConsent
     else -> null
 }
