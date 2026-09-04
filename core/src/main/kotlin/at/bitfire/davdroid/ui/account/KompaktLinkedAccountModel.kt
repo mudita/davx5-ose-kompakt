@@ -211,7 +211,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             contacts = contacts,
             dialog = dialog,
             reauthPhase = phase,
-            showNewContactsConsent = newContactsConsentVisible(calendar.switch, contacts.switch, consentShown)
+            showNewContactsConsent = newContactsConsentVisible(contacts.switch, consentShown)
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialState())
 
