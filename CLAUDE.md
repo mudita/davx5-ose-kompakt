@@ -166,8 +166,9 @@ Edges: `app-ose → core → synctools`, `core → frontitude`. One product flav
   the code, which looks fully wired. Check *Reachability on Kompakt* before touching a screen.
 - **Kompakt strings are in `:frontitude`, not in `core`.** All Kompakt copy is `frontitude`'s
   `values*/strings.xml`, used as `import com.mudita.frontitude.R as RFrontitude`. `core`'s own
-  `strings.xml` holds no `kompakt*` entries. The Frontitude project is shared with the calendar app
-  and is named **"Calendar"** (`frontitude/frontituderc.json`).
+  `strings.xml` holds no `kompakt*` entries. This app pulls exactly **one** Frontitude project, named
+  **"Settings"** (`frontitude/frontituderc.json`). In `keys_to_filter.py`, a key that is the prefix of
+  another needs the closing quote ([`docs/local-config.md`](docs/local-config.md#frontitude-strings)).
 - **The OAuth client ID is chosen at runtime from the signing certificate**
   (`KompaktGoogleOAuthClients`). A build signed with an unregistered key silently gets
   `FALLBACK_CLIENT_ID` and sign-in fails at Google, not in our code

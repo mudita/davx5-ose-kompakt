@@ -6,13 +6,10 @@ package at.bitfire.davdroid.ui.account
 
 import android.accounts.Account
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
-import android.text.format.DateFormat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -22,7 +19,6 @@ import at.bitfire.davdroid.di.qualifier.IoDispatcher
 import at.bitfire.davdroid.network.KompaktOAuthGoogle
 import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.repository.DavServiceRepository
-import at.bitfire.davdroid.repository.KompaktTimeFormatRepository
 import at.bitfire.davdroid.servicedetection.DavResourceFinder
 import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
 import at.bitfire.davdroid.settings.AccountSettings
@@ -34,8 +30,8 @@ import at.bitfire.davdroid.sync.KompaktStorage
 import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.sync.KompaktSyncWork
 import at.bitfire.davdroid.sync.SyncConditions
-import at.bitfire.davdroid.util.broadcastReceiverFlow
 import at.bitfire.davdroid.util.combine
+import at.bitfire.davdroid.util.dateformat.KompaktLastSyncFormatSource
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -64,8 +60,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runInterruptible
 import net.openid.appauth.AuthState
-import java.time.Instant
-import java.time.ZoneId
 import java.util.UUID
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -93,7 +87,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     private val oAuthGoogle: KompaktOAuthGoogle,
     private val resourceFinderFactory: DavResourceFinder.Factory,
     private val serviceRepository: DavServiceRepository,
-    private val timeFormatRepository: KompaktTimeFormatRepository,
+    private val lastSyncFormat: KompaktLastSyncFormatSource,
     private val syncConditionsFactory: SyncConditions.Factory,
     private val switches: KompaktServiceSwitch,
     private val lastSyncSource: KompaktServiceLastSync,
@@ -123,13 +117,6 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     // state
 
     private val email: String = account.name
-
-    private val dateTimeFormat = combine(
-        timeFormatRepository.is24HourFormat,
-        broadcastReceiverFlow(context, IntentFilter(Intent.ACTION_LOCALE_CHANGED), immediate = true)
-    ) { _, _ ->
-        lastSyncFormatter(DateFormat.is24HourFormat(context), ZoneId.systemDefault())
-    }
 
     private val _syncFailed = MutableStateFlow(false)
 
@@ -419,11 +406,13 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             .distinctUntilChanged()
 
     private fun lastSyncOf(service: KompaktSyncService): Flow<Reported<String?>> =
-        combine(lastSyncSource.observe(account, service), dateTimeFormat) { reported, format ->
+        combine(
+            lastSyncSource.observe(account, service),
+            lastSyncFormat.formatter
+        ) { reported, formatter ->
             when (reported) {
                 Reported.Pending -> Reported.Pending
-                is Reported.Value ->
-                    Reported.Value(reported.value?.let { format.format(Instant.ofEpochMilli(it)) })
+                is Reported.Value -> Reported.Value(reported.value?.let(formatter::format))
             }
         }
 
