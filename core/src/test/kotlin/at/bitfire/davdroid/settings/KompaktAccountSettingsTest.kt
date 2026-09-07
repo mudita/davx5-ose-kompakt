@@ -172,7 +172,9 @@ class KompaktAccountSettingsTest {
 
     @Test
     fun setSyncInterval_delegatesAndAnnouncesTheStoredValue() = runTest(testDispatcher) {
-        every { accountSettings.setSyncInterval(SyncDataType.EVENTS, 900) } answers {
+        every {
+            accountSettings.setSyncInterval(SyncDataType.EVENTS, 900, delayFirstRun = true)
+        } answers {
             userData[account to AccountSettings.KEY_SYNC_INTERVAL_CALENDARS] = "900"
             true
         }
@@ -180,7 +182,7 @@ class KompaktAccountSettingsTest {
 
         settings.setSyncInterval(account, SyncDataType.EVENTS, 900)
 
-        verify { accountSettings.setSyncInterval(SyncDataType.EVENTS, 900) }
+        verify { accountSettings.setSyncInterval(SyncDataType.EVENTS, 900, delayFirstRun = true) }
         assertEquals(listOf(null, 900L), seen)
     }
 

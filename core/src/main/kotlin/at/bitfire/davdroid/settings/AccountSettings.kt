@@ -165,8 +165,10 @@ class AccountSettings @AssistedInject constructor(
      *
      * @param dataType              data type of the sync interval to set
      * @param seconds               sync interval in seconds; _null_ for no periodic sync
+     * @param delayFirstRun         whether the first periodic run waits a full interval; WorkManager
+     *                              otherwise runs a newly enqueued periodic worker straight away
      */
-    fun setSyncInterval(dataType: SyncDataType, seconds: Long?) {
+    fun setSyncInterval(dataType: SyncDataType, seconds: Long?, delayFirstRun: Boolean = false) {
         val key = when (dataType) {
             SyncDataType.CONTACTS -> KEY_SYNC_INTERVAL_ADDRESSBOOKS
             SyncDataType.EVENTS -> KEY_SYNC_INTERVAL_CALENDARS
@@ -175,7 +177,7 @@ class AccountSettings @AssistedInject constructor(
         val newValue = seconds ?: SYNC_INTERVAL_MANUALLY
         accountManager.setAndVerifyUserData(account, key, newValue.toString())
 
-        automaticSyncManager.updateAutomaticSync(account, dataType)
+        automaticSyncManager.updateAutomaticSync(account, dataType, delayFirstRun)
     }
 
     fun getSyncWifiOnly() =
