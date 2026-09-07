@@ -58,8 +58,7 @@ import com.mudita.mmd.components.text.TextMMD
 
 data class KompaktLinkedAccountActions(
     val onBack: () -> Unit = {},
-    val onToggleService: (KompaktSyncService, Boolean) -> Unit = { _, _ -> },
-    val onRequestDisable: (KompaktSyncService) -> Unit = {},
+    val onRequestServiceToggle: (KompaktSyncService, Boolean) -> Unit = { _, _ -> },
     val onConfirmDisable: () -> Unit = {},
     val onSyncNow: () -> Unit = {},
     val onUnlink: () -> Unit = {},
@@ -68,8 +67,7 @@ data class KompaktLinkedAccountActions(
     val onAccountLinkedDialogDismiss: () -> Unit = {},
     val onReauthorize: () -> Unit = {},
     val onGrantConsent: (serviceType: String) -> Unit = {},
-    val onNewContactsConsentShown: () -> Unit = {},
-    val onRequestConsent: (KompaktSyncService) -> Unit = {}
+    val onNewContactsConsentShown: () -> Unit = {}
 )
 
 /**
@@ -144,8 +142,7 @@ fun KompaktLinkedAccountScreen(
             state = state,
             actions = KompaktLinkedAccountActions(
                 onBack = onBack,
-                onToggleService = model::setServiceSync,
-                onRequestDisable = model::requestDisable,
+                onRequestServiceToggle = model::onRequestServiceToggle,
                 onConfirmDisable = model::confirmDisable,
                 onSyncNow = model::syncNow,
                 onUnlink = model::unlink,
@@ -154,8 +151,7 @@ fun KompaktLinkedAccountScreen(
                 onAccountLinkedDialogDismiss = onAccountLinkedDialogDismiss,
                 onReauthorize = onReauthorize,
                 onGrantConsent = onGrantConsent,
-                onNewContactsConsentShown = model::newContactsConsentShown,
-                onRequestConsent = model::requestConsent
+                onNewContactsConsentShown = model::newContactsConsentShown
             ),
             showAccountLinkedDialog = showAccountLinkedDialog
         )
@@ -240,12 +236,7 @@ fun KompaktLinkedAccountContent(
                         title = stringResource(RFrontitude.string.common_label_calendar),
                         state = state.calendar,
                         onCheckedChange = { enabled ->
-                            when {
-                                enabled && state.calendar.switch == KompaktSyncSwitch.ConsentMissing ->
-                                    actions.onRequestConsent(KompaktSyncService.CALENDAR)
-                                enabled -> actions.onToggleService(KompaktSyncService.CALENDAR, true)
-                                else -> actions.onRequestDisable(KompaktSyncService.CALENDAR)
-                            }
+                            actions.onRequestServiceToggle(KompaktSyncService.CALENDAR, enabled)
                         },
                         onFailureClick = actions.onFailureClick,
                         showDivider = true
@@ -255,12 +246,7 @@ fun KompaktLinkedAccountContent(
                         title = stringResource(RFrontitude.string.common_label_contacts),
                         state = state.contacts,
                         onCheckedChange = { enabled ->
-                            when {
-                                enabled && state.contacts.switch == KompaktSyncSwitch.ConsentMissing ->
-                                    actions.onRequestConsent(KompaktSyncService.CONTACTS)
-                                enabled -> actions.onToggleService(KompaktSyncService.CONTACTS, true)
-                                else -> actions.onRequestDisable(KompaktSyncService.CONTACTS)
-                            }
+                            actions.onRequestServiceToggle(KompaktSyncService.CONTACTS, enabled)
                         },
                         onFailureClick = actions.onFailureClick
                     )

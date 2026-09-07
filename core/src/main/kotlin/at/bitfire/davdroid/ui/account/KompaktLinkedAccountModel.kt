@@ -313,8 +313,20 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         _reauthPhase.value = ReauthPhase.SHOW_CONTENT
     }
 
+    /**
+     * The one entry point a toggle tap calls: decides whether the tap needs consent first, can apply
+     * directly, or needs to confirm a disable, rather than the screen re-deciding it from rendered state.
+     */
+    fun onRequestServiceToggle(service: KompaktSyncService, enabled: Boolean) {
+        when {
+            enabled && readSwitch(service) == KompaktSyncSwitch.ConsentMissing -> requestConsent(service)
+            enabled -> setServiceSync(service, true)
+            else -> requestDisable(service)
+        }
+    }
+
     /** Switching a service off asks first; the answer arrives via [confirmDisable] or [consumeDialog]. */
-    fun requestDisable(service: KompaktSyncService) {
+    private fun requestDisable(service: KompaktSyncService) {
         _confirmDisable.value = service
     }
 
@@ -324,7 +336,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         setServiceSync(service, false)
     }
 
-    fun setServiceSync(service: KompaktSyncService, enabled: Boolean) {
+    private fun setServiceSync(service: KompaktSyncService, enabled: Boolean) {
         viewModelScope.launch(ioDispatcher) {
             // The cell renders ConsentMissing exactly like Off, so its switch reports an enable.
             // Persisting one would arm the periodic worker for a service Google answers 403 for, and
@@ -363,7 +375,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         viewModelScope.launch(ioDispatcher) { startSync(KompaktSyncService.entries) }
     }
 
-    fun requestConsent(service: KompaktSyncService) {
+    private fun requestConsent(service: KompaktSyncService) {
         _requestConsent.value = service
     }
 
