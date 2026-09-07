@@ -1,0 +1,54 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountScreen.kt
+  6240d042982c54ac 72-73,126,132,135,166-167,362-373,548-560
+frontitude/src/main/res/values-de/strings.xml
+  6240d042982c54ac 7,9,18,33
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountModel.kt
+  6240d042982c54ac 207,217,376-393,402,466-467
+core/src/test/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountStateTest.kt
+  6240d042982c54ac 57-100,230-265
+core/src/test/kotlin/at/bitfire/davdroid/util/KompaktFlowCombineTest.kt
+  6240d042982c54ac 31-47
+frontitude/src/main/res/values-it/strings.xml
+  6240d042982c54ac 7,9,18,33
+frontitude/src/main/res/values-pl/strings.xml
+  6240d042982c54ac 7,9,18,33
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountState.kt
+  6240d042982c54ac 28-29,42-52,56-57,66-67,73
+frontitude/src/main/res/values-es/strings.xml
+  6240d042982c54ac 7,9,18,33
+frontitude/src/main/res/values-fr/strings.xml
+  6240d042982c54ac 7,9,18,33
+frontitude/src/main/res/values-pt/strings.xml
+  6240d042982c54ac 7,9,18,33
+frontitude/src/main/res/values-cs/strings.xml
+  6240d042982c54ac 7,9,18,33
+frontitude/src/main/res/values-nl/strings.xml
+  6240d042982c54ac 7,9,18,33
+frontitude/keys_to_filter.py
+  6240d042982c54ac 19,21,30,45
+core/src/main/kotlin/at/bitfire/davdroid/util/KompaktFlowCombine.kt
+  6240d042982c54ac 38-61
+frontitude/src/main/res/values/strings.xml
+  6240d042982c54ac 7,9,18,33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "3b0007f38806bc0e77c909bb9c23b02d8180a26a",
+  "prompts": {
+    "6240d042982c54ac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d25db870-14bf-4ea2-918d-f46b1e2a8cb6",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 9063,
+      "total_deletions": 834,
+      "accepted_lines": 788,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/f65e3a940573909a684b190654c4f412d44460053c437e80701ef4a8996c9ebd"
+    }
+  }
+}
