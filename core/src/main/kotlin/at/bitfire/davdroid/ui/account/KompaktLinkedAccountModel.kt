@@ -162,10 +162,6 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         kompaktAccountSettings.observeReauthNeeded(account)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), readNeedsReauth())
 
-    private val newContactsConsentAlreadyShown: StateFlow<Boolean> =
-        kompaktAccountSettings.observeNewContactsConsentShown(account)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), readNewContactsConsentShown())
-
     private val _reauthPhase = MutableStateFlow(
         if (initialReauth && needsReauth.value) ReauthPhase.PENDING_LAUNCH else ReauthPhase.SHOW_CONTENT
     )
@@ -199,7 +195,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     private val showNewContactsConsent: Flow<Boolean> = combine(
         serviceStates.getValue(KompaktSyncService.CONTACTS),
-        newContactsConsentAlreadyShown
+        kompaktAccountSettings.observeNewContactsConsentShown(account)
     ) { contacts, shown -> newContactsConsentVisible(contacts.switch, shown) }
 
     private val _requestConsent = MutableStateFlow<KompaktSyncService?>(null)
@@ -457,8 +453,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
         val authState = kompaktAccountSettings.getAuthState(account) ?: return false
         val discovered = discoverService(service, authState) ?: return false
-        val serviceId = accountRepository.addServiceBlocking(account.name, service, discovered)
-        initDefaults.maybeApply(account, service, serviceId)
+        accountRepository.addServiceBlocking(account.name, service, discovered)
         return true
     }
 
@@ -484,13 +479,6 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         } catch (e: Exception) {
             logger.log(Level.WARNING, "Couldn't read the sync switch for $account", e)
             KompaktSyncSwitch.Off
-        }
-
-    private fun readNewContactsConsentShown(): Boolean =
-        try {
-            kompaktAccountSettings.getNewContactsConsentShown(account)
-        } catch (_: Exception) {
-            true    // fail closed: never nag on a read error
         }
 
     private fun readNeedsReauth(): Boolean =

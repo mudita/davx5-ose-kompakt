@@ -122,14 +122,10 @@ fun KompaktLinkedAccountScreen(
         )
     }
 
-    val addConsentLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {
+    val onGrantConsent = { serviceType: String ->
         // No result to read: KompaktAddConsentModel.apply() already notified the authStateChanges
         // ContentObserver before this activity finished, so calendar/contactsSwitch have re-read by now.
-    }
-    val onGrantConsent = { serviceType: String ->
-        addConsentLauncher.launch(
+        context.startActivity(
             Intent(context, KompaktLoginActivity::class.java)
                 .putExtra(KompaktLoginActivity.EXTRA_ADD_CONSENT_ACCOUNT_NAME, account.name)
                 .putExtra(KompaktLoginActivity.EXTRA_ADD_CONSENT_SERVICE_TYPE, serviceType)
