@@ -7,6 +7,10 @@
 #
 # Adding an RFrontitude.string.<key> reference means adding the key here too —
 # otherwise the next pull removes the string and the build breaks.
+#
+# An entry matches anywhere in the line, so a key that is the prefix of another
+# key drags that one in too. Such entries carry the closing quote to pin them to
+# one key: 'common_label_sun' alone also keeps common_label_sunday.
 
 filter_keys = [
     '<?xml version="1.0" encoding="utf-8"?>',
@@ -45,8 +49,17 @@ filter_keys = [
     'common_error_dialog_h1_storageisfull',
     'common_label_calendar',
     'common_label_contacts',
+    'common_label_fri"',
     'common_label_linkedaccount',
+    'common_label_mon"',
     'common_label_nointernetconnection',
+    'common_label_sat"',
+    'common_label_sun"',
+    'common_label_thu"',
+    'common_label_today"',
+    'common_label_tue"',
+    'common_label_wed"',
+    'common_label_yesterday"',
     'common_status_synchronizing',
     'settings_twowaygoogle_body_synchronizeyourcalendarandcontacts',
 ]

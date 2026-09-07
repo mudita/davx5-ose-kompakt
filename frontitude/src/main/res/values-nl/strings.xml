@@ -33,8 +33,17 @@
   <string name="common_error_dialog_h1_storageisfull">Uw opslag is vol</string>
   <string name="common_label_calendar">Kalender</string>
   <string name="common_label_contacts">Contacten</string>
+  <string name="common_label_fri">Vr</string>
   <string name="common_label_linkedaccount">Gekoppeld account</string>
+  <string name="common_label_mon">Ma</string>
   <string name="common_label_nointernetconnection">Geen internetverbinding</string>
+  <string name="common_label_sat">Za</string>
+  <string name="common_label_sun">Zon</string>
+  <string name="common_label_thu">Do</string>
+  <string name="common_label_today">Vandaag</string>
+  <string name="common_label_tue">Di</string>
+  <string name="common_label_wed">Wo</string>
+  <string name="common_label_yesterday">Gisteren</string>
   <string name="common_status_synchronizing">Synchroniseren...</string>
   <string name="settings_twowaygoogle_body_synchronizeyourcalendarandcontacts">Synchroniseer je agenda en contacten met je Google-account</string>
 </resources>
