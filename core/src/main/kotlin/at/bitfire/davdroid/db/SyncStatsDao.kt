@@ -19,9 +19,9 @@ interface SyncStatsDao {
     @Query("SELECT * FROM syncstats WHERE collectionId=:id")
     fun getByCollectionIdFlow(id: Long): Flow<List<SyncStats>>
 
-    /** Most recent successful sync time (across all collections and data types), or null if there was none yet. */
-    @Query("SELECT MAX(lastSync) FROM syncstats")
-    suspend fun getLastSyncTime(): Long?
+    /** Most recent successful sync time of one data type (across all collections), or null if there was none yet. */
+    @Query("SELECT MAX(lastSync) FROM syncstats WHERE dataType = :dataType")
+    suspend fun getLastSyncTime(dataType: String): Long?
 
     /** Most recent successful sync time across the collections selected for a service. */
     @Query("SELECT MAX(syncstats.lastSync) FROM syncstats " +

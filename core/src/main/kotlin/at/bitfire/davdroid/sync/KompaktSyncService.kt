@@ -8,6 +8,7 @@ import at.bitfire.davdroid.db.Service
 import at.bitfire.davdroid.db.ServiceType
 import at.bitfire.davdroid.network.KompaktOAuthGoogle
 import net.openid.appauth.AuthState
+import java.util.Locale
 
 enum class KompaktSyncService(
     val dataType: SyncDataType,
@@ -25,7 +26,16 @@ enum class KompaktSyncService(
         dataType = SyncDataType.CONTACTS,
         serviceType = Service.TYPE_CARDDAV,
         scope = KompaktOAuthGoogle.SCOPE_CONTACTS
-    )
+    );
+
+    companion object {
+
+        // Each constant's own name, lowercased, is published in docs/app-integration.md as a value
+        // another app sends over REQUEST_SYNC: renaming one silently turns that app's requests into
+        // no-ops
+        fun fromRequestName(name: String): KompaktSyncService? =
+            runCatching { enumValueOf<KompaktSyncService>(name.uppercase(Locale.ROOT)) }.getOrNull()
+    }
 
 }
 
