@@ -148,8 +148,14 @@ class AccountRepository @Inject constructor(
 
     suspend fun delete(accountName: String): Boolean = withContext(defaultDispatcher) {
         val account = fromName(accountName)
-        // remove account directly (bypassing the authenticator, which is our own)
         try {
+            // cancel maybe running synchronization first, for this account and its address books, so a
+            // running sync can't re-insert data behind the deletion below
+            cancelSyncWork(account)
+            for (addressBookAccount in localAddressBookStore.get().getAddressBookAccounts(account))
+                cancelSyncWork(addressBookAccount)
+
+            // remove account directly (bypassing the authenticator, which is our own)
             accountManager.removeAccountExplicitly(account)
 
             // delete address books (= address book accounts)
@@ -167,6 +173,12 @@ class AccountRepository @Inject constructor(
             logger.log(Level.WARNING, "Couldn't remove account $accountName", e)
             false
         }
+    }
+
+    private fun cancelSyncWork(account: Account) {
+        syncWorkerManager.get().cancelAllWork(account)
+        for (dataType in SyncDataType.entries)
+            syncWorkerManager.get().disablePeriodic(account, dataType)
     }
 
     fun exists(accountName: String): Boolean =
