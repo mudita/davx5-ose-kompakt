@@ -41,7 +41,7 @@ class KompaktOAuthGoogleTest {
     }
 
     @Test
-    fun `signIn request asks for the Calendar and Contacts scopes`() {
+    fun `every request asks for both data scopes and the sign-in scopes`() {
         // pass a customClientId so the request does not depend on the app's signing certificate
         val request = oAuthGoogle.signIn(email = null, customClientId = "test.apps.googleusercontent.com")
 

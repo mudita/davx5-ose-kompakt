@@ -6,7 +6,6 @@ package at.bitfire.davdroid.ui.setup
 
 import android.accounts.AccountManager
 import android.content.Context
-import android.util.Base64
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -25,7 +24,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.launch
 import net.openid.appauth.AuthorizationResponse
 import net.openid.appauth.AuthorizationService
-import org.json.JSONObject
 import java.util.logging.Level
 import java.util.logging.Logger
 
@@ -94,7 +92,7 @@ class KompaktGoogleLoginViewModel @AssistedInject constructor(
                 // This is the only reliable way to get the email on Kompakt where the Android
                 // AccountManager has no Google account registered.
                 val email = authState.lastTokenResponse?.idToken
-                    ?.let { parseEmailFromIdToken(it) }
+                    ?.let { KompaktOAuthGoogle.parseEmailFromIdToken(it) }
                     ?: uiState.emailWithDomain
 
                 uiState = uiState.copy(
@@ -108,17 +106,6 @@ class KompaktGoogleLoginViewModel @AssistedInject constructor(
                 logger.log(Level.WARNING, "Google authentication failed", e)
                 uiState = uiState.copy(error = e.message)
             }
-        }
-    }
-
-    private fun parseEmailFromIdToken(idToken: String): String? {
-        return try {
-            val payloadBase64 = idToken.split(".").getOrNull(1) ?: return null
-            val payloadBytes = Base64.decode(payloadBase64, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
-            val payloadJson = JSONObject(String(payloadBytes, Charsets.UTF_8))
-            payloadJson.optString("email").takeIf { it.isNotBlank() }
-        } catch (_: Exception) {
-            null
         }
     }
 

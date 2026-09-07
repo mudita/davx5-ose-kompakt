@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="calendar_accountsync_dialog_body_nothingwillsynchronizewithyour">Nothing will synchronize with your Google account </string>
+  <string name="calendar_accountsync_dialog_body_sharecalendarandeventsbetween">Share calendar and events between your linked Google Account and Kompakt </string>
+  <string name="calendar_accountsync_dialog_body_sharecontactsbetweenyourlinked">Share contacts between your linked Google Account and Kompakt </string>
   <string name="calendar_accountsync_dialog_body_synchronizenowtoimportyourselected">Syncronize now to import your selected Google data</string>
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">You won’t see data from your Google account any more</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Link account</string>
@@ -8,6 +10,8 @@
   <string name="calendar_accountsync_dialog_h1_accountlinked">Account linked</string>
   <string name="calendar_accountsync_dialog_h1_disablecalendarsync">Disable calendar sync\?</string>
   <string name="calendar_accountsync_dialog_h1_disablecontactsync">Disable contact sync\?</string>
+  <string name="calendar_accountsync_dialog_h1_enablecalendarsync">Enable calendar sync\?</string>
+  <string name="calendar_accountsync_dialog_h1_enablecontactsync">Enable contact sync\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Link a Google account</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Remove account\?</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagaintocontinue">Link your account again to continue synchronizing with Google calendar</string>
@@ -26,6 +30,7 @@
   <string name="common_button_skip">Skip</string>
   <string name="common_button_synchronize">Synchronize</string>
   <string name="common_dialog_button_cancel">Cancel</string>
+  <string name="common_dialog_button_enable">Enable</string>
   <string name="common_dialog_button_later">Later</string>
   <string name="common_dialog_button_tryagain">Try again</string>
   <string name="common_error_body_opensettingstocheck">Open settings to check data and Wi-Fi are switched on</string>

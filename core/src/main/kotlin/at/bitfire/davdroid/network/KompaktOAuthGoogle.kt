@@ -5,11 +5,13 @@
 package at.bitfire.davdroid.network
 
 import android.content.Context
+import android.util.Base64
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import net.openid.appauth.AuthorizationRequest
 import net.openid.appauth.AuthorizationServiceConfiguration
 import net.openid.appauth.ResponseTypeValues
+import org.json.JSONObject
 import java.net.URI
 import java.util.logging.Logger
 import javax.inject.Inject
@@ -35,6 +37,11 @@ class KompaktOAuthGoogle @Inject constructor(
         "https://oauth2.googleapis.com/token".toUri()
     )
 
+    /**
+     * Always asks for every scope. Asking only for a missing one would be pointless: Google's consent
+     * screen already omits what this user has granted before, so a request for both shows just the one
+     * that's new (verified on a Kompakt).
+     */
     fun signIn(email: String?, customClientId: String?): AuthorizationRequest {
         logger.info("Google OAuth signing-key index: ${KompaktGoogleOAuthClients.clientIndex(context)}")
         return AuthorizationRequest.Builder(
@@ -51,5 +58,17 @@ class KompaktOAuthGoogle @Inject constructor(
     companion object {
         const val SCOPE_CALENDAR = "https://www.googleapis.com/auth/calendar"
         const val SCOPE_CONTACTS = "https://www.googleapis.com/auth/carddav"
+
+        fun parseEmailFromIdToken(idToken: String): String? = try {
+            val payloadBase64 = idToken.split(".").getOrNull(1) ?: return null
+            val payloadBytes = Base64.decode(
+                payloadBase64,
+                Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
+            )
+            val payloadJson = JSONObject(String(payloadBytes, Charsets.UTF_8))
+            payloadJson.optString("email").takeIf { it.isNotBlank() }
+        } catch (_: Exception) {
+            null
+        }
     }
 }
