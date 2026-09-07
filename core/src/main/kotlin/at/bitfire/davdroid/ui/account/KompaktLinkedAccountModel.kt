@@ -27,6 +27,7 @@ import at.bitfire.davdroid.sync.KompaktStorage
 import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.sync.KompaktSyncWork
 import at.bitfire.davdroid.sync.SyncConditions
+import at.bitfire.davdroid.util.dateformat.KompaktLastSyncFormatSource
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject

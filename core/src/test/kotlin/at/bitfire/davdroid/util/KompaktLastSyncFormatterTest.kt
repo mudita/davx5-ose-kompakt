@@ -2,8 +2,10 @@
  * Copyright © All Contributors. See LICENSE and AUTHORS in the root directory for details.
  */
 
-package at.bitfire.davdroid.ui.account
+package at.bitfire.davdroid.util
 
+import at.bitfire.davdroid.util.dateformat.KompaktLastSyncWords
+import at.bitfire.davdroid.util.dateformat.formatLastSync
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
