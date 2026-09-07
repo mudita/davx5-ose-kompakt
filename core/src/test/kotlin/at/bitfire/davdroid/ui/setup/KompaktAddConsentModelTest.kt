@@ -14,7 +14,6 @@ import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.servicedetection.DavResourceFinder
 import at.bitfire.davdroid.settings.KompaktAccountSettings
-import at.bitfire.davdroid.sync.KompaktInitDefaults
 import at.bitfire.davdroid.sync.KompaktSyncService
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -55,7 +54,6 @@ class KompaktAddConsentModelTest {
 
     private val accountRepository = mockk<AccountRepository>()
     private val authService = mockk<AuthorizationService>()
-    private val initDefaults = mockk<KompaktInitDefaults>()
     private val kompaktAccountSettings = mockk<KompaktAccountSettings>()
     private val oAuthIntegration = mockk<OAuthIntegration>()
     private val resourceFinderFactory = mockk<DavResourceFinder.Factory>()
@@ -67,7 +65,6 @@ class KompaktAddConsentModelTest {
             service = service,
             accountRepository = accountRepository,
             authService = authService,
-            initDefaults = initDefaults,
             kompaktAccountSettings = kompaktAccountSettings,
             oAuthGoogle = oAuthGoogle,
             oAuthIntegration = oAuthIntegration,
@@ -142,15 +139,13 @@ class KompaktAddConsentModelTest {
 
     @Test
     fun `granting consent for a service that already has a row skips discovery`() = runTest {
-        val existingService = mockk<at.bitfire.davdroid.db.Service> { every { id } returns 42L }
+        val existingService = mockk<at.bitfire.davdroid.db.Service>()
         every { kompaktAccountSettings.getAuthState(account) } returns null
         coEvery { serviceRepository.getByAccountAndType(account.name, Service.TYPE_CALDAV) } returns existingService
         coEvery { oAuthIntegration.authenticate(any(), any()) } returns
             grantedAuthState(KompaktOAuthGoogle.SCOPE_CALENDAR)
         coEvery { kompaktAccountSettings.updateAuthState(account, any()) } returns Unit
         coEvery { kompaktAccountSettings.setReauthNeeded(account, false) } returns Unit
-        coEvery { initDefaults.maybeApply(account, KompaktSyncService.CALENDAR, 42L) } returns
-            KompaktInitDefaults.Outcome.APPLIED
 
         val vm = model(KompaktSyncService.CALENDAR)
         vm.authenticate(mockk())
@@ -202,8 +197,6 @@ class KompaktAddConsentModelTest {
             grantedAuthState(KompaktOAuthGoogle.SCOPE_CALENDAR)
         coEvery { kompaktAccountSettings.updateAuthState(account, any()) } returns Unit
         coEvery { kompaktAccountSettings.setReauthNeeded(account, false) } returns Unit
-        coEvery { initDefaults.maybeApply(account, KompaktSyncService.CALENDAR, 7L) } returns
-            KompaktInitDefaults.Outcome.APPLIED
 
         val vm = model(KompaktSyncService.CALENDAR)
         vm.authenticate(mockk())

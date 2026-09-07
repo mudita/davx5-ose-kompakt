@@ -16,7 +16,6 @@ import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.servicedetection.DavResourceFinder
 import at.bitfire.davdroid.settings.Credentials
 import at.bitfire.davdroid.settings.KompaktAccountSettings
-import at.bitfire.davdroid.sync.KompaktInitDefaults
 import at.bitfire.davdroid.sync.KompaktSyncService
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -51,7 +50,6 @@ class KompaktAddConsentModel @AssistedInject constructor(
     @Assisted private val service: KompaktSyncService,
     private val accountRepository: AccountRepository,
     private val authService: AuthorizationService,
-    private val initDefaults: KompaktInitDefaults,
     private val kompaktAccountSettings: KompaktAccountSettings,
     private val oAuthGoogle: KompaktOAuthGoogle,
     private val oAuthIntegration: OAuthIntegration,
@@ -136,11 +134,7 @@ class KompaktAddConsentModel @AssistedInject constructor(
     }
 
     private suspend fun apply(authState: AuthState) {
-        val existingService = serviceRepository.getByAccountAndType(account.name, service.serviceType)
-
-        val serviceId = if (existingService != null) {
-            existingService.id
-        } else {
+        if (serviceRepository.getByAccountAndType(account.name, service.serviceType) == null) {
             val discovered = discoverService(authState)
             if (discovered == null) {
                 logger.warning("Discovery found no $service for $account; leaving the grant unrecorded so it can be retried")
@@ -157,12 +151,6 @@ class KompaktAddConsentModel @AssistedInject constructor(
         // usable again. This write is also what makes KompaktAuthStateReplicator announce the change to
         // the other apps on the device.
         kompaktAccountSettings.setReauthNeeded(account, false)
-
-        // The same primitive every other entry point uses for selection and the Kompakt interval. For a
-        // newly discovered service its collections are already persisted above, so this never waits on
-        // NOT_READY — and unlike a bare interval write, it also selects a primary calendar when this call
-        // is the one that grants Calendar consent, which nothing else in this flow does.
-        initDefaults.maybeApply(account, service, serviceId)
 
         _state.value = AddConsentState.Granted
     }
