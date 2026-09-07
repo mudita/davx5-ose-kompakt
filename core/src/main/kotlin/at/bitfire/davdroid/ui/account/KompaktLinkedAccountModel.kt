@@ -35,6 +35,7 @@ import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.sync.KompaktSyncWork
 import at.bitfire.davdroid.sync.SyncConditions
 import at.bitfire.davdroid.util.broadcastReceiverFlow
+import at.bitfire.davdroid.util.combine
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -204,21 +205,16 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     private val _requestConsent = MutableStateFlow<KompaktSyncService?>(null)
     private val _confirmDisable = MutableStateFlow<KompaktSyncService?>(null)
 
-    private val dialogTriggers: Flow<Triple<Boolean, KompaktSyncService?, KompaktSyncService?>> = combine(
-        showNewContactsConsent,
-        _requestConsent,
-        _confirmDisable
-    ) { newOffer, requested, confirmDisable -> Triple(newOffer, requested, confirmDisable) }
-
     private val dialog: Flow<KompaktLinkedAccountDialog?> = combine(
         needsReauth,
         _showOutOfStorage,
         _showNoInternet,
         _syncFailed,
-        dialogTriggers
-    ) { authError, outOfStorage, noInternet, syncFailed, (newContactsConsent, requestConsent, confirmDisable) ->
-        linkedAccountDialog(authError, outOfStorage, noInternet, syncFailed, newContactsConsent, requestConsent, confirmDisable)
-    }
+        showNewContactsConsent,
+        _requestConsent,
+        _confirmDisable,
+        ::linkedAccountDialog
+    )
 
     val state: StateFlow<KompaktLinkedAccountState> = combine(
         serviceStates.getValue(KompaktSyncService.CALENDAR),
