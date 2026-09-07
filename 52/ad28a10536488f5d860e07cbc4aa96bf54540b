@@ -1,0 +1,24 @@
+core/src/test/kotlin/at/bitfire/davdroid/ui/account/KompaktAccountProgressUseCaseTest.kt
+  f82f40c8fc19b41d 1-169
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "52ad28a10536488f5d860e07cbc4aa96bf54540b",
+  "prompts": {
+    "f82f40c8fc19b41d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "01c50bb0-f26c-4d4b-8477-b90aceb2cfc2",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 223,
+      "total_deletions": 6,
+      "accepted_lines": 169,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/1385391b326c345a06e17f8678ca64e1c62c4ddf92500ff2f16ce0e74863d4e5"
+    }
+  }
+}
