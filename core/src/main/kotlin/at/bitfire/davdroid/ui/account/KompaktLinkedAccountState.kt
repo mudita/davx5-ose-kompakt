@@ -29,6 +29,7 @@ sealed interface KompaktLinkedAccountDialog {
     data class RequestConsent(val service: KompaktSyncService) : KompaktLinkedAccountDialog
     /** Carries the service so the sheet can name it, rather than the screen remembering which was tapped. */
     data class ConfirmDisable(val service: KompaktSyncService) : KompaktLinkedAccountDialog
+    data object ConfirmUnlink : KompaktLinkedAccountDialog
 }
 
 internal fun newContactsConsentVisible(
@@ -48,7 +49,8 @@ internal fun linkedAccountDialog(
     syncFailed: Boolean,
     newContactsConsent: Boolean = false,
     requestConsent: KompaktSyncService? = null,
-    confirmDisable: KompaktSyncService? = null
+    confirmDisable: KompaktSyncService? = null,
+    confirmUnlink: Boolean = false
 ): KompaktLinkedAccountDialog? = when {
     authError -> KompaktLinkedAccountDialog.AuthError
     outOfStorage -> KompaktLinkedAccountDialog.OutOfStorage
@@ -57,5 +59,6 @@ internal fun linkedAccountDialog(
     requestConsent != null -> KompaktLinkedAccountDialog.RequestConsent(requestConsent)
     newContactsConsent -> KompaktLinkedAccountDialog.NewContactsConsent
     confirmDisable != null -> KompaktLinkedAccountDialog.ConfirmDisable(confirmDisable)
+    confirmUnlink -> KompaktLinkedAccountDialog.ConfirmUnlink
     else -> null
 }
