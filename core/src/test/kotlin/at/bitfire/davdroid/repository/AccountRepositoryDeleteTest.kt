@@ -18,11 +18,11 @@ import at.bitfire.davdroid.sync.TasksAppManager
 import at.bitfire.davdroid.sync.worker.SyncWorkerManager
 import dagger.Lazy
 import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
+import io.mockk.verify
+import io.mockk.verifyOrder
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -78,9 +78,9 @@ class AccountRepositoryDeleteTest {
 
         accountRepository.delete(account.name)
 
-        coVerify { syncWorkerManager.cancelAllWork(account) }
+        verify { syncWorkerManager.cancelAllWork(account) }
         for (dataType in SyncDataType.entries)
-            coVerify(exactly = 1) { syncWorkerManager.disablePeriodic(account, dataType) }
+            verify(exactly = 1) { syncWorkerManager.disablePeriodic(account, dataType) }
     }
 
     @Test
@@ -95,7 +95,7 @@ class AccountRepositoryDeleteTest {
 
         accountRepository.delete(account.name)
 
-        coVerifyOrder {
+        verifyOrder {
             syncWorkerManager.cancelAllWork(account)
             localAddressBookStore.deleteByCollectionId(99L)
         }
@@ -112,9 +112,9 @@ class AccountRepositoryDeleteTest {
         accountRepository.delete(account.name)
 
         for (addressBookAccount in listOf(addressBook1, addressBook2)) {
-            coVerify { syncWorkerManager.cancelAllWork(addressBookAccount) }
+            verify { syncWorkerManager.cancelAllWork(addressBookAccount) }
             for (dataType in SyncDataType.entries)
-                coVerify(exactly = 1) { syncWorkerManager.disablePeriodic(addressBookAccount, dataType) }
+                verify(exactly = 1) { syncWorkerManager.disablePeriodic(addressBookAccount, dataType) }
         }
     }
 
