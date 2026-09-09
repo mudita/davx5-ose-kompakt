@@ -1,0 +1,32 @@
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktSyncAttempt.kt
+  e6f855d2e290bd55 89
+docs/superpowers/plans/2026-09-09-sync-error-handling.md
+  e6f855d2e290bd55 875-877,879-882,886,1007,1214
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktSyncAttemptTest.kt
+  e6f855d2e290bd55 63
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktNetworkAvailability.kt
+  e6f855d2e290bd55 23,25-29,37,42,45-47,51
+docs/superpowers/specs/2026-09-09-sync-error-handling-design.md
+  e6f855d2e290bd55 570-571,575,577,580,582-583,587-598
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "8601dc65a0fed7046d3190adeed2f5ed919abe1d",
+  "prompts": {
+    "e6f855d2e290bd55": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "34724e08-7790-486e-9bec-f561eab4306f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 43,
+      "total_deletions": 55,
+      "accepted_lines": 779,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/530a28079f4f2a5d7fd979f8e014d6e02f17d56dbe2bd6524a88be4e4c7a502c"
+    }
+  }
+}
