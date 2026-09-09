@@ -96,20 +96,47 @@ The re-auth target is the single linked account; the caller does not pass an acc
 Another app on the device (e.g. the Mudita calendar app) can request a sync of the
 linked account by sending a broadcast to DAVx⁵ Mudita.
 
-The request is **throttled**: a sync is only enqueued if the last successful sync finished at least
-**15 minutes** ago (or no successful sync has ever happened). If a successful sync completed less than 15
-minutes ago, the broadcast is a **no‑op**.
+The caller says **which data to sync** — calendar, contacts, or both — with the optional `sync_services`
+extra.
 
-Synchronization is requested **per service**. Each of Calendar and Contacts is enqueued only when the
+A request that names no service syncs **calendar only**. This broadcast was introduced for a single
+integrator, the calendar app, and calendar data was all that was in scope, so an unqualified request
+carries that same meaning. **Contacts are synced only when the caller names them.**
+
+Each requested service is **throttled on its own**: it is only enqueued if *that service's* last
+successful sync finished at least **15 minutes** ago (or it has never synced successfully). A recent
+calendar sync therefore does **not** block a contacts request, and vice versa. If every requested service
+is inside its window, the broadcast is a **no‑op**.
+
+Synchronization is also gated **per service**. Each of Calendar and Contacts is enqueued only when the
 user has that service's sync toggle switched on, has granted its Google permission, and that service is
-configured. A service failing any of those is skipped — so a request may now enqueue **nothing at all**,
-even for a linked and otherwise healthy account.
+configured. A service failing any of those is skipped — so a request may enqueue **nothing at all**, even
+for a linked and otherwise healthy account.
 
 ### Contract
 
 - **Action:** `at.bitfire.davdroid.mudita.action.REQUEST_SYNC`
 - **Target package:** `at.bitfire.davdroid.mudita` (the broadcast must be explicit — set the package)
 - **Permission:** `at.bitfire.davdroid.mudita.permission.TRIGGER_SYNC` — **`signature`** protection level
+- **Extra (optional):** `sync_services` — `String[]`, values `"calendar"` and/or `"contacts"`
+  (`KompaktSyncRequestReceiver.EXTRA_SYNC_SERVICES`; the values are the `KompaktSyncService` constant
+  names, lowercased)
+
+How the extra resolves:
+
+| `sync_services` | Result |
+|---|---|
+| **absent** | calendar only — an unqualified request carries the broadcast's original calendar scope |
+| `["calendar"]` | calendar only |
+| `["contacts"]` | contacts only |
+| `["calendar", "contacts"]` | both |
+| a name that isn't `"calendar"` or `"contacts"` | that name is dropped and logged as a warning |
+| present but no recognised name (e.g. `["todos"]`, or empty) | **no‑op** — nothing is enqueued |
+
+The values are matched **case‑insensitively** (`"Calendar"` works), but send them lowercase — that is the
+documented spelling. An unrecognised request stays a no‑op rather than escalating into a full sync, so a
+misspelling costs a missed sync, not an unexpected one — check logcat for
+`Ignoring unknown sync_services values` if a request seems to do nothing.
 
 ### Conditions that must be met
 
@@ -119,14 +146,14 @@ even for a linked and otherwise healthy account.
 2. The caller must **declare** the permission with `<uses-permission>` (below).
 3. The broadcast must be **explicit** (target package `at.bitfire.davdroid.mudita`); implicit broadcasts for a
    custom action won't be delivered on modern Android.
-4. **At least 15 minutes** must have elapsed since the last successful sync (otherwise the request is
-   silently ignored).
+4. **At least 15 minutes** must have elapsed since the last successful sync **of a requested service**
+   (otherwise that service is silently skipped; if all of them are skipped, the request is a no‑op).
 5. An account must be linked. With no linked account the broadcast is a no‑op.
 6. Normal sync conditions still apply afterwards (e.g. connectivity) — the broadcast only *enqueues* a
    manual sync; it does not bypass the lack of a network.
-7. **At least one service must be eligible.** A service is skipped when its sync toggle is off, when the
-   account has not granted that service's Google permission, or when the service is not configured. If
-   no service qualifies, the broadcast is a no‑op and nothing is enqueued.
+7. **At least one requested service must be eligible.** A service is skipped when its sync toggle is off,
+   when the account has not granted that service's Google permission, or when the service is not
+   configured. If no requested service qualifies, the broadcast is a no‑op and nothing is enqueued.
 
 ### Caller — manifest
 
@@ -137,14 +164,21 @@ even for a linked and otherwise healthy account.
 ### Caller — code
 
 ```kotlin
+// calendar only
 val intent = Intent("at.bitfire.davdroid.mudita.action.REQUEST_SYNC")
     .setPackage("at.bitfire.davdroid.mudita")
+    .putExtra("sync_services", arrayOf("calendar"))
 context.sendBroadcast(intent)
+
+// contacts only
+//     .putExtra("sync_services", arrayOf("contacts"))
+// both
+//     .putExtra("sync_services", arrayOf("calendar", "contacts"))
 ```
 
 ### What happens
 
-If at least 15 minutes have passed since the last successful sync, `KompaktSyncRequestReceiver` (in
+For each requested service whose own 15‑minute window has elapsed, `KompaktSyncRequestReceiver` (in
 DAVx⁵ Mudita) enqueues a one‑time manual sync for every linked account — but **only for the services
 that qualify** (see condition 7 above), so it may enqueue for one service, both, or neither. This is the
 same path used by the in‑app "Synchronize now" button. The "Last synchronization" timestamp updates on
@@ -160,6 +194,10 @@ worker with `CANCEL_AND_REENQUEUE`). A failed manual sync does not reschedule.
 
 - It's a fire‑and‑forget broadcast: there is no result/callback to the caller. Observe the effect via the
   calendar contents / the account screen, not a return value.
+- The caller learns **nothing** about which services were actually enqueued — not which were throttled,
+  which were ineligible, and not whether any ran at all.
+- Requesting one service does not touch the other's throttle window: a calendar‑only request leaves the
+  contacts window where it was.
 - Only one sync per account + data type runs at a time; if a sync is already running, the request is
   coalesced/queued (it won't run a second concurrent sync).
 - Testing from `adb` shell is **not** possible because of the signature permission (shell isn't

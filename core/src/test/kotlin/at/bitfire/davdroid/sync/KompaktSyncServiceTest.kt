@@ -10,6 +10,7 @@ import at.bitfire.davdroid.mockAuthStateWithoutScopes
 import at.bitfire.davdroid.network.KompaktOAuthGoogle
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -55,4 +56,29 @@ class KompaktSyncServiceTest {
         assertFalse(KompaktSyncService.CALENDAR.isConsented(mockAuthStateWithoutScopes()))
     }
 
+    @Test
+    fun resolvesTheNamesPublishedInTheIntegrationDoc() {
+        // These two literals are the cross-app contract. Renaming a constant breaks it silently at
+        // runtime, so this test is what stands between a rename and a broken calendar app.
+        assertEquals(KompaktSyncService.CALENDAR, KompaktSyncService.fromRequestName("calendar"))
+        assertEquals(KompaktSyncService.CONTACTS, KompaktSyncService.fromRequestName("contacts"))
+    }
+
+    @Test
+    fun resolvesEveryServiceFromItsName() {
+        for (service in KompaktSyncService.entries)
+            assertEquals(service, KompaktSyncService.fromRequestName(service.name.lowercase()))
+    }
+
+    @Test
+    fun resolvesANameWhateverItsCase() {
+        assertEquals(KompaktSyncService.CALENDAR, KompaktSyncService.fromRequestName("Calendar"))
+        assertEquals(KompaktSyncService.CALENDAR, KompaktSyncService.fromRequestName("CALENDAR"))
+    }
+
+    @Test
+    fun resolvesNothingForANameItDoesNotKnow() {
+        assertNull(KompaktSyncService.fromRequestName("todos"))
+        assertNull(KompaktSyncService.fromRequestName(""))
+    }
 }
