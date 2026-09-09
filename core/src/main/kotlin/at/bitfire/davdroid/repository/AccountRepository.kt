@@ -156,14 +156,12 @@ class AccountRepository @Inject constructor(
     suspend fun delete(accountName: String): Boolean = withContext(defaultDispatcher) {
         val account = fromName(accountName)
         try {
-            // cancel maybe running synchronization first, for this account and its address books, so a
-            // running sync can't re-insert data behind the deletion below
+            // cancel maybe running synchronization first, so a queued sync doesn't start again for an
+            // account that's about to be removed. (Address-book accounts are never enqueued under their
+            // own identity - see LocalAddressBookStore.create() - so this already covers all sync work;
+            // the actual protection against a sync recreating an address book after this delete is
+            // LocalAddressBookStore.create()'s account-existence check.)
             cancelSyncWork(account)
-            // each address book is its own Android account, with its own sync-work identity -- cancelling only
-            // the main account leaves a running/queued contacts sync free to recreate the address book once its
-            // account is gone but its DB collection row isn't yet (Syncer.createLocalCollections)
-            for (addressBookAccount in localAddressBookStore.get().getAddressBookAccounts(account))
-                cancelSyncWork(addressBookAccount)
 
             // remove account directly (bypassing the authenticator, which is our own)
             accountManager.removeAccountExplicitly(account)

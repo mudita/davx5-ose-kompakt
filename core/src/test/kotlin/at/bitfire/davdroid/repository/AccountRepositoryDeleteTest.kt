@@ -90,7 +90,6 @@ class AccountRepositoryDeleteTest {
     fun `delete cancels all sync work for the account`() = runTest {
         coEvery { serviceRepository.getByAccountAndType(account.name, Service.TYPE_CARDDAV) } returns null
         coEvery { serviceRepository.deleteByAccount(account.name) } returns Unit
-        every { localAddressBookStore.getAddressBookAccounts(account) } returns emptyList()
 
         accountRepository.delete(account.name)
 
@@ -105,7 +104,6 @@ class AccountRepositoryDeleteTest {
         coEvery { collectionRepository.getByService(42L) } returns listOf(collection)
         every { localAddressBookStore.deleteByCollectionId(99L) } returns Unit
         coEvery { serviceRepository.deleteByAccount(account.name) } returns Unit
-        every { localAddressBookStore.getAddressBookAccounts(account) } returns emptyList()
 
         accountRepository.delete(account.name)
 
@@ -116,24 +114,9 @@ class AccountRepositoryDeleteTest {
     }
 
     @Test
-    fun `delete cancels sync work for every address book account too`() = runTest {
-        val addressBook1 = Account("Address book 1", "address_book_type")
-        val addressBook2 = Account("Address book 2", "address_book_type")
-        coEvery { serviceRepository.getByAccountAndType(account.name, Service.TYPE_CARDDAV) } returns null
-        coEvery { serviceRepository.deleteByAccount(account.name) } returns Unit
-        every { localAddressBookStore.getAddressBookAccounts(account) } returns listOf(addressBook1, addressBook2)
-
-        accountRepository.delete(account.name)
-
-        for (addressBookAccount in listOf(addressBook1, addressBook2))
-            verify { syncWorkerManager.cancelAllWork(addressBookAccount) }
-    }
-
-    @Test
     fun `delete schedules a delayed orphaned-contacts cleanup instead of blocking on one`() = runTest {
         coEvery { serviceRepository.getByAccountAndType(account.name, Service.TYPE_CARDDAV) } returns null
         coEvery { serviceRepository.deleteByAccount(account.name) } returns Unit
-        every { localAddressBookStore.getAddressBookAccounts(account) } returns emptyList()
 
         accountRepository.delete(account.name)
 
