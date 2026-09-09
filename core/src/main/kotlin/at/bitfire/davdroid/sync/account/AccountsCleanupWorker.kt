@@ -10,6 +10,7 @@ import android.provider.ContactsContract
 import androidx.annotation.VisibleForTesting
 import androidx.hilt.work.HiltWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -129,6 +130,7 @@ class AccountsCleanupWorker @AssistedInject constructor(
     companion object {
 
         const val NAME = "accounts-cleanup"
+        const val NAME_ONE_TIME = "accounts-cleanup-onetime"
 
         private val mutex = Semaphore(1)
         /**
@@ -140,13 +142,14 @@ class AccountsCleanupWorker @AssistedInject constructor(
         fun unlockAccountsCleanup() = mutex.release()
 
         /**
-         * Enqueues [AccountsCleanupWorker] to be run once, as soon as possible after [delay].
+         * Enqueues [AccountsCleanupWorker] to be run once, as soon as possible after [delay]. Repeated
+         * calls while one is already pending are coalesced into that single pending run.
          */
         fun enqueue(context: Context, delay: Duration = Duration.ZERO) {
             val rq = OneTimeWorkRequestBuilder<AccountsCleanupWorker>()
                 .setInitialDelay(delay.toMillis(), TimeUnit.MILLISECONDS)
                 .build()
-            WorkManager.getInstance(context).enqueue(rq)
+            WorkManager.getInstance(context).enqueueUniqueWork(NAME_ONE_TIME, ExistingWorkPolicy.KEEP, rq)
         }
 
         /**

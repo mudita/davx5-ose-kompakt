@@ -16,6 +16,7 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.ListenableWorker.Result
 import androidx.work.testing.TestListenableWorkerBuilder
+import androidx.work.WorkManager
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.TestUtils
 import at.bitfire.davdroid.db.AppDatabase
@@ -33,6 +34,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.Duration
 import javax.inject.Inject
 
 @HiltAndroidTest
@@ -199,6 +201,16 @@ class AccountsCleanupWorkerTest {
         } finally {
             automation.grantRuntimePermission(packageName, Manifest.permission.WRITE_CONTACTS)
         }
+    }
+
+    @Test
+    fun testEnqueue_coalescesRepeatedCallsWithinDelay() {
+        AccountsCleanupWorker.enqueue(context, delay = Duration.ofSeconds(15))
+        AccountsCleanupWorker.enqueue(context, delay = Duration.ofSeconds(15))
+
+        val workInfos = WorkManager.getInstance(context)
+            .getWorkInfosForUniqueWork(AccountsCleanupWorker.NAME_ONE_TIME).get()
+        assertEquals(1, workInfos.size)
     }
 
 
