@@ -62,6 +62,7 @@ class AccountsCleanupWorkerTest {
     lateinit var addressBookAccountType: String
     lateinit var addressBookAccount: Account
     lateinit var service: Service
+    private var keptRawContactId: Long? = null
 
     @Before
     fun setUp() {
@@ -79,6 +80,7 @@ class AccountsCleanupWorkerTest {
     fun tearDown() {
         // Remove the account here in any case; Nice to have when the test fails
         accountManager.removeAccountExplicitly(addressBookAccount)
+        keptRawContactId?.let { deleteRawContact(it) }
     }
 
 
@@ -176,6 +178,7 @@ class AccountsCleanupWorkerTest {
     fun testCleanUpOrphanedContacts_keepsContactWithAddressBookAccount() {
         assertTrue(accountManager.addAccountExplicitly(addressBookAccount, null, null))
         val rawContactId = insertRawContact(accountName = addressBookAccount.name)
+        keptRawContactId = rawContactId
 
         val worker = TestListenableWorkerBuilder<AccountsCleanupWorker>(context)
             .setWorkerFactory(workerFactory)
@@ -239,5 +242,13 @@ class AccountsCleanupWorkerTest {
             arrayOf(rawContactId.toString()),
             null
         )?.use { cursor -> if (cursor.moveToFirst()) rawContactId else null }
+
+    private fun deleteRawContact(rawContactId: Long) {
+        val uri = ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, rawContactId)
+            .buildUpon()
+            .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
+            .build()
+        context.contentResolver.delete(uri, null, null)
+    }
 
 }
