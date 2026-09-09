@@ -152,6 +152,9 @@ class AccountRepository @Inject constructor(
             // cancel maybe running synchronization first, for this account and its address books, so a
             // running sync can't re-insert data behind the deletion below
             cancelSyncWork(account)
+            // each address book is its own Android account, with its own sync-work identity -- cancelling only
+            // the main account leaves a running/queued contacts sync free to recreate the address book once its
+            // account is gone but its DB collection row isn't yet (Syncer.createLocalCollections)
             for (addressBookAccount in localAddressBookStore.get().getAddressBookAccounts(account))
                 cancelSyncWork(addressBookAccount)
 
@@ -177,8 +180,6 @@ class AccountRepository @Inject constructor(
 
     private fun cancelSyncWork(account: Account) {
         syncWorkerManager.get().cancelAllWork(account)
-        for (dataType in SyncDataType.entries)
-            syncWorkerManager.get().disablePeriodic(account, dataType)
     }
 
     fun exists(accountName: String): Boolean =

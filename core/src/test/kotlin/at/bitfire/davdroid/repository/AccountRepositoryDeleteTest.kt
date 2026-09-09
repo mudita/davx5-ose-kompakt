@@ -13,7 +13,6 @@ import at.bitfire.davdroid.resource.LocalAddressBookStore
 import at.bitfire.davdroid.resource.LocalCalendarStore
 import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.sync.AutomaticSyncManager
-import at.bitfire.davdroid.sync.SyncDataType
 import at.bitfire.davdroid.sync.TasksAppManager
 import at.bitfire.davdroid.sync.worker.SyncWorkerManager
 import dagger.Lazy
@@ -79,8 +78,6 @@ class AccountRepositoryDeleteTest {
         accountRepository.delete(account.name)
 
         verify { syncWorkerManager.cancelAllWork(account) }
-        for (dataType in SyncDataType.entries)
-            verify(exactly = 1) { syncWorkerManager.disablePeriodic(account, dataType) }
     }
 
     @Test
@@ -111,11 +108,8 @@ class AccountRepositoryDeleteTest {
 
         accountRepository.delete(account.name)
 
-        for (addressBookAccount in listOf(addressBook1, addressBook2)) {
+        for (addressBookAccount in listOf(addressBook1, addressBook2))
             verify { syncWorkerManager.cancelAllWork(addressBookAccount) }
-            for (dataType in SyncDataType.entries)
-                verify(exactly = 1) { syncWorkerManager.disablePeriodic(addressBookAccount, dataType) }
-        }
     }
 
 }
