@@ -6,12 +6,15 @@ package at.bitfire.davdroid.sync.account
 
 import android.accounts.Account
 import android.accounts.AccountManager
+import android.Manifest
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.os.Bundle
 import android.provider.ContactsContract
 import androidx.hilt.work.HiltWorkerFactory
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.work.ListenableWorker.Result
 import androidx.work.testing.TestListenableWorkerBuilder
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.TestUtils
@@ -178,6 +181,24 @@ class AccountsCleanupWorkerTest {
         worker.cleanUpOrphanedContacts()
 
         assertNotNull(queryRawContact(rawContactId))
+    }
+
+    @Test
+    fun testDoWork_survivesMissingContactsPermission() {
+        val packageName = context.packageName
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        automation.revokeRuntimePermission(packageName, Manifest.permission.WRITE_CONTACTS)
+        try {
+            val worker = TestListenableWorkerBuilder<AccountsCleanupWorker>(context)
+                .setWorkerFactory(workerFactory)
+                .build()
+
+            val result = worker.doWork()
+
+            assertTrue(result is Result.Success)
+        } finally {
+            automation.grantRuntimePermission(packageName, Manifest.permission.WRITE_CONTACTS)
+        }
     }
 
 

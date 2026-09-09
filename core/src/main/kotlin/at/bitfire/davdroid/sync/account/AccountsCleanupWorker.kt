@@ -50,7 +50,13 @@ class AccountsCleanupWorker @AssistedInject constructor(
         try {
             cleanUpServices()
             cleanUpAddressBooks()
-            cleanUpOrphanedContacts()
+            try {
+                cleanUpOrphanedContacts()
+            } catch (e: SecurityException) {
+                // Contacts permission may not be granted (or may have been revoked) on this device -
+                // don't let that fail the services/address-books cleanup that already ran above.
+                logger.log(Level.WARNING, "Couldn't clean up orphaned contacts, missing permission?", e)
+            }
         } finally {
             unlockAccountsCleanup()
         }
