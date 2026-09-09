@@ -28,6 +28,7 @@ import io.mockk.verifyOrder
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.After
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -121,6 +122,17 @@ class AccountRepositoryDeleteTest {
         accountRepository.delete(account.name)
 
         verify { AccountsCleanupWorker.enqueue(context, delay = Duration.ofSeconds(15)) }
+    }
+
+    @Test
+    fun `delete removes the account even if cancelling sync work fails`() = runTest {
+        coEvery { serviceRepository.getByAccountAndType(account.name, Service.TYPE_CARDDAV) } returns null
+        coEvery { serviceRepository.deleteByAccount(account.name) } returns Unit
+        every { syncWorkerManager.cancelAllWork(account) } throws RuntimeException("boom")
+
+        val result = accountRepository.delete(account.name)
+
+        assertTrue(result)
     }
 
 }
