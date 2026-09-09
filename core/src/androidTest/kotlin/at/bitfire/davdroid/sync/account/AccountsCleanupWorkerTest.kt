@@ -6,8 +6,11 @@ package at.bitfire.davdroid.sync.account
 
 import android.accounts.Account
 import android.accounts.AccountManager
+import android.content.ContentUris
+import android.content.ContentValues
 import android.content.Context
 import android.os.Bundle
+import android.provider.ContactsContract
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.testing.TestListenableWorkerBuilder
 import at.bitfire.davdroid.R
@@ -152,6 +155,32 @@ class AccountsCleanupWorkerTest {
     }
 
 
+    @Test
+    fun testCleanUpOrphanedContacts_deletesContactWithoutAddressBookAccount() {
+        val rawContactId = insertRawContact(accountName = "Orphaned address book")
+
+        val worker = TestListenableWorkerBuilder<AccountsCleanupWorker>(context)
+            .setWorkerFactory(workerFactory)
+            .build()
+        worker.cleanUpOrphanedContacts()
+
+        assertNull(queryRawContact(rawContactId))
+    }
+
+    @Test
+    fun testCleanUpOrphanedContacts_keepsContactWithAddressBookAccount() {
+        assertTrue(accountManager.addAccountExplicitly(addressBookAccount, null, null))
+        val rawContactId = insertRawContact(accountName = addressBookAccount.name)
+
+        val worker = TestListenableWorkerBuilder<AccountsCleanupWorker>(context)
+            .setWorkerFactory(workerFactory)
+            .build()
+        worker.cleanUpOrphanedContacts()
+
+        assertNotNull(queryRawContact(rawContactId))
+    }
+
+
     // helpers
 
     private fun createTestService(): Service {
@@ -159,5 +188,23 @@ class AccountsCleanupWorkerTest {
         val serviceId = db.serviceDao().insertOrReplace(service)
         return db.serviceDao().get(serviceId)!!
     }
+
+    private fun insertRawContact(accountName: String): Long {
+        val values = ContentValues().apply {
+            put(ContactsContract.RawContacts.ACCOUNT_NAME, accountName)
+            put(ContactsContract.RawContacts.ACCOUNT_TYPE, addressBookAccountType)
+        }
+        val uri = context.contentResolver.insert(ContactsContract.RawContacts.CONTENT_URI, values)
+        return ContentUris.parseId(uri!!)
+    }
+
+    private fun queryRawContact(rawContactId: Long): Long? =
+        context.contentResolver.query(
+            ContactsContract.RawContacts.CONTENT_URI,
+            arrayOf(ContactsContract.RawContacts._ID),
+            "${ContactsContract.RawContacts._ID}=?",
+            arrayOf(rawContactId.toString()),
+            null
+        )?.use { cursor -> if (cursor.moveToFirst()) rawContactId else null }
 
 }

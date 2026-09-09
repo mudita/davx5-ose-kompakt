@@ -6,6 +6,7 @@ package at.bitfire.davdroid.sync.account
 
 import android.accounts.AccountManager
 import android.content.Context
+import android.provider.ContactsContract
 import androidx.annotation.VisibleForTesting
 import androidx.hilt.work.HiltWorker
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -23,6 +24,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import java.time.Duration
 import java.util.concurrent.Semaphore
+import java.util.concurrent.TimeUnit
 import java.util.logging.Level
 import java.util.logging.Logger
 
@@ -48,6 +50,7 @@ class AccountsCleanupWorker @AssistedInject constructor(
         try {
             cleanUpServices()
             cleanUpAddressBooks()
+            cleanUpOrphanedContacts()
         } finally {
             unlockAccountsCleanup()
         }
@@ -88,6 +91,34 @@ class AccountsCleanupWorker @AssistedInject constructor(
         }
     }
 
+    /**
+     * Deletes contacts belonging to an address book account which is no longer registered — for
+     * instance, one left behind by a sync that was still writing when its account got removed.
+     */
+    @VisibleForTesting
+    internal fun cleanUpOrphanedContacts() {
+        val addressBookType = context.getString(R.string.account_type_address_book)
+        val validNames = accountManager.getAccountsByType(addressBookType).map { it.name }
+
+        val uri = ContactsContract.RawContacts.CONTENT_URI.buildUpon()
+            .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
+            .build()
+        val where: String
+        val args: Array<String>
+        if (validNames.isEmpty()) {
+            where = "${ContactsContract.RawContacts.ACCOUNT_TYPE}=?"
+            args = arrayOf(addressBookType)
+        } else {
+            val placeholders = validNames.joinToString(",") { "?" }
+            where = "${ContactsContract.RawContacts.ACCOUNT_TYPE}=? AND ${ContactsContract.RawContacts.ACCOUNT_NAME} NOT IN ($placeholders)"
+            args = (listOf(addressBookType) + validNames).toTypedArray()
+        }
+
+        val deleted = context.contentResolver.delete(uri, where, args)
+        if (deleted > 0)
+            logger.info("Deleted $deleted orphaned contact(s)")
+    }
+
 
     companion object {
 
@@ -103,12 +134,13 @@ class AccountsCleanupWorker @AssistedInject constructor(
         fun unlockAccountsCleanup() = mutex.release()
 
         /**
-         * Enqueues [AccountsCleanupWorker] to be run once as soon as possible.
+         * Enqueues [AccountsCleanupWorker] to be run once, as soon as possible after [delay].
          */
-        fun enqueue(context: Context) {
-            // run once
+        fun enqueue(context: Context, delay: Duration = Duration.ZERO) {
             val rq = OneTimeWorkRequestBuilder<AccountsCleanupWorker>()
-            WorkManager.getInstance(context).enqueue(rq.build())
+                .setInitialDelay(delay.toMillis(), TimeUnit.MILLISECONDS)
+                .build()
+            WorkManager.getInstance(context).enqueue(rq)
         }
 
         /**
