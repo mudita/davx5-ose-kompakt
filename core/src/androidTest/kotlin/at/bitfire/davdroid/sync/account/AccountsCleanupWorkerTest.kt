@@ -14,6 +14,7 @@ import android.os.Bundle
 import android.provider.ContactsContract
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.rule.GrantPermissionRule
 import androidx.work.ListenableWorker.Result
 import androidx.work.testing.TestListenableWorkerBuilder
 import androidx.work.WorkManager
@@ -42,6 +43,9 @@ class AccountsCleanupWorkerTest {
 
     @get:Rule
     val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule
+    val permissionRule = GrantPermissionRule.grant(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)!!
 
     @Inject
     lateinit var accountsCleanupWorkerFactory: AccountsCleanupWorker.Factory

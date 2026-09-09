@@ -159,7 +159,7 @@ class AccountRepository @Inject constructor(
             // best-effort: cancel maybe running synchronization so a queued sync doesn't start again for
             // an account that's about to be removed. A failure here must not stop the removal below.
             // (Address-book accounts are never enqueued under their own identity - see
-            // LocalAddressBookStore.create() - so this already covers all sync work; the actual
+            // SyncAdapterImpl.onPerformSync() - so this already covers all sync work; the actual
             // protection against a sync recreating an address book after this delete is
             // LocalAddressBookStore.create()'s account-existence check.)
             try {

@@ -42,7 +42,7 @@ private const val ACCOUNT_TYPE = "test.account.type"
 
 // delete() removed the account but never stopped sync work, unlike rename() which always has: a sync
 // in flight kept running, queued jobs stayed queued, and periodic workers kept firing against an
-// account that no longer existed. These cover the fix, for both the main account and its address books.
+// account that no longer existed. These cover the fix for the main account's sync work.
 @RunWith(RobolectricTestRunner::class)
 @ConscryptMode(ConscryptMode.Mode.OFF)      // required because main project uses Conscrypt, but unit tests do not
 class AccountRepositoryDeleteTest {
