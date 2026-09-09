@@ -264,7 +264,7 @@ class AccountRepository @Inject constructor(
                 throw IllegalStateException("renameAccount returned ${newNameFromApi.name} instead of $newName")
 
             // account renamed, cancel maybe running synchronization of old account
-            syncWorkerManager.get().cancelAllWork(oldAccount)
+            cancelSyncWork(oldAccount)
 
             // disable periodic syncs for old account
             for (dataType in SyncDataType.entries)
