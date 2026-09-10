@@ -17,7 +17,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.util.UUID
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -45,7 +44,7 @@ class KompaktSyncRequestUseCaseTest {
         startSync = mockk()
         coEvery { startSync(any(), any(), any()) } answers {
             started += firstArg<Account>() to secondArg<Collection<KompaktSyncService>>().toList()
-            emptyMap<KompaktSyncService, UUID?>()
+            KompaktSyncStart.NoneEligible
         }
 
         requestSync = KompaktSyncRequestUseCase(accountRepository, syncStatsRepository, startSync)
