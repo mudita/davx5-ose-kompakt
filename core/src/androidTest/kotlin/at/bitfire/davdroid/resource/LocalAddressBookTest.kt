@@ -6,6 +6,7 @@ package at.bitfire.davdroid.resource
 
 import android.Manifest
 import android.accounts.Account
+import android.accounts.AccountManager
 import android.content.ContentProviderClient
 import android.content.ContentUris
 import android.content.Context
@@ -24,6 +25,7 @@ import at.bitfire.synctools.storage.contacts.AddressContract.CachedGroupMembersh
 import at.bitfire.synctools.storage.contacts.AddressContract.GroupColumns
 import at.bitfire.synctools.storage.contacts.AddressContract.asSyncAdapter
 import at.bitfire.synctools.storage.contacts.ContactsBatchOperation
+import at.bitfire.synctools.util.setAndVerifyUserData
 import at.bitfire.synctools.vcard.GroupMethod
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -133,6 +135,30 @@ class LocalAddressBookTest {
             assertEquals(uid, contact2.uid)
             assertEquals("Test Contact", contact2.displayName)
             assertEquals("1234567890", contact2.phoneNumbers.first().component1().text)
+        }
+    }
+
+    /**
+     * Tests whether the identifying user data survives a rename. An address book account without it is
+     * invisible to the account teardown, which looks address books up by exactly these keys — so an
+     * unlink during a rename used to leave the renamed account behind with all of its contacts.
+     */
+    @Test
+    fun test_renameAccount_carriesUserData() {
+        localTestAddressBook.provide(account, provider) { addressBook ->
+            val accountManager = AccountManager.get(context)
+            val before = addressBook.addressBookAccount
+            accountManager.setAndVerifyUserData(before, LocalAddressBook.USER_DATA_ACCOUNT_NAME, account.name)
+            accountManager.setAndVerifyUserData(before, LocalAddressBook.USER_DATA_ACCOUNT_TYPE, account.type)
+            accountManager.setAndVerifyUserData(before, LocalAddressBook.USER_DATA_COLLECTION_ID, "42")
+
+            addressBook.renameAccount("Renamed Address Book")
+
+            val renamed = addressBook.addressBookAccount
+            assertEquals("Renamed Address Book", renamed.name)
+            assertEquals(account.name, accountManager.getUserData(renamed, LocalAddressBook.USER_DATA_ACCOUNT_NAME))
+            assertEquals(account.type, accountManager.getUserData(renamed, LocalAddressBook.USER_DATA_ACCOUNT_TYPE))
+            assertEquals("42", accountManager.getUserData(renamed, LocalAddressBook.USER_DATA_COLLECTION_ID))
         }
     }
 
