@@ -15,6 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import at.bitfire.davdroid.R
+import at.bitfire.davdroid.sync.KompaktSyncFailure
 import at.bitfire.davdroid.ui.composable.KompaktListCell
 import com.mudita.frontitude.R as RFrontitude
 import com.mudita.mmd.components.progress_indicator.CircularProgressIndicatorMMD
@@ -195,7 +196,7 @@ private fun KompaktServiceSyncCell_Synced_Preview() {
 private fun KompaktServiceSyncCell_Failed_Preview() {
     KompaktServiceSyncCell(
         "Calendar",
-        cellPreviewState(KompaktSyncSwitch.On, KompaktSyncStatus.Failed("26.10.2025 11:00")),
+        cellPreviewState(KompaktSyncSwitch.On, KompaktSyncStatus.Failed("26.10.2025 11:00", KompaktSyncFailure.ServerProblem)),
         {}, {}
     )
 }
