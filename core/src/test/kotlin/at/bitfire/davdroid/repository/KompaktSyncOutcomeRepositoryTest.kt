@@ -4,27 +4,20 @@
 
 package at.bitfire.davdroid.repository
 
-import at.bitfire.davdroid.TEST_ACCOUNT_NAME
 import at.bitfire.davdroid.db.AppDatabase
 import at.bitfire.davdroid.db.KompaktSyncOutcome
 import at.bitfire.davdroid.db.KompaktSyncOutcomeDao
-import at.bitfire.davdroid.db.Service
-import at.bitfire.davdroid.mockAccount
 import at.bitfire.davdroid.sync.KompaktSyncFailure
-import at.bitfire.davdroid.sync.KompaktSyncService
-import at.bitfire.davdroid.ui.account.Reported
+import at.bitfire.davdroid.sync.SyncDataType
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -32,109 +25,79 @@ import org.junit.Test
 class KompaktSyncOutcomeRepositoryTest {
 
     private companion object {
-        const val CALDAV_SERVICE_ID = 7L
+        const val SERVICE_ID = 7L
     }
 
-    private val account = mockAccount()
-    private val caldavService =
-        Service(id = CALDAV_SERVICE_ID, accountName = TEST_ACCOUNT_NAME, type = Service.TYPE_CALDAV)
-
-    private val rows = MutableSharedFlow<KompaktSyncOutcome?>(extraBufferCapacity = 8)
-    private val serviceRows = MutableSharedFlow<Service?>(extraBufferCapacity = 8)
-
     private lateinit var dao: KompaktSyncOutcomeDao
-    private lateinit var serviceRepository: DavServiceRepository
     private lateinit var repository: KompaktSyncOutcomeRepository
 
     @Before
     fun setUp() {
         dao = mockk(relaxed = true)
-        every { dao.observe(any(), any()) } returns rows
-
-        serviceRepository = mockk()
-        every { serviceRepository.getServiceFlow(TEST_ACCOUNT_NAME, any()) } returns serviceRows
 
         val db = mockk<AppDatabase>()
         every { db.kompaktSyncOutcomeDao() } returns dao
 
-        repository = KompaktSyncOutcomeRepository(db, serviceRepository)
+        repository = KompaktSyncOutcomeRepository(db)
     }
 
+    // A non-zero id would replace by primary key instead of on the index, leaving one service with two
+    // rows and the cell reading whichever came back first.
     @Test
-    fun `record writes a failure row with id zero, so REPLACE resolves on the unique index`() = runTest {
-        coEvery { serviceRepository.getByAccountAndType(TEST_ACCOUNT_NAME, Service.TYPE_CALDAV) } returns caldavService
-
-        repository.record(account, KompaktSyncService.CALENDAR, KompaktSyncFailure.ServerProblem, manual = true)
+    fun `record writes id zero, so REPLACE resolves on the unique index`() = runTest {
+        repository.record(
+            serviceId = SERVICE_ID,
+            dataType = SyncDataType.EVENTS,
+            succeeded = false,
+            cause = KompaktSyncFailure.ServerProblem.name,
+            trigger = "MANUAL",
+            detail = "detail"
+        )
 
         val written = slot<KompaktSyncOutcome>()
         coVerify { dao.insertOrReplace(capture(written)) }
         assertEquals(0L, written.captured.id)
-        assertEquals(CALDAV_SERVICE_ID, written.captured.serviceId)
-        assertEquals(KompaktSyncService.CALENDAR.dataType.name, written.captured.dataType)
+        assertEquals(SERVICE_ID, written.captured.serviceId)
+        assertEquals(SyncDataType.EVENTS.name, written.captured.dataType)
         assertEquals(false, written.captured.succeeded)
         assertEquals(KompaktSyncFailure.ServerProblem.name, written.captured.cause)
-        assertEquals(KompaktSyncOutcomeRepository.TRIGGER_MANUAL, written.captured.trigger)
+        assertEquals("MANUAL", written.captured.trigger)
+        assertEquals("detail", written.captured.detail)
     }
 
     @Test
-    fun `record writes a success row with no cause`() = runTest {
-        coEvery { serviceRepository.getByAccountAndType(TEST_ACCOUNT_NAME, Service.TYPE_CALDAV) } returns caldavService
+    fun `record stamps the row with the time it was written`() = runTest {
+        val before = System.currentTimeMillis()
 
-        repository.record(account, KompaktSyncService.CALENDAR, cause = null, manual = false)
+        repository.record(
+            serviceId = SERVICE_ID,
+            dataType = SyncDataType.CONTACTS,
+            succeeded = true,
+            cause = null,
+            trigger = "AUTOMATIC",
+            detail = null
+        )
 
         val written = slot<KompaktSyncOutcome>()
         coVerify { dao.insertOrReplace(capture(written)) }
-        assertTrue(written.captured.succeeded)
+        assertTrue(written.captured.at >= before)
         assertEquals(null, written.captured.cause)
-        assertEquals(KompaktSyncOutcomeRepository.TRIGGER_AUTOMATIC, written.captured.trigger)
-    }
-
-    // An account unlinked mid-run cascades the service row away; writing anyway would throw
-    // SQLiteConstraintException out of the worker.
-    @Test
-    fun `record is a no-op when the service row is gone`() = runTest {
-        coEvery { serviceRepository.getByAccountAndType(TEST_ACCOUNT_NAME, Service.TYPE_CALDAV) } returns null
-
-        repository.record(account, KompaktSyncService.CALENDAR, KompaktSyncFailure.Unknown, manual = true)
-
-        coVerify(exactly = 0) { dao.insertOrReplace(any()) }
     }
 
     @Test
-    fun `get returns null when the service row is gone`() = runTest {
-        coEvery { serviceRepository.getByAccountAndType(TEST_ACCOUNT_NAME, Service.TYPE_CARDDAV) } returns null
+    fun `get asks the dao for that service and data type`() = runTest {
+        val row = mockk<KompaktSyncOutcome>()
+        coEvery { dao.get(SERVICE_ID, SyncDataType.CONTACTS.name) } returns row
 
-        assertEquals(null, repository.get(account, KompaktSyncService.CONTACTS))
-        coVerify(exactly = 0) { dao.get(any(), any()) }
+        assertSame(row, repository.get(SERVICE_ID, SyncDataType.CONTACTS))
     }
 
     @Test
-    fun `observe reports Pending first, then the row`() = runTest {
-        val seen = mutableListOf<Reported<KompaktSyncOutcome?>>()
-        val scope = TestScope(UnconfinedTestDispatcher(testScheduler))
-        val job = scope.launch {
-            repository.observe(account, KompaktSyncService.CALENDAR).toList(seen)
-        }
+    fun `observe asks the dao for that service and data type`() {
+        val rows = emptyFlow<KompaktSyncOutcome?>()
+        every { dao.observe(SERVICE_ID, SyncDataType.EVENTS.name) } returns rows
 
-        serviceRows.emit(caldavService)
-        rows.emit(null)
-
-        assertEquals(Reported.Pending, seen.first())
-        assertEquals(Reported.Value(null), seen.last())
-        job.cancel()
+        assertSame(rows, repository.observe(SERVICE_ID, SyncDataType.EVENTS))
     }
 
-    @Test
-    fun `observe reports a null value when the service row is absent`() = runTest {
-        val seen = mutableListOf<Reported<KompaktSyncOutcome?>>()
-        val scope = TestScope(UnconfinedTestDispatcher(testScheduler))
-        val job = scope.launch {
-            repository.observe(account, KompaktSyncService.CONTACTS).toList(seen)
-        }
-
-        serviceRows.emit(null)
-
-        assertEquals(Reported.Value(null), seen.last())
-        job.cancel()
-    }
 }
