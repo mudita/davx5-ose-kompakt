@@ -1,0 +1,24 @@
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktNetworkAvailability.kt
+  eba0eb0262ddb8c8 53-57,62-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "ac7e11a724f5dd48a5fceb73065b3d9beadad8c7",
+  "prompts": {
+    "eba0eb0262ddb8c8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d48eebcc-0cbe-4e2b-b6b5-fc6ec16160fd",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 13,
+      "total_deletions": 0,
+      "accepted_lines": 13,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/8133cd9e4cc433ebc0345714e27002684bd3a91752f2f163a036732618578730"
+    }
+  }
+}
