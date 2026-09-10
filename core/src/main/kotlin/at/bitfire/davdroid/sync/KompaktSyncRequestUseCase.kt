@@ -28,11 +28,13 @@ class KompaktSyncRequestUseCase @Inject constructor(
         if (allowed.isEmpty())
             return
 
-        for (account in accountRepository.getAll())
-            // No discovery wait: a receiver has no lifecycle to block on. A service whose toggle is
-            // off, whose consent is missing or which is not configured is skipped, so this may
-            // enqueue nothing at all.
-            startSync(account, allowed, awaitDiscovery = false)
+        for (account in accountRepository.getAll()) {
+            // No discovery wait: a receiver has no lifecycle to block on. Every precondition lives in
+            // the use case, so this may enqueue nothing at all -- see docs/app-integration.md.
+            val start = startSync(account, allowed, awaitDiscovery = false)
+            if (start !is KompaktSyncStart.Started)
+                logger.info("Nothing enqueued for $account: $start")
+        }
     }
 
     // Per service, so a calendar sync a minute ago cannot swallow a contacts request.
