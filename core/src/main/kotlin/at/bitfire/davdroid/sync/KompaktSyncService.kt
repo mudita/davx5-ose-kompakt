@@ -35,6 +35,11 @@ enum class KompaktSyncService(
         // no-ops
         fun fromRequestName(name: String): KompaktSyncService? =
             runCatching { enumValueOf<KompaktSyncService>(name.uppercase(Locale.ROOT)) }.getOrNull()
+
+        // TASKS has no Kompakt service, so a tasks run maps to null and is left out of everything
+        // keyed by this enum.
+        fun fromDataType(dataType: SyncDataType): KompaktSyncService? =
+            entries.firstOrNull { it.dataType == dataType }
     }
 
 }
