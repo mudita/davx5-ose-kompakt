@@ -43,6 +43,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
+import at.bitfire.davdroid.sync.KompaktSyncFailure
 import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.ui.KompaktTypography900
 import at.bitfire.davdroid.ui.account.KompaktLinkedAccountModel.ReauthPhase
@@ -65,7 +66,8 @@ data class KompaktLinkedAccountActions(
     val onRequestUnlink: () -> Unit = {},
     val onConfirmUnlink: () -> Unit = {},
     val onConsumeDialog: () -> Unit = {},
-    val onFailureClick: () -> Unit = {},
+    val onFailureClick: (KompaktSyncService) -> Unit = {},
+    val onRetry: (Set<KompaktSyncService>) -> Unit = {},
     val onAccountLinkedDialogDismiss: () -> Unit = {},
     val onReauthorize: () -> Unit = {},
     val onGrantConsent: (serviceType: String) -> Unit = {},
@@ -158,7 +160,8 @@ fun KompaktLinkedAccountScreen(
                 onRequestUnlink = model::requestUnlink,
                 onConfirmUnlink = model::confirmUnlink,
                 onConsumeDialog = model::consumeDialog,
-                onFailureClick = model::consumeDialog,
+                onFailureClick = model::explainFailure,
+                onRetry = model::retry,
                 onAccountLinkedDialogDismiss = onAccountLinkedDialogDismiss,
                 onReauthorize = onReauthorize,
                 onGrantConsent = onGrantConsent,
@@ -248,7 +251,7 @@ fun KompaktLinkedAccountContent(
                         onCheckedChange = { enabled ->
                             actions.onRequestServiceToggle(KompaktSyncService.CALENDAR, enabled)
                         },
-                        onFailureClick = actions.onFailureClick,
+                        onFailureClick = { actions.onFailureClick(KompaktSyncService.CALENDAR) },
                         showDivider = true
                     )
 
@@ -258,7 +261,7 @@ fun KompaktLinkedAccountContent(
                         onCheckedChange = { enabled ->
                             actions.onRequestServiceToggle(KompaktSyncService.CONTACTS, enabled)
                         },
-                        onFailureClick = actions.onFailureClick
+                        onFailureClick = { actions.onFailureClick(KompaktSyncService.CONTACTS) }
                     )
                 }
             }
@@ -281,7 +284,7 @@ fun KompaktLinkedAccountContent(
         )
     }
 
-    when (state.dialog) {
+    when (val dialog = state.dialog) {
         KompaktLinkedAccountDialog.AuthError ->
             // token expired / access revoked: persistent until re-auth succeeds. Offer re-linking
             // (in place, keeping local data), or unlink and go back to the home screen.
@@ -315,19 +318,25 @@ fun KompaktLinkedAccountContent(
                 icon = painterResource(R.drawable.ic_kompakt_alert)
             )
 
-        KompaktLinkedAccountDialog.SyncFailed ->
+        is KompaktLinkedAccountDialog.SyncFailed ->
             KompaktModalSheet(
                 onDismissRequest = actions.onConsumeDialog,
                 title = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_h1_accountsyncfailed),
                 text = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour),
                 icon = painterResource(R.drawable.ic_kompakt_alert),
                 confirmLabel = stringResource(RFrontitude.string.common_dialog_button_tryagain),
-                onConfirm = {
-                    actions.onConsumeDialog()
-                    actions.onSyncNow()
-                },
+                // Only what failed: the other service already has fresh data, and re-syncing it would
+                // cost a second worker and push the periodic schedule back another interval.
+                onConfirm = { actions.onRetry(dialog.retry) },
                 dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
                 onDismiss = actions.onConsumeDialog
+            )
+
+        is KompaktLinkedAccountDialog.ExplainFailure ->
+            KompaktSyncFailureSheet(
+                cause = dialog.cause,
+                onRetry = { actions.onRetry(setOf(dialog.service)) },
+                onDismissRequest = actions.onConsumeDialog
             )
 
         KompaktLinkedAccountDialog.ImportServiceNow ->
@@ -511,7 +520,7 @@ private fun KompaktLinkedAccountContent_MixedSyncingAndSynced_Preview() {
 private fun KompaktLinkedAccountContent_FailedAndNeverSynced_Preview() {
     KompaktLinkedAccountContent(
         state = previewState(
-            on(KompaktSyncStatus.Failed("26.10.2025 11:00")),
+            on(KompaktSyncStatus.Failed("26.10.2025 11:00", KompaktSyncFailure.ServerProblem)),
             on(KompaktSyncStatus.NeverSynced)
         ),
         actions = KompaktLinkedAccountActions(),
