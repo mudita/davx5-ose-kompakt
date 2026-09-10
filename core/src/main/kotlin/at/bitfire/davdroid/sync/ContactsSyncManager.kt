@@ -373,8 +373,7 @@ class ContactsSyncManager @AssistedInject constructor(
     // helpers
 
     private fun processCard(fileName: String, eTag: String, reader: Reader, downloader: Contact.Downloader) {
-        // checked again here, not only before the download: this batch may have been fetched before the
-        // account was removed, and writing it would leave contacts behind an unlink
+        // cheap early-out before the photo download below; the write itself is checked again
         requireAccountExists()
 
         logger.info("Processing CardDAV resource $fileName")
@@ -398,6 +397,10 @@ class ContactsSyncManager @AssistedInject constructor(
         }
 
         groupStrategy.verifyContactBeforeSaving(newData)
+
+        // the photo download above can take seconds, so an unlink can land between the check at the top
+        // of this method and the writes below
+        requireAccountExists()
 
         var updated: LocalAddress? = null
 

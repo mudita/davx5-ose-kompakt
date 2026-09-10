@@ -161,14 +161,21 @@ class AccountRepository @Inject constructor(
             // remove account directly (bypassing the authenticator, which is our own)
             accountManager.removeAccountExplicitly(account)
 
-            // delete address books (= address book accounts), by owner account first: an address book
-            // whose collection row is stale, duplicated or already gone is invisible to the per-collection
-            // lookup below, and used to survive the unlink with all of its contacts
-            localAddressBookStore.get().deleteByAccount(account)
-            serviceRepository.getByAccountAndType(accountName, Service.TYPE_CARDDAV)?.let { service ->
-                collectionRepository.getByService(service.id).forEach { collection ->
-                    localAddressBookStore.get().deleteByCollectionId(collection.id)
+            // delete address books (= address book accounts). Best-effort, like the cancellation above:
+            // the account itself is already gone, so a failure here must not skip the database cleanup
+            // below and report the whole unlink as failed.
+            try {
+                // by owner account first: an address book whose collection row is stale, duplicated or
+                // already gone is invisible to the per-collection lookup, and used to survive the
+                // unlink with all of its contacts
+                localAddressBookStore.get().deleteByAccount(account)
+                serviceRepository.getByAccountAndType(accountName, Service.TYPE_CARDDAV)?.let { service ->
+                    collectionRepository.getByService(service.id).forEach { collection ->
+                        localAddressBookStore.get().deleteByCollectionId(collection.id)
+                    }
                 }
+            } catch (e: Exception) {
+                logger.log(Level.WARNING, "Couldn't purge address books of $accountName, removing account anyway", e)
             }
 
             // delete from database
