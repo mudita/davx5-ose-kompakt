@@ -5,7 +5,6 @@
 package at.bitfire.davdroid.sync
 
 import android.accounts.Account
-import android.accounts.AccountManager
 import android.content.ContentProviderClient
 import android.text.format.Formatter
 import at.bitfire.dav4jvm.okhttp.DavAddressBook
@@ -33,7 +32,6 @@ import at.bitfire.davdroid.resource.LocalResource
 import at.bitfire.davdroid.resource.SyncState
 import at.bitfire.davdroid.resource.workaround.ContactDirtyVerifier
 import at.bitfire.davdroid.settings.AccountSettings
-import at.bitfire.davdroid.sync.account.InvalidAccountException
 import at.bitfire.davdroid.sync.groups.CategoriesStrategy
 import at.bitfire.davdroid.sync.groups.VCard4Strategy
 import at.bitfire.davdroid.util.DavUtils
@@ -142,8 +140,6 @@ class ContactsSyncManager @AssistedInject constructor(
     companion object {
         infix fun <T> Set<T>.disjunct(other: Set<T>) = (this - other) union (other - this)
     }
-
-    private val accountManager by lazy { AccountManager.get(context) }
 
     private val accountSettings = accountSettingsFactory.create(account)
 
@@ -377,12 +373,9 @@ class ContactsSyncManager @AssistedInject constructor(
     // helpers
 
     private fun processCard(fileName: String, eTag: String, reader: Reader, downloader: Contact.Downloader) {
-        /* Cancelling the sync work does not interrupt a sync that is already running, so an unlink can
-        happen while this one keeps processing an already downloaded batch. Without this check its
-        contacts are written into an address book that is being torn down, and outlive it.
-        SyncManager and Syncer both already handle InvalidAccountException as "account was removed". */
-        if (!accountManager.getAccountsByType(account.type).contains(account))
-            throw InvalidAccountException(account)
+        // checked again here, not only before the download: this batch may have been fetched before the
+        // account was removed, and writing it would leave contacts behind an unlink
+        requireAccountExists()
 
         logger.info("Processing CardDAV resource $fileName")
 
