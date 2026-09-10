@@ -4,77 +4,50 @@
 
 package at.bitfire.davdroid.repository
 
-import android.accounts.Account
 import at.bitfire.davdroid.db.AppDatabase
 import at.bitfire.davdroid.db.KompaktSyncOutcome
-import at.bitfire.davdroid.sync.KompaktSyncFailure
-import at.bitfire.davdroid.sync.KompaktSyncService
-import at.bitfire.davdroid.ui.account.Reported
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import at.bitfire.davdroid.sync.SyncDataType
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import javax.inject.Inject
 
-class KompaktSyncOutcomeRepository @Inject constructor(
-    db: AppDatabase,
-    private val serviceRepository: DavServiceRepository
-) {
+/**
+ * How the last sync attempt for one service and data type ended. Keyed by service row id, like
+ * [DavSyncStatsRepository]: resolving an account to that row is the caller's job.
+ */
+class KompaktSyncOutcomeRepository @Inject constructor(db: AppDatabase) {
 
     private val dao = db.kompaktSyncOutcomeDao()
 
     /**
-     * Records how the last sync attempt for [service] ended. A `null` [cause] means it succeeded.
-     *
-     * Does nothing when the service row is gone: an account unlinked during a sync has already
-     * cascaded it away, and the insert would then fail the foreign key inside the worker.
+     * Always inserts with `id = 0`, so Room binds NULL for the autoGenerate primary key and the
+     * conflict lands on the unique service-and-data-type index instead of replacing by primary key.
      */
     suspend fun record(
-        account: Account,
-        service: KompaktSyncService,
-        cause: KompaktSyncFailure?,
-        manual: Boolean,
-        detail: String? = null
+        serviceId: Long,
+        dataType: SyncDataType,
+        succeeded: Boolean,
+        cause: String?,
+        trigger: String,
+        detail: String?
     ) {
-        val serviceRow = serviceRepository.getByAccountAndType(account.name, service.serviceType) ?: return
         dao.insertOrReplace(
             KompaktSyncOutcome(
                 id = 0,
-                serviceId = serviceRow.id,
-                dataType = service.dataType.name,
+                serviceId = serviceId,
+                dataType = dataType.name,
                 at = System.currentTimeMillis(),
-                succeeded = cause == null,
-                cause = cause?.name,
-                trigger = if (manual) TRIGGER_MANUAL else TRIGGER_AUTOMATIC,
+                succeeded = succeeded,
+                cause = cause,
+                trigger = trigger,
                 detail = detail
             )
         )
     }
 
-    suspend fun get(account: Account, service: KompaktSyncService): KompaktSyncOutcome? {
-        val serviceRow = serviceRepository.getByAccountAndType(account.name, service.serviceType) ?: return null
-        return dao.get(serviceRow.id, service.dataType.name)
-    }
+    suspend fun get(serviceId: Long, dataType: SyncDataType): KompaktSyncOutcome? =
+        dao.get(serviceId, dataType.name)
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    internal fun observe(account: Account, service: KompaktSyncService): Flow<Reported<KompaktSyncOutcome?>> =
-        serviceRepository.getServiceFlow(account.name, service.serviceType)
-            .flatMapLatest { serviceRow ->
-                if (serviceRow == null)
-                    flowOf<Reported<KompaktSyncOutcome?>>(Reported.Value(null))
-                else
-                    dao.observe(serviceRow.id, service.dataType.name)
-                        .map<KompaktSyncOutcome?, Reported<KompaktSyncOutcome?>> { Reported.Value(it) }
-            }
-            .onStart { emit(Reported.Pending) }
-            .distinctUntilChanged()
-
-    companion object {
-        const val TRIGGER_MANUAL = "MANUAL"
-        const val TRIGGER_AUTOMATIC = "AUTOMATIC"
-    }
+    fun observe(serviceId: Long, dataType: SyncDataType): Flow<KompaktSyncOutcome?> =
+        dao.observe(serviceId, dataType.name)
 
 }

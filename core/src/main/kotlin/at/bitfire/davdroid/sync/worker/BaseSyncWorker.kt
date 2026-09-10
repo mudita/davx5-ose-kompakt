@@ -23,7 +23,7 @@ import at.bitfire.davdroid.sync.AddressBookSyncer
 import at.bitfire.davdroid.sync.AutomaticSyncManager
 import at.bitfire.davdroid.sync.CalendarSyncer
 import at.bitfire.davdroid.sync.JtxSyncer
-import at.bitfire.davdroid.repository.KompaktSyncOutcomeRepository
+import at.bitfire.davdroid.sync.KompaktServiceSyncOutcome
 import at.bitfire.davdroid.sync.KompaktSyncOutcomeClassifier
 import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.sync.ResyncType
@@ -56,7 +56,7 @@ abstract class BaseSyncWorker(
     lateinit var kompaktAccountSettings: KompaktAccountSettings
 
     @Inject
-    lateinit var kompaktSyncOutcomeRepository: Lazy<KompaktSyncOutcomeRepository>
+    lateinit var kompaktSyncOutcome: Lazy<KompaktServiceSyncOutcome>
 
     @Inject
     lateinit var accountSettingsFactory: AccountSettings.Factory
@@ -299,7 +299,7 @@ abstract class BaseSyncWorker(
         val service = KompaktSyncService.fromDataType(dataType) ?: return
         val cause = KompaktSyncOutcomeClassifier.classify(syncResult)
         try {
-            kompaktSyncOutcomeRepository.get().record(
+            kompaktSyncOutcome.get().record(
                 account = account,
                 service = service,
                 cause = cause,
