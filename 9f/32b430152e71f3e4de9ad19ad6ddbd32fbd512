@@ -1,0 +1,29 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountState.kt
+  eba0eb0262ddb8c8 31-34,55-56,64-65
+core/src/test/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountStateTest.kt
+  eba0eb0262ddb8c8 115-137
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktSyncFailureSheet.kt
+  eba0eb0262ddb8c8 54-55
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountScreen.kt
+  eba0eb0262ddb8c8 152-153,293,327,334-336,341
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "9f32b430152e71f3e4de9ad19ad6ddbd32fbd512",
+  "prompts": {
+    "eba0eb0262ddb8c8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d48eebcc-0cbe-4e2b-b6b5-fc6ec16160fd",
+        "model": "claude-opus-5"
+      },
+      "human_author": null,
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 9,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    }
+  }
+}

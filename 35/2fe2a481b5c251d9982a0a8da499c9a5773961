@@ -1,0 +1,26 @@
+core/src/main/kotlin/at/bitfire/davdroid/sync/AddressBookSyncer.kt
+  e6f855d2e290bd55 10,24-25,124-140
+docs/superpowers/plans/2026-09-09-sync-error-handling.md
+  e6f855d2e290bd55 789,812,817
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "352fe2a481b5c251d9982a0a8da499c9a5773961",
+  "prompts": {
+    "e6f855d2e290bd55": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "34724e08-7790-486e-9bec-f561eab4306f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 23,
+      "total_deletions": 4,
+      "accepted_lines": 759,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/73a155fd9be594e6722d294532af59eef60695586a0b61c68447bc56ea996716"
+    }
+  }
+}

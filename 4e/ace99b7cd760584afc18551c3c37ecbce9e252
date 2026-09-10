@@ -1,0 +1,23 @@
+docs/app-integration.md
+  eba0eb0262ddb8c8 158-160,187-188,205-209
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "4eace99b7cd760584afc18551c3c37ecbce9e252",
+  "prompts": {
+    "eba0eb0262ddb8c8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d48eebcc-0cbe-4e2b-b6b5-fc6ec16160fd",
+        "model": "claude-opus-5"
+      },
+      "human_author": null,
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 6,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    }
+  }
+}

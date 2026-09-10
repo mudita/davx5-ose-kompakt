@@ -1,0 +1,24 @@
+docs/superpowers/specs/2026-09-09-sync-error-handling-design.md
+  e6f855d2e290bd55 499,503,508-511,513,524-550,554,557-560,562-564,602-603,609-613,705-707,740-742
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "513383c59a927827af620909453827253def3c6f",
+  "prompts": {
+    "e6f855d2e290bd55": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "34724e08-7790-486e-9bec-f561eab4306f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 57,
+      "total_deletions": 65,
+      "accepted_lines": 56,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/20d13a0c981c643f9d92985c61ef5e14ff55ccdc0591ff6a92f740073513c928"
+    }
+  }
+}

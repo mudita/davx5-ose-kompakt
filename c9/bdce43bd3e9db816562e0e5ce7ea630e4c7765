@@ -1,0 +1,26 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountModel.kt
+  e6f855d2e290bd55 430-436,440
+docs/superpowers/specs/2026-09-09-sync-error-handling-design.md
+  e6f855d2e290bd55 606-609,709-711
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "c9bdce43bd3e9db816562e0e5ce7ea630e4c7765",
+  "prompts": {
+    "e6f855d2e290bd55": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "34724e08-7790-486e-9bec-f561eab4306f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 24,
+      "total_deletions": 14,
+      "accepted_lines": 2850,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/a8fbb401c05f23a336340dd48c08873cede221bf3c38893baf5d7681120fc020"
+    }
+  }
+}
