@@ -51,13 +51,6 @@ class AccountsCleanupWorker @AssistedInject constructor(
         try {
             cleanUpServices()
             cleanUpAddressBooks()
-            try {
-                cleanUpOrphanedContacts()
-            } catch (e: SecurityException) {
-                // Contacts permission may not be granted (or may have been revoked) on this device -
-                // don't let that fail the services/address-books cleanup that already ran above.
-                logger.log(Level.WARNING, "Couldn't clean up orphaned contacts, missing permission?", e)
-            }
         } finally {
             unlockAccountsCleanup()
         }
@@ -98,39 +91,9 @@ class AccountsCleanupWorker @AssistedInject constructor(
         }
     }
 
-    /**
-     * Deletes contacts belonging to an address book account which is no longer registered — for
-     * instance, one left behind by a sync that was still writing when its account got removed.
-     */
-    @VisibleForTesting
-    internal fun cleanUpOrphanedContacts() {
-        val addressBookType = context.getString(R.string.account_type_address_book)
-        val validNames = accountManager.getAccountsByType(addressBookType).map { it.name }
-
-        val uri = ContactsContract.RawContacts.CONTENT_URI.buildUpon()
-            .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
-            .build()
-        val where: String
-        val args: Array<String>
-        if (validNames.isEmpty()) {
-            where = "${ContactsContract.RawContacts.ACCOUNT_TYPE}=?"
-            args = arrayOf(addressBookType)
-        } else {
-            val placeholders = validNames.joinToString(",") { "?" }
-            where = "${ContactsContract.RawContacts.ACCOUNT_TYPE}=? AND ${ContactsContract.RawContacts.ACCOUNT_NAME} NOT IN ($placeholders)"
-            args = (listOf(addressBookType) + validNames).toTypedArray()
-        }
-
-        val deleted = context.contentResolver.delete(uri, where, args)
-        if (deleted > 0)
-            logger.info("Deleted $deleted orphaned contact(s)")
-    }
-
-
     companion object {
 
         const val NAME = "accounts-cleanup"
-        const val NAME_ONE_TIME = "accounts-cleanup-onetime"
 
         private val mutex = Semaphore(1)
         /**
@@ -142,14 +105,12 @@ class AccountsCleanupWorker @AssistedInject constructor(
         fun unlockAccountsCleanup() = mutex.release()
 
         /**
-         * Enqueues [AccountsCleanupWorker] to be run once, as soon as possible after [delay]. Repeated
-         * calls while one is already pending are coalesced into that single pending run.
+         * Enqueues [AccountsCleanupWorker] to be run once as soon as possible.
          */
-        fun enqueue(context: Context, delay: Duration = Duration.ZERO) {
+        fun enqueue(context: Context) {
+            // run once
             val rq = OneTimeWorkRequestBuilder<AccountsCleanupWorker>()
-                .setInitialDelay(delay.toMillis(), TimeUnit.MILLISECONDS)
-                .build()
-            WorkManager.getInstance(context).enqueueUniqueWork(NAME_ONE_TIME, ExistingWorkPolicy.KEEP, rq)
+            WorkManager.getInstance(context).enqueue(rq.build())
         }
 
         /**

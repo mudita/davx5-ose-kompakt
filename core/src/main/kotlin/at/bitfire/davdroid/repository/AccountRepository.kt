@@ -61,12 +61,6 @@ class AccountRepository @Inject constructor(
     private val tasksAppManager: Lazy<TasksAppManager>
 ) {
 
-    companion object {
-        /** Grace period for a sync that was already mid-write when cancelled to finish its last batch,
-         *  before the orphaned-contacts cleanup runs behind it. */
-        val ORPHANED_CONTACTS_CLEANUP_DELAY: Duration = Duration.ofSeconds(15)
-    }
-
     private val accountType = context.getString(R.string.account_type)
     private val accountManager = AccountManager.get(context)
 
@@ -184,11 +178,6 @@ class AccountRepository @Inject constructor(
 
             // delete from database
             serviceRepository.deleteByAccount(accountName)
-
-            // a sync that was already mid-write when cancelled above may still land a few rows under
-            // an address book account that's already gone by the time it finishes; sweep those up
-            // shortly after, without making this unlink wait for it
-            //AccountsCleanupWorker.enqueue(context, delay = ORPHANED_CONTACTS_CLEANUP_DELAY)
 
             true
         } catch (e: Exception) {

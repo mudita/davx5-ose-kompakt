@@ -6,18 +6,10 @@ package at.bitfire.davdroid.sync.account
 
 import android.accounts.Account
 import android.accounts.AccountManager
-import android.Manifest
-import android.content.ContentUris
-import android.content.ContentValues
 import android.content.Context
 import android.os.Bundle
-import android.provider.ContactsContract
 import androidx.hilt.work.HiltWorkerFactory
-import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.rule.GrantPermissionRule
-import androidx.work.ListenableWorker.Result
 import androidx.work.testing.TestListenableWorkerBuilder
-import androidx.work.WorkManager
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.TestUtils
 import at.bitfire.davdroid.db.AppDatabase
@@ -35,7 +27,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import java.time.Duration
 import javax.inject.Inject
 
 @HiltAndroidTest
@@ -43,9 +34,6 @@ class AccountsCleanupWorkerTest {
 
     @get:Rule
     val hiltRule = HiltAndroidRule(this)
-
-    @get:Rule
-    val permissionRule = GrantPermissionRule.grant(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)!!
 
     @Inject
     lateinit var accountsCleanupWorkerFactory: AccountsCleanupWorker.Factory
@@ -66,8 +54,6 @@ class AccountsCleanupWorkerTest {
     lateinit var addressBookAccountType: String
     lateinit var addressBookAccount: Account
     lateinit var service: Service
-    private var keptRawContactId: Long? = null
-
     @Before
     fun setUp() {
         hiltRule.inject()
@@ -84,7 +70,6 @@ class AccountsCleanupWorkerTest {
     fun tearDown() {
         // Remove the account here in any case; Nice to have when the test fails
         accountManager.removeAccountExplicitly(addressBookAccount)
-        keptRawContactId?.let { deleteRawContact(it) }
     }
 
 
@@ -166,59 +151,9 @@ class AccountsCleanupWorkerTest {
     }
 
 
-    @Test
-    fun testCleanUpOrphanedContacts_deletesContactWithoutAddressBookAccount() {
-        val rawContactId = insertRawContact(accountName = "Orphaned address book")
 
-        val worker = TestListenableWorkerBuilder<AccountsCleanupWorker>(context)
-            .setWorkerFactory(workerFactory)
-            .build()
-        worker.cleanUpOrphanedContacts()
 
-        assertNull(queryRawContact(rawContactId))
-    }
 
-    @Test
-    fun testCleanUpOrphanedContacts_keepsContactWithAddressBookAccount() {
-        assertTrue(accountManager.addAccountExplicitly(addressBookAccount, null, null))
-        val rawContactId = insertRawContact(accountName = addressBookAccount.name)
-        keptRawContactId = rawContactId
-
-        val worker = TestListenableWorkerBuilder<AccountsCleanupWorker>(context)
-            .setWorkerFactory(workerFactory)
-            .build()
-        worker.cleanUpOrphanedContacts()
-
-        assertNotNull(queryRawContact(rawContactId))
-    }
-
-    @Test
-    fun testDoWork_survivesMissingContactsPermission() {
-        val packageName = context.packageName
-        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
-        automation.revokeRuntimePermission(packageName, Manifest.permission.WRITE_CONTACTS)
-        try {
-            val worker = TestListenableWorkerBuilder<AccountsCleanupWorker>(context)
-                .setWorkerFactory(workerFactory)
-                .build()
-
-            val result = worker.doWork()
-
-            assertTrue(result is Result.Success)
-        } finally {
-            automation.grantRuntimePermission(packageName, Manifest.permission.WRITE_CONTACTS)
-        }
-    }
-
-    @Test
-    fun testEnqueue_coalescesRepeatedCallsWithinDelay() {
-        AccountsCleanupWorker.enqueue(context, delay = Duration.ofSeconds(15))
-        AccountsCleanupWorker.enqueue(context, delay = Duration.ofSeconds(15))
-
-        val workInfos = WorkManager.getInstance(context)
-            .getWorkInfosForUniqueWork(AccountsCleanupWorker.NAME_ONE_TIME).get()
-        assertEquals(1, workInfos.size)
-    }
 
 
     // helpers
@@ -227,32 +162,6 @@ class AccountsCleanupWorkerTest {
         val service = Service(id=0, accountName="test", type=Service.TYPE_CARDDAV, principal = null)
         val serviceId = db.serviceDao().insertOrReplace(service)
         return db.serviceDao().get(serviceId)!!
-    }
-
-    private fun insertRawContact(accountName: String): Long {
-        val values = ContentValues().apply {
-            put(ContactsContract.RawContacts.ACCOUNT_NAME, accountName)
-            put(ContactsContract.RawContacts.ACCOUNT_TYPE, addressBookAccountType)
-        }
-        val uri = context.contentResolver.insert(ContactsContract.RawContacts.CONTENT_URI, values)
-        return ContentUris.parseId(uri!!)
-    }
-
-    private fun queryRawContact(rawContactId: Long): Long? =
-        context.contentResolver.query(
-            ContactsContract.RawContacts.CONTENT_URI,
-            arrayOf(ContactsContract.RawContacts._ID),
-            "${ContactsContract.RawContacts._ID}=?",
-            arrayOf(rawContactId.toString()),
-            null
-        )?.use { cursor -> if (cursor.moveToFirst()) rawContactId else null }
-
-    private fun deleteRawContact(rawContactId: Long) {
-        val uri = ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, rawContactId)
-            .buildUpon()
-            .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
-            .build()
-        context.contentResolver.delete(uri, null, null)
     }
 
 }

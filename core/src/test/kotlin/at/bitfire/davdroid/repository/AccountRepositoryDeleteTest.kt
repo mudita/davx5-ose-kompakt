@@ -14,20 +14,16 @@ import at.bitfire.davdroid.resource.LocalCalendarStore
 import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.sync.AutomaticSyncManager
 import at.bitfire.davdroid.sync.TasksAppManager
-import at.bitfire.davdroid.sync.account.AccountsCleanupWorker
 import at.bitfire.davdroid.sync.worker.SyncWorkerManager
 import dagger.Lazy
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkObject
 import io.mockk.spyk
-import io.mockk.unmockkObject
 import io.mockk.verify
 import io.mockk.verifyOrder
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -35,7 +31,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.ConscryptMode
-import java.time.Duration
 import java.util.logging.Logger
 
 private const val ACCOUNT_TYPE = "test.account.type"
@@ -78,14 +73,7 @@ class AccountRepositoryDeleteTest {
 
     @Before
     fun setUp() {
-        mockkObject(AccountsCleanupWorker)
-        every { AccountsCleanupWorker.enqueue(any(), any()) } returns Unit
         every { localAddressBookStore.deleteByAccount(account) } returns Unit
-    }
-
-    @After
-    fun tearDown() {
-        unmockkObject(AccountsCleanupWorker)
     }
 
     @Test
@@ -127,16 +115,6 @@ class AccountRepositoryDeleteTest {
         accountRepository.delete(account.name)
 
         verify { localAddressBookStore.deleteByAccount(account) }
-    }
-
-    @Test
-    fun `delete schedules a delayed orphaned-contacts cleanup instead of blocking on one`() = runTest {
-        coEvery { serviceRepository.getByAccountAndType(account.name, Service.TYPE_CARDDAV) } returns null
-        coEvery { serviceRepository.deleteByAccount(account.name) } returns Unit
-
-        accountRepository.delete(account.name)
-
-        verify { AccountsCleanupWorker.enqueue(context, delay = Duration.ofSeconds(15)) }
     }
 
     @Test
