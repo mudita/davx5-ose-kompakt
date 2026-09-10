@@ -143,7 +143,10 @@ open class LocalAddressBook @AssistedInject constructor(
 
     /**
      * Renames an address book account and moves the contacts and groups (without making them dirty).
-     * Carries the identifying user data over to the new account, so it is never on the device without it.
+     * Carries [USER_DATA_ACCOUNT_NAME], [USER_DATA_ACCOUNT_TYPE] and [USER_DATA_COLLECTION_ID] over to
+     * the new account, so it is never on the device without the keys that account teardown and sync look
+     * an address book up by. All other user data is not kept and has to be set again — today that is
+     * AddressBookSyncer.PREVIOUS_GROUP_METHOD and AndroidAddressBook.USER_DATA_READ_ONLY.
      *
      * On success, [addressBookAccount] will be updated to the new account name.
      *

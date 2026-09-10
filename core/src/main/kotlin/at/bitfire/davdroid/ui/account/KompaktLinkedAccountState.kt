@@ -39,8 +39,9 @@ internal fun newContactsConsentVisible(
     contacts == KompaktSyncSwitch.ConsentMissing && !alreadyShown
 
 /**
- * The one dialog to show, in precedence order. [confirmDisable] comes last because it is an intent
- * rather than a condition: a persistent problem the user has to deal with outranks a confirmation.
+ * The one dialog to show, in precedence order. [confirmDisable] and [confirmUnlink] come last because
+ * they are intents rather than conditions: a persistent problem the user has to deal with outranks a
+ * confirmation.
  */
 internal fun linkedAccountDialog(
     authError: Boolean,

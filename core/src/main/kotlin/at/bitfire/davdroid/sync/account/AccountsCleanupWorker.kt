@@ -6,11 +6,9 @@ package at.bitfire.davdroid.sync.account
 
 import android.accounts.AccountManager
 import android.content.Context
-import android.provider.ContactsContract
 import androidx.annotation.VisibleForTesting
 import androidx.hilt.work.HiltWorker
 import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -25,7 +23,6 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import java.time.Duration
 import java.util.concurrent.Semaphore
-import java.util.concurrent.TimeUnit
 import java.util.logging.Level
 import java.util.logging.Logger
 
@@ -90,6 +87,7 @@ class AccountsCleanupWorker @AssistedInject constructor(
             }
         }
     }
+
 
     companion object {
 

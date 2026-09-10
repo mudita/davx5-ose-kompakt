@@ -35,7 +35,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
-import java.time.Duration
 import java.util.logging.Level
 import java.util.logging.Logger
 import javax.inject.Inject
@@ -150,15 +149,11 @@ class AccountRepository @Inject constructor(
     suspend fun delete(accountName: String): Boolean = withContext(defaultDispatcher) {
         val account = fromName(accountName)
         try {
-            // best-effort: cancel maybe running synchronization so a queued sync doesn't start again for
-            // an account that's about to be removed. A failure here must not stop the removal below.
-            // (Address-book accounts are never enqueued under their own identity - see
-            // SyncAdapterImpl.onPerformSync() - so this already covers all sync work. It does not stop a
-            // sync that is already running: what keeps that sync from leaving an address book behind is
-            // that both paths which create one - LocalAddressBookStore.create() and
-            // LocalAddressBook.renameAccount() - leave it findable by the teardown below.)
+            // best-effort: a failure here must not stop the removal below. Address-book accounts are
+            // never enqueued under their own identity (see SyncAdapterImpl.onPerformSync()), so
+            // cancelling the main account's work already covers all sync work.
             try {
-                cancelSyncWork(account)
+                syncWorkerManager.get().cancelAllWork(account)
             } catch (e: Exception) {
                 logger.log(Level.WARNING, "Couldn't cancel sync work for $accountName, removing account anyway", e)
             }
@@ -184,10 +179,6 @@ class AccountRepository @Inject constructor(
             logger.log(Level.WARNING, "Couldn't remove account $accountName", e)
             false
         }
-    }
-
-    private fun cancelSyncWork(account: Account) {
-        syncWorkerManager.get().cancelAllWork(account)
     }
 
     fun exists(accountName: String): Boolean =
@@ -257,7 +248,7 @@ class AccountRepository @Inject constructor(
                 throw IllegalStateException("renameAccount returned ${newNameFromApi.name} instead of $newName")
 
             // account renamed, cancel maybe running synchronization of old account
-            cancelSyncWork(oldAccount)
+            syncWorkerManager.get().cancelAllWork(oldAccount)
 
             // disable periodic syncs for old account
             for (dataType in SyncDataType.entries)

@@ -54,6 +54,7 @@ class AccountsCleanupWorkerTest {
     lateinit var addressBookAccountType: String
     lateinit var addressBookAccount: Account
     lateinit var service: Service
+
     @Before
     fun setUp() {
         hiltRule.inject()
@@ -149,11 +150,6 @@ class AccountsCleanupWorkerTest {
             assertEquals(listOf(addressBookAccount), accountManager.getAccountsByType(addressBookAccountType).toList())
         }
     }
-
-
-
-
-
 
 
     // helpers
