@@ -1,0 +1,25 @@
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktSyncAttemptTest.kt
+  eba0eb0262ddb8c8 229-270
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktSyncAttempt.kt
+  eba0eb0262ddb8c8 15-137
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "6e901be36a6f4ca4b608992bc3b8040338195165",
+  "prompts": {
+    "eba0eb0262ddb8c8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d48eebcc-0cbe-4e2b-b6b5-fc6ec16160fd",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 2508,
+      "total_deletions": 28,
+      "accepted_lines": 2494,
+      "overriden_lines": 0
+    }
+  }
+}
