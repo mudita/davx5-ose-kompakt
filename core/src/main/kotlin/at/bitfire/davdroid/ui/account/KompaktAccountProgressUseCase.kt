@@ -42,7 +42,13 @@ class KompaktAccountProgressUseCase @Inject constructor(
     // A periodic worker is always enqueued, so only its run tells us anything. A one-time worker exists
     // only because a sync was asked for, so it counts from the moment it is queued — blocked included,
     // the state a run appended behind an unfinished one waits in.
+    //
+    // Unless a constraint stopped it: WorkManager returns an interrupted run to ENQUEUED with its tags
+    // intact, so losing the network mid-sync would otherwise leave the row claiming to synchronize until
+    // connectivity comes back, however long that takes. A fresh request and a soft-error retry both read
+    // NOT_STOPPED and still count, and the reason resets when the run finally executes.
     private fun syncing(workInfo: WorkInfo, oneTimeTag: String): Boolean =
-        workInfo.state == WorkInfo.State.RUNNING || oneTimeTag in workInfo.tags
+        workInfo.state == WorkInfo.State.RUNNING ||
+            (oneTimeTag in workInfo.tags && workInfo.stopReason == WorkInfo.STOP_REASON_NOT_STOPPED)
 
 }

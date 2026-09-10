@@ -55,13 +55,20 @@ class KompaktAccountProgressUseCaseTest {
             }
         }
 
-    private fun workInfo(state: WorkInfo.State, vararg tags: String): WorkInfo =
+    private fun workInfo(
+        state: WorkInfo.State,
+        vararg tags: String,
+        stopReason: Int = WorkInfo.STOP_REASON_NOT_STOPPED
+    ): WorkInfo =
         mockk<WorkInfo>().also {
             every { it.state } returns state
             every { it.tags } returns tags.toSet()
+            every { it.stopReason } returns stopReason
         }
 
-    private fun oneTime(state: WorkInfo.State) = workInfo(state, commonWorkTag, oneTimeTag)
+    private fun oneTime(state: WorkInfo.State, stopReason: Int = WorkInfo.STOP_REASON_NOT_STOPPED) =
+        workInfo(state, commonWorkTag, oneTimeTag, stopReason = stopReason)
+
     private fun periodic(state: WorkInfo.State) = workInfo(state, commonWorkTag, periodicTag)
 
     @Test
@@ -107,6 +114,45 @@ class KompaktAccountProgressUseCaseTest {
         val seen = syncing()
 
         work.emit(listOf(oneTime(WorkInfo.State.BLOCKED)))
+
+        assertEquals(listOf(true), seen)
+    }
+
+    // Losing the network mid-sync returns the run to ENQUEUED with its tags intact. Reproduced on a
+    // Kompakt: stop_reason 7, and the row claimed "Synchronizing..." for four minutes with nothing
+    // running, until connectivity came back.
+    @Test
+    fun oneTimeStoppedByAConstraint_isNotSyncing() = runTest(testDispatcher) {
+        val seen = syncing()
+
+        work.emit(listOf(oneTime(WorkInfo.State.ENQUEUED, WorkInfo.STOP_REASON_CONSTRAINT_CONNECTIVITY)))
+
+        assertEquals(listOf(false), seen)
+    }
+
+    // The reason resets when the run finally executes, so the row starts claiming a sync again on the
+    // same event that makes the claim true.
+    @Test
+    fun aStoppedOneTimeResumingOnceTheConstraintIsMet_isSyncingAgain() = runTest(testDispatcher) {
+        val seen = syncing()
+
+        work.emit(listOf(oneTime(WorkInfo.State.ENQUEUED, WorkInfo.STOP_REASON_CONSTRAINT_CONNECTIVITY)))
+        work.emit(listOf(oneTime(WorkInfo.State.RUNNING)))
+
+        assertEquals(listOf(false, true), seen)
+    }
+
+    // A stopped one-time run must not hide a periodic one that really is running.
+    @Test
+    fun aStoppedOneTimeAlongsideARunningPeriodic_isSyncing() = runTest(testDispatcher) {
+        val seen = syncing()
+
+        work.emit(
+            listOf(
+                oneTime(WorkInfo.State.ENQUEUED, WorkInfo.STOP_REASON_CONSTRAINT_CONNECTIVITY),
+                periodic(WorkInfo.State.RUNNING)
+            )
+        )
 
         assertEquals(listOf(true), seen)
     }
