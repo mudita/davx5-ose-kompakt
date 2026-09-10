@@ -1,0 +1,28 @@
+core/src/main/kotlin/at/bitfire/davdroid/repository/AccountRepository.kt
+  9d3876b0d03a9177 164-175,177-178
+docs/app-integration.md
+  9d3876b0d03a9177 313-318,324-326
+core/src/main/kotlin/at/bitfire/davdroid/sync/ContactsSyncManager.kt
+  9d3876b0d03a9177 376,401-404
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "a13131c7ebc947a9b285d53f7899a5dd948c2a56",
+  "prompts": {
+    "9d3876b0d03a9177": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3e501698-9f47-4ab8-8f8e-eacaaad62701",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 28,
+      "total_deletions": 12,
+      "accepted_lines": 467,
+      "overriden_lines": 5,
+      "messages_url": "https://gitai.miquido.dev/cas/fc8d3aa995e4109841cb8ca3fb9960df8307fe51a3a05fe2ed422b32c53a3172"
+    }
+  }
+}

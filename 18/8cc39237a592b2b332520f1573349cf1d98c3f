@@ -1,0 +1,26 @@
+core/src/androidTest/kotlin/at/bitfire/davdroid/sync/account/AccountsCleanupWorkerTest.kt
+  7168c8842eeff26e 9,16-17,186-203
+core/src/main/kotlin/at/bitfire/davdroid/sync/account/AccountsCleanupWorker.kt
+  7168c8842eeff26e 53-59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "188cc39237a592b2b332520f1573349cf1d98c3f",
+  "prompts": {
+    "7168c8842eeff26e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c9ee86e9-f919-4cf3-89f5-25fb50d29a48",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 28,
+      "total_deletions": 1,
+      "accepted_lines": 952,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/2b3793c45bc6b44d1b9e88f566c1b8d4f7acbe44f9af7f069204bb536ac3d459"
+    }
+  }
+}
