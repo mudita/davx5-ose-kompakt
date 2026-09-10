@@ -59,11 +59,13 @@ class AutomaticSyncManager @Inject constructor(
      *
      * @param account   the account to synchronize
      * @param dataType  the data type to synchronize
+     * @param delayFirstRun see [AccountSettings.setSyncInterval]
      */
     @WorkerThread
     private fun enableAutomaticSync(
         account: Account,
-        dataType: SyncDataType
+        dataType: SyncDataType,
+        delayFirstRun: Boolean = false
     ) {
         val accountSettings = accountSettingsFactory.create(account)
         val syncInterval = accountSettings.getSyncInterval(dataType)
@@ -71,7 +73,7 @@ class AutomaticSyncManager @Inject constructor(
         // 1. Update sync workers (needs already updated sync interval in AccountSettings).
         if (syncInterval != null) {
             val wifiOnly = accountSettings.getSyncWifiOnly()
-            workerManager.enablePeriodic(account, dataType, syncInterval, wifiOnly)
+            workerManager.enablePeriodic(account, dataType, syncInterval, wifiOnly, delayFirstRun)
         } else
             workerManager.disablePeriodic(account, dataType)
 
@@ -130,9 +132,10 @@ class AutomaticSyncManager @Inject constructor(
      *
      * @param account   account for which automatic synchronization shall be updated
      * @param dataType  sync data type for which automatic synchronization shall be updated
+     * @param delayFirstRun see [AccountSettings.setSyncInterval]
      */
     @WorkerThread
-    fun updateAutomaticSync(account: Account, dataType: SyncDataType) {
+    fun updateAutomaticSync(account: Account, dataType: SyncDataType, delayFirstRun: Boolean = false) {
         val serviceType = when (dataType) {
             SyncDataType.CONTACTS -> Service.TYPE_CARDDAV
             SyncDataType.EVENTS,
@@ -146,7 +149,7 @@ class AutomaticSyncManager @Inject constructor(
             true
 
         if (hasService && hasProvider)
-            enableAutomaticSync(account, dataType)
+            enableAutomaticSync(account, dataType, delayFirstRun)
         else
             disableAutomaticSync(account, dataType)
     }
@@ -166,7 +169,7 @@ class AutomaticSyncManager @Inject constructor(
         val syncInterval = accountSettings.getSyncInterval(dataType) ?: return  // periodic not enabled
         workerManager.enablePeriodic(
             account, dataType, syncInterval, accountSettings.getSyncWifiOnly(),
-            rescheduleFromNow = true
+            delayFirstRun = true
         )
     }
 

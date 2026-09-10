@@ -165,9 +165,12 @@ class KompaktAccountSettingsImpl @Inject constructor(
     override fun observeSyncInterval(account: Account, dataType: SyncDataType, emitInitial: Boolean) =
         observe(account, intervalKey(dataType), emitInitial).map { it?.toLongOrNull() }
 
+    // WorkManager runs a freshly enqueued periodic worker straight away, and both callers here — the
+    // service toggle and the init defaults — start the sync they want themselves, so arming must not.
     override suspend fun setSyncInterval(account: Account, dataType: SyncDataType, seconds: Long?) =
         write(account, intervalKey(dataType)) {
-            accountSettingsFactory.create(account).setSyncInterval(dataType, seconds)
+            accountSettingsFactory.create(account)
+                .setSyncInterval(dataType, seconds, delayFirstRun = true)
         }
 
     override fun getAuthState(account: Account) =

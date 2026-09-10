@@ -264,22 +264,22 @@ class SyncWorkerManager @Inject constructor(
         dataType: SyncDataType,
         interval: Long,
         syncWifiOnly: Boolean,
-        rescheduleFromNow: Boolean = false
+        delayFirstRun: Boolean = false
     ): Operation {
-        logger.fine("Updating periodic worker for account=$account, dataType=$dataType, interval=$interval, syncWifiOnly=$syncWifiOnly, rescheduleFromNow=$rescheduleFromNow")
+        logger.fine("Updating periodic worker for account=$account, dataType=$dataType, interval=$interval, syncWifiOnly=$syncWifiOnly, delayFirstRun=$delayFirstRun")
         val name = PeriodicSyncWorker.workerName(account, dataType)
         val workRequest = buildPeriodic(
             account, dataType, interval, syncWifiOnly,
             // WorkManager runs a freshly enqueued periodic worker straight away, so without this the
             // re-enqueue would sync again on top of the manual sync that asked for the reschedule.
-            delayFirstRunBy = if (rescheduleFromNow) interval else 0
+            delayFirstRunBy = if (delayFirstRun) interval else 0
         )
         return WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             name,
             // UPDATE keeps the existing schedule (just updates interval/constraints for the next iteration);
             // CANCEL_AND_REENQUEUE drops it, so the delayed request above becomes the whole schedule and
             // every following run is counted from now (used after a successful manual sync).
-            if (rescheduleFromNow)
+            if (delayFirstRun)
                 ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE
             else
                 ExistingPeriodicWorkPolicy.UPDATE,

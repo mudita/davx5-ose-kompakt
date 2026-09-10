@@ -92,7 +92,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     private val switches: KompaktServiceSwitch,
     private val lastSyncSource: KompaktServiceLastSync,
     private val startSyncUseCase: KompaktStartSyncUseCase,
-    private val accountProgress: AccountProgressUseCase,
+    private val accountProgress: KompaktAccountProgressUseCase,
     private val syncWork: KompaktSyncWork,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     private val logger: Logger
@@ -394,14 +394,9 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     // Reported at the source: the first query is asynchronous, so "not yet known" must stay
     // distinguishable from "not syncing", and combine needs every input to carry a first value.
-    // AccountProgress.Pending counts as syncing, or a just-tapped sync shows nothing until it starts.
     private fun syncingOf(service: KompaktSyncService): Flow<Reported<Boolean>> =
-        accountProgress(
-            account,
-            serviceRepository.getServiceFlow(account.name, service.serviceType),
-            listOf(service.dataType)
-        )
-            .map<AccountProgress, Reported<Boolean>> { Reported.Value(it != AccountProgress.Idle) }
+        accountProgress(account, service.dataType)
+            .map<Boolean, Reported<Boolean>> { Reported.Value(it) }
             .onStart { emit(Reported.Pending) }
             .distinctUntilChanged()
 
