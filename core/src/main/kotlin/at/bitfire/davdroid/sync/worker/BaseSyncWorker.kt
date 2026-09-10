@@ -23,6 +23,9 @@ import at.bitfire.davdroid.sync.AddressBookSyncer
 import at.bitfire.davdroid.sync.AutomaticSyncManager
 import at.bitfire.davdroid.sync.CalendarSyncer
 import at.bitfire.davdroid.sync.JtxSyncer
+import at.bitfire.davdroid.repository.KompaktSyncOutcomeRepository
+import at.bitfire.davdroid.sync.KompaktSyncOutcomeClassifier
+import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.sync.ResyncType
 import at.bitfire.davdroid.sync.SyncConditions
 import at.bitfire.davdroid.sync.SyncDataType
@@ -51,6 +54,9 @@ abstract class BaseSyncWorker(
 
     @Inject
     lateinit var kompaktAccountSettings: KompaktAccountSettings
+
+    @Inject
+    lateinit var kompaktSyncOutcomeRepository: Lazy<KompaktSyncOutcomeRepository>
 
     @Inject
     lateinit var accountSettingsFactory: AccountSettings.Factory
@@ -248,6 +254,7 @@ abstract class BaseSyncWorker(
                 }
 
                 output.putBoolean(OUTPUT_TOO_MANY_RETRIES, true)
+                recordOutcome(account, dataType, syncResult)
                 return Result.failure(output.build())
             }
 
@@ -262,12 +269,41 @@ abstract class BaseSyncWorker(
             // Note: SyncManager should have notified the user
             if (syncResult.hasHardError()) {
                 logger.log(Level.WARNING, "Hard error while syncing", syncResult)
+                recordOutcome(account, dataType, syncResult)
                 return Result.failure(output.build())
             }
         }
 
         logger.log(Level.INFO, "Sync worker succeeded", syncResult)
+        recordOutcome(account, dataType, syncResult)
         return Result.success(output.build())
+    }
+
+    /**
+     * Kompakt: persists how this run ended, so a failure survives process death and is visible for a
+     * periodic run — whose [Result] WorkManager discards, resetting the work to ENQUEUED without ever
+     * storing output data.
+     *
+     * Skipped for a stopped run: the outcome records a *completed* attempt, and an interrupted one did
+     * not end. Cancellation cannot reach the sync itself (every syncer calls `runBlocking`, whose job
+     * has no parent), so this flag is the only signal that the verdict is about to be discarded.
+     */
+    private suspend fun recordOutcome(account: Account, dataType: SyncDataType, syncResult: SyncResult) {
+        if (isStopped) return
+        val service = KompaktSyncService.fromDataType(dataType) ?: return
+        val cause = KompaktSyncOutcomeClassifier.classify(syncResult)
+        try {
+            kompaktSyncOutcomeRepository.get().record(
+                account = account,
+                service = service,
+                cause = cause,
+                manual = inputData.getBoolean(INPUT_MANUAL, false),
+                // Nothing renders this; it is what a bug report needs when six causes are too coarse.
+                detail = cause?.let { syncResult.toString() }
+            )
+        } catch (e: Exception) {
+            logger.log(Level.WARNING, "Couldn't record the sync outcome", e)
+        }
     }
 
 
