@@ -80,6 +80,7 @@ class AccountRepositoryDeleteTest {
     fun setUp() {
         mockkObject(AccountsCleanupWorker)
         every { AccountsCleanupWorker.enqueue(any(), any()) } returns Unit
+        every { localAddressBookStore.deleteByAccount(account) } returns Unit
     }
 
     @After
@@ -112,6 +113,20 @@ class AccountRepositoryDeleteTest {
             syncWorkerManager.cancelAllWork(account)
             localAddressBookStore.deleteByCollectionId(99L)
         }
+    }
+
+    // An address book whose collection row is stale, duplicated or gone is invisible to the
+    // per-collection lookup, and used to survive the unlink with all of its contacts.
+    @Test
+    fun `delete purges address books by owner account, not only by collection row`() = runTest {
+        val service = mockk<Service> { every { id } returns 42L }
+        coEvery { serviceRepository.getByAccountAndType(account.name, Service.TYPE_CARDDAV) } returns service
+        coEvery { collectionRepository.getByService(42L) } returns emptyList()
+        coEvery { serviceRepository.deleteByAccount(account.name) } returns Unit
+
+        accountRepository.delete(account.name)
+
+        verify { localAddressBookStore.deleteByAccount(account) }
     }
 
     @Test

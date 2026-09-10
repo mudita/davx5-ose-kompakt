@@ -159,9 +159,10 @@ class AccountRepository @Inject constructor(
             // best-effort: cancel maybe running synchronization so a queued sync doesn't start again for
             // an account that's about to be removed. A failure here must not stop the removal below.
             // (Address-book accounts are never enqueued under their own identity - see
-            // SyncAdapterImpl.onPerformSync() - so this already covers all sync work; the actual
-            // protection against a sync recreating an address book after this delete is
-            // LocalAddressBookStore.create()'s account-existence check.)
+            // SyncAdapterImpl.onPerformSync() - so this already covers all sync work. It does not stop a
+            // sync that is already running: what keeps that sync from leaving an address book behind is
+            // that both paths which create one - LocalAddressBookStore.create() and
+            // LocalAddressBook.renameAccount() - leave it findable by the teardown below.)
             try {
                 cancelSyncWork(account)
             } catch (e: Exception) {
@@ -171,7 +172,10 @@ class AccountRepository @Inject constructor(
             // remove account directly (bypassing the authenticator, which is our own)
             accountManager.removeAccountExplicitly(account)
 
-            // delete address books (= address book accounts)
+            // delete address books (= address book accounts), by owner account first: an address book
+            // whose collection row is stale, duplicated or already gone is invisible to the per-collection
+            // lookup below, and used to survive the unlink with all of its contacts
+            localAddressBookStore.get().deleteByAccount(account)
             serviceRepository.getByAccountAndType(accountName, Service.TYPE_CARDDAV)?.let { service ->
                 collectionRepository.getByService(service.id).forEach { collection ->
                     localAddressBookStore.get().deleteByCollectionId(collection.id)
@@ -184,7 +188,7 @@ class AccountRepository @Inject constructor(
             // a sync that was already mid-write when cancelled above may still land a few rows under
             // an address book account that's already gone by the time it finishes; sweep those up
             // shortly after, without making this unlink wait for it
-            AccountsCleanupWorker.enqueue(context, delay = ORPHANED_CONTACTS_CLEANUP_DELAY)
+            //AccountsCleanupWorker.enqueue(context, delay = ORPHANED_CONTACTS_CLEANUP_DELAY)
 
             true
         } catch (e: Exception) {
