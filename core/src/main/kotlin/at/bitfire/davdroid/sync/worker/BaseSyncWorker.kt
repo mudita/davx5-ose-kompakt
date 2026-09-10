@@ -210,10 +210,16 @@ abstract class BaseSyncWorker(
         // app entry — even when the failing sync was a background/periodic one (whose WorkInfo output
         // isn't retained). Set on HTTP 401, cleared on a clean sync. KompaktAuthStateReplicator
         // publishes each change to other (same-signed) apps; see docs/app-integration.md.
-        if (dataType == SyncDataType.EVENTS)
+        // Any Kompakt service may report it: on a Contacts-only account no EVENTS sync ever runs, so an
+        // EVENTS-only guard meant a revoked token was never detected at all. One OAuth token serves both
+        // services, so a clean run by either proves it good.
+        // Setting stays unguarded because a 401 is evidence, and stays evidence whether or not the
+        // worker was later stopped. Clearing asserts a *completed* clean sync, which a stopped run has
+        // not performed — without that guard, losing the network mid-run silently drops the prompt.
+        if (KompaktSyncService.fromDataType(dataType) != null)
             when {
                 syncResult.numAuthExceptions > 0 -> kompaktAccountSettings.setReauthNeeded(account, true)
-                !syncResult.hasError() -> kompaktAccountSettings.setReauthNeeded(account, false)
+                !isStopped && !syncResult.hasError() -> kompaktAccountSettings.setReauthNeeded(account, false)
             }
 
         // convert SyncResult from Syncers to worker Data
