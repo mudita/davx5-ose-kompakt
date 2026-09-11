@@ -12,9 +12,10 @@ import org.junit.Test
 
 class KompaktFlowCombineTest {
 
-    // Seven distinct types so a swapped array index fails the test, not just the type checker.
+    // Eight distinct types, for the same reason: the untyped vararg underneath makes a misplaced index
+    // a runtime cast failure rather than a compile error.
     @Test
-    fun `combines seven flows into their own typed parameters, in order`() = runTest {
+    fun `combines eight flows into their own typed parameters, in order`() = runTest {
         val result = combine(
             MutableStateFlow(1),
             MutableStateFlow("two"),
@@ -22,10 +23,11 @@ class KompaktFlowCombineTest {
             MutableStateFlow(4.0),
             MutableStateFlow(true),
             MutableStateFlow('f'),
-            MutableStateFlow(listOf("g"))
-        ) { a, b, c, d, e, f, g -> "$a-$b-$c-$d-$e-$f-$g" }.first()
+            MutableStateFlow(listOf("g")),
+            MutableStateFlow(8.toShort())
+        ) { a, b, c, d, e, f, g, h -> "$a-$b-$c-$d-$e-$f-$g-$h" }.first()
 
-        assertEquals("1-two-3-4.0-true-f-[g]", result)
+        assertEquals("1-two-3-4.0-true-f-[g]-8", result)
     }
 
 }

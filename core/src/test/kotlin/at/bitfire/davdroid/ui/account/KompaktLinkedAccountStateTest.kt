@@ -4,6 +4,7 @@
 
 package at.bitfire.davdroid.ui.account
 
+import at.bitfire.davdroid.sync.KompaktSyncFailure
 import at.bitfire.davdroid.sync.KompaktSyncService
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -54,6 +55,8 @@ class KompaktLinkedAccountStateTest {
     }
 
 
+    private val failedCalendar = setOf(KompaktSyncService.CALENDAR)
+
     // linkedAccountDialog
 
     @Test
@@ -62,7 +65,7 @@ class KompaktLinkedAccountStateTest {
         // showing when several are pending at once.
         assertEquals(
             KompaktLinkedAccountDialog.AuthError,
-            linkedAccountDialog(authError = true, outOfStorage = true, noInternet = true, syncFailed = true, confirmDisable = null)
+            linkedAccountDialog(authError = true, outOfStorage = true, noInternet = true, syncFailed = failedCalendar, confirmDisable = null)
         )
     }
 
@@ -70,7 +73,7 @@ class KompaktLinkedAccountStateTest {
     fun aFullDiskOutranksTheNetworkDialogs() {
         assertEquals(
             KompaktLinkedAccountDialog.OutOfStorage,
-            linkedAccountDialog(authError = false, outOfStorage = true, noInternet = true, syncFailed = true, confirmDisable = null)
+            linkedAccountDialog(authError = false, outOfStorage = true, noInternet = true, syncFailed = failedCalendar, confirmDisable = null)
         )
     }
 
@@ -79,22 +82,67 @@ class KompaktLinkedAccountStateTest {
         // The failure is the symptom of being offline; naming the cause is the more useful of the two.
         assertEquals(
             KompaktLinkedAccountDialog.NoInternet,
-            linkedAccountDialog(authError = false, outOfStorage = false, noInternet = true, syncFailed = true, confirmDisable = null)
+            linkedAccountDialog(authError = false, outOfStorage = false, noInternet = true, syncFailed = failedCalendar, confirmDisable = null)
         )
     }
 
     @Test
     fun aFailedRunIsReportedWhenNothingElseExplainsIt() {
         assertEquals(
-            KompaktLinkedAccountDialog.SyncFailed,
-            linkedAccountDialog(authError = false, outOfStorage = false, noInternet = false, syncFailed = true, confirmDisable = null)
+            KompaktLinkedAccountDialog.SyncFailed(failedCalendar),
+            linkedAccountDialog(authError = false, outOfStorage = false, noInternet = false, syncFailed = failedCalendar, confirmDisable = null)
+        )
+    }
+
+    @Test
+    fun theFailureDialogCarriesOnlyWhatFailed() {
+        // Try again re-syncs this set, so a service that succeeded is not re-run.
+        assertEquals(
+            KompaktLinkedAccountDialog.SyncFailed(setOf(KompaktSyncService.CONTACTS)),
+            linkedAccountDialog(
+                authError = false,
+                outOfStorage = false,
+                noInternet = false,
+                syncFailed = setOf(KompaktSyncService.CONTACTS)
+            )
+        )
+    }
+
+    @Test
+    fun theAggregatedFailureOutranksASingleServicesCause() {
+        // Both can be pending: a run finishes and raises the modal while a cause sheet is open. The
+        // modal speaks for the whole attempt, so it wins rather than stacking two bottom sheets.
+        val cause = KompaktLinkedAccountDialog.ExplainSyncFailure(
+            KompaktSyncService.CONTACTS,
+            KompaktSyncFailure.ServerProblem
+        )
+
+        assertEquals(
+            KompaktLinkedAccountDialog.SyncFailed(failedCalendar),
+            linkedAccountDialog(
+                authError = false,
+                outOfStorage = false,
+                noInternet = false,
+                syncFailed = failedCalendar,
+                explainSyncFailure = cause
+            )
+        )
+        assertEquals(
+            cause,
+            linkedAccountDialog(
+                authError = false,
+                outOfStorage = false,
+                noInternet = false,
+                syncFailed = null,
+                explainSyncFailure = cause
+            )
         )
     }
 
     @Test
     fun noDialogWhenNothingIsWrong() {
         assertNull(
-            linkedAccountDialog(authError = false, outOfStorage = false, noInternet = false, syncFailed = false, confirmDisable = null)
+            linkedAccountDialog(authError = false, outOfStorage = false, noInternet = false, syncFailed = null, confirmDisable = null)
         )
     }
 
@@ -107,7 +155,7 @@ class KompaktLinkedAccountStateTest {
                 authError = false,
                 outOfStorage = false,
                 noInternet = false,
-                syncFailed = false,
+                syncFailed = null,
                 confirmDisable = KompaktSyncService.CONTACTS
             )
         )
@@ -123,7 +171,7 @@ class KompaktLinkedAccountStateTest {
                 authError = true,
                 outOfStorage = false,
                 noInternet = false,
-                syncFailed = false,
+                syncFailed = null,
                 confirmDisable = KompaktSyncService.CALENDAR
             )
         )
@@ -133,7 +181,7 @@ class KompaktLinkedAccountStateTest {
     fun `the new-contacts offer shows when it is the only thing set`() {
         assertEquals(
             KompaktLinkedAccountDialog.NewContactsConsent,
-            linkedAccountDialog(false, false, false, false, true, null)
+            linkedAccountDialog(false, false, false, null, null, true, null)
         )
     }
 
@@ -141,7 +189,7 @@ class KompaktLinkedAccountStateTest {
     fun `an auth error locks out the new-contacts offer instead of stacking with it`() {
         assertEquals(
             KompaktLinkedAccountDialog.AuthError,
-            linkedAccountDialog(true, false, false, false, true, null)
+            linkedAccountDialog(authError = true, outOfStorage = false, noInternet = false, syncFailed = null, newContactsConsent = true, requestConsent = null)
         )
     }
 
@@ -149,21 +197,21 @@ class KompaktLinkedAccountStateTest {
     fun `out-of-storage locks out the new-contacts offer instead of stacking with it`() {
         assertEquals(
             KompaktLinkedAccountDialog.OutOfStorage,
-            linkedAccountDialog(false, true, false, false, true, null)
+            linkedAccountDialog(authError = false, outOfStorage = true, noInternet = false, syncFailed = null, newContactsConsent = true, requestConsent = null)
         )
     }
 
     @Test
     fun `the four error tiers still pick the right dialog on their own`() {
-        assertEquals(KompaktLinkedAccountDialog.NoInternet, linkedAccountDialog(false, false, true, false, false, null))
-        assertEquals(KompaktLinkedAccountDialog.SyncFailed, linkedAccountDialog(false, false, false, true, false, null))
+        assertEquals(KompaktLinkedAccountDialog.NoInternet, linkedAccountDialog(authError = false, outOfStorage = false, noInternet = true, syncFailed = null, newContactsConsent = false, requestConsent = null))
+        assertEquals(KompaktLinkedAccountDialog.SyncFailed(failedCalendar), linkedAccountDialog(authError = false, outOfStorage = false, noInternet = false, syncFailed = failedCalendar, newContactsConsent = false, requestConsent = null))
     }
 
     @Test
     fun `a requested consent shows when it is the only thing set`() {
         assertEquals(
             KompaktLinkedAccountDialog.RequestConsent(KompaktSyncService.CONTACTS),
-            linkedAccountDialog(false, false, false, false, false, KompaktSyncService.CONTACTS)
+            linkedAccountDialog(authError = false, outOfStorage = false, noInternet = false, syncFailed = null, newContactsConsent = false, requestConsent = KompaktSyncService.CONTACTS)
         )
     }
 
@@ -171,7 +219,7 @@ class KompaktLinkedAccountStateTest {
     fun `a requested consent outranks the new-contacts offer`() {
         assertEquals(
             KompaktLinkedAccountDialog.RequestConsent(KompaktSyncService.CALENDAR),
-            linkedAccountDialog(false, false, false, false, true, KompaktSyncService.CALENDAR)
+            linkedAccountDialog(authError = false, outOfStorage = false, noInternet = false, syncFailed = null, newContactsConsent = true, requestConsent = KompaktSyncService.CALENDAR)
         )
     }
 
@@ -179,7 +227,7 @@ class KompaktLinkedAccountStateTest {
     fun `an auth error locks out a requested consent instead of stacking with it`() {
         assertEquals(
             KompaktLinkedAccountDialog.AuthError,
-            linkedAccountDialog(true, false, false, false, false, KompaktSyncService.CONTACTS)
+            linkedAccountDialog(authError = true, outOfStorage = false, noInternet = false, syncFailed = null, newContactsConsent = false, requestConsent = KompaktSyncService.CONTACTS)
         )
     }
 

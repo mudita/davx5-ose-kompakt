@@ -4,6 +4,9 @@
 
 package at.bitfire.davdroid.ui.account
 
+import at.bitfire.davdroid.db.KompaktSyncOutcome
+import at.bitfire.davdroid.sync.KompaktSyncFailure
+
 // Separates "the source hasn't emitted yet" from whatever value it eventually carries, which a
 // nullable or a default value cannot express.
 internal sealed interface Reported<out T> {
@@ -20,7 +23,7 @@ sealed interface KompaktSyncStatus {
     data object NeverSynced : KompaktSyncStatus
     data object Syncing : KompaktSyncStatus
     data class Synced(val lastSync: String) : KompaktSyncStatus
-    data class Failed(val lastSync: String?) : KompaktSyncStatus
+    data class Failed(val lastSync: String?, val cause: KompaktSyncFailure) : KompaktSyncStatus
 }
 
 data class KompaktServiceSyncState(
@@ -37,10 +40,10 @@ internal fun serviceSyncState(
     switch: KompaktSyncSwitch,
     syncing: Reported<Boolean>,
     lastSync: Reported<String?>,
-    failed: Boolean
+    outcome: Reported<KompaktSyncOutcome?>
 ) = KompaktServiceSyncState(
     switch = switch,
-    status = syncStatus(syncing, lastSync, failed)
+    status = syncStatus(syncing, lastSync, outcome)
 )
 
 // Consent only vetoes: a scope granted during a re-auth brings no service, no discovery and no
@@ -56,10 +59,19 @@ internal fun kompaktSyncSwitch(consented: Boolean, on: Boolean): KompaktSyncSwit
 private fun syncStatus(
     syncing: Reported<Boolean>,
     lastSync: Reported<String?>,
-    failed: Boolean
+    outcome: Reported<KompaktSyncOutcome?>
 ): KompaktSyncStatus {
-    if (syncing !is Reported.Value || lastSync !is Reported.Value) return KompaktSyncStatus.Resolving
+    if (syncing !is Reported.Value || lastSync !is Reported.Value || outcome !is Reported.Value)
+        return KompaktSyncStatus.Resolving
     if (syncing.value) return KompaktSyncStatus.Syncing
-    if (failed) return KompaktSyncStatus.Failed(lastSync.value)
+    // No row means "not failed", which is deliberately indistinguishable from a success: an account
+    // that predates the table keeps its last-sync time until the next attempt records one.
+    val failure = outcome.value?.takeIf { !it.succeeded }
+    if (failure != null) return KompaktSyncStatus.Failed(lastSync.value, failure.cause.asSyncFailure())
     return lastSync.value?.let(KompaktSyncStatus::Synced) ?: KompaktSyncStatus.NeverSynced
 }
+
+// A cause written by an older build, or one whose constant was renamed, still has to render as a
+// failure rather than disappear.
+private fun String?.asSyncFailure(): KompaktSyncFailure =
+    KompaktSyncFailure.entries.firstOrNull { it.name == this } ?: KompaktSyncFailure.Unknown

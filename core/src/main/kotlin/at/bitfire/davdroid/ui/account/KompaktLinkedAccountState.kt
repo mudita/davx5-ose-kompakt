@@ -4,6 +4,7 @@
 
 package at.bitfire.davdroid.ui.account
 
+import at.bitfire.davdroid.sync.KompaktSyncFailure
 import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.ui.account.KompaktLinkedAccountModel.ReauthPhase
 
@@ -24,7 +25,13 @@ sealed interface KompaktLinkedAccountDialog {
     data object AuthError : KompaktLinkedAccountDialog
     data object OutOfStorage : KompaktLinkedAccountDialog
     data object NoInternet : KompaktLinkedAccountDialog
-    data object SyncFailed : KompaktLinkedAccountDialog
+    /** Carries what to retry, so Try again re-syncs only the services that actually failed. */
+    data class SyncFailed(val retry: Set<KompaktSyncService>) : KompaktLinkedAccountDialog
+    /** One service's stored cause, opened by tapping its alert icon. */
+    data class ExplainSyncFailure(
+        val service: KompaktSyncService,
+        val cause: KompaktSyncFailure
+    ) : KompaktLinkedAccountDialog
     data object NewContactsConsent : KompaktLinkedAccountDialog
     data class RequestConsent(val service: KompaktSyncService) : KompaktLinkedAccountDialog
     /** Carries the service so the sheet can name it, rather than the screen remembering which was tapped. */
@@ -45,7 +52,8 @@ internal fun linkedAccountDialog(
     authError: Boolean,
     outOfStorage: Boolean,
     noInternet: Boolean,
-    syncFailed: Boolean,
+    syncFailed: Set<KompaktSyncService>?,
+    explainSyncFailure: KompaktLinkedAccountDialog.ExplainSyncFailure? = null,
     newContactsConsent: Boolean = false,
     requestConsent: KompaktSyncService? = null,
     confirmDisable: KompaktSyncService? = null
@@ -53,7 +61,8 @@ internal fun linkedAccountDialog(
     authError -> KompaktLinkedAccountDialog.AuthError
     outOfStorage -> KompaktLinkedAccountDialog.OutOfStorage
     noInternet -> KompaktLinkedAccountDialog.NoInternet
-    syncFailed -> KompaktLinkedAccountDialog.SyncFailed
+    syncFailed != null -> KompaktLinkedAccountDialog.SyncFailed(syncFailed)
+    explainSyncFailure != null -> explainSyncFailure
     requestConsent != null -> KompaktLinkedAccountDialog.RequestConsent(requestConsent)
     newContactsConsent -> KompaktLinkedAccountDialog.NewContactsConsent
     confirmDisable != null -> KompaktLinkedAccountDialog.ConfirmDisable(confirmDisable)
