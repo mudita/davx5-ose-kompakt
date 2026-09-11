@@ -41,10 +41,8 @@ class KompaktSyncOutcomeRepositoryTest {
         repository = KompaktSyncOutcomeRepository(db)
     }
 
-    // A non-zero id would replace by primary key instead of on the index, leaving one service with two
-    // rows and the cell reading whichever came back first.
     @Test
-    fun `record writes id zero, so REPLACE resolves on the unique index`() = runTest {
+    fun `record writes the values it was given`() = runTest {
         repository.record(
             serviceId = SERVICE_ID,
             dataType = SyncDataType.EVENTS,
@@ -56,7 +54,6 @@ class KompaktSyncOutcomeRepositoryTest {
 
         val written = slot<KompaktSyncOutcome>()
         coVerify { dao.insertOrReplace(capture(written)) }
-        assertEquals(0L, written.captured.id)
         assertEquals(SERVICE_ID, written.captured.serviceId)
         assertEquals(SyncDataType.EVENTS.name, written.captured.dataType)
         assertEquals(false, written.captured.succeeded)

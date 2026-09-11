@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 20,
-    "identityHash": "7da66d85ec78fdaeda3b998f72f412ff",
+    "identityHash": "61a5d394ea092c80d4299779aa1114f5",
     "entities": [
       {
         "tableName": "service",
@@ -479,14 +479,8 @@
       },
       {
         "tableName": "kompakt_sync_outcome",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `serviceId` INTEGER NOT NULL, `dataType` TEXT NOT NULL, `at` INTEGER NOT NULL, `succeeded` INTEGER NOT NULL, `cause` TEXT, `trigger` TEXT NOT NULL, `detail` TEXT, FOREIGN KEY(`serviceId`) REFERENCES `service`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`serviceId` INTEGER NOT NULL, `dataType` TEXT NOT NULL, `at` INTEGER NOT NULL, `succeeded` INTEGER NOT NULL, `cause` TEXT, `trigger` TEXT NOT NULL, `detail` TEXT, PRIMARY KEY(`serviceId`, `dataType`), FOREIGN KEY(`serviceId`) REFERENCES `service`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
           {
             "fieldPath": "serviceId",
             "columnName": "serviceId",
@@ -529,23 +523,12 @@
           }
         ],
         "primaryKey": {
-          "autoGenerate": true,
+          "autoGenerate": false,
           "columnNames": [
-            "id"
+            "serviceId",
+            "dataType"
           ]
         },
-        "indices": [
-          {
-            "name": "index_kompakt_sync_outcome_serviceId_dataType",
-            "unique": true,
-            "columnNames": [
-              "serviceId",
-              "dataType"
-            ],
-            "orders": [],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_kompakt_sync_outcome_serviceId_dataType` ON `${TABLE_NAME}` (`serviceId`, `dataType`)"
-          }
-        ],
         "foreignKeys": [
           {
             "table": "service",
@@ -730,7 +713,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7da66d85ec78fdaeda3b998f72f412ff')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '61a5d394ea092c80d4299779aa1114f5')"
     ]
   }
 }
