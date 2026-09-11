@@ -4,7 +4,10 @@
   <string name="calendar_accountsync_dialog_body_sharecalendarandeventsbetween">Share calendar and events between your linked Google Account and Kompakt </string>
   <string name="calendar_accountsync_dialog_body_sharecontactsbetweenyourlinked">Share contacts between your linked Google Account and Kompakt </string>
   <string name="calendar_accountsync_dialog_body_synchronizenowtoimportyourselected">Syncronize now to import your selected Google data</string>
+  <string name="calendar_accountsync_dialog_body_youcannowimportselectedgoogle">You can now import selected Google data</string>
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">You won’t see data from your Google account any more</string>
+  <string name="calendar_accountsync_dialog_button_enablecalendarsync">Enable calendar sync</string>
+  <string name="calendar_accountsync_dialog_button_importnow">Import now</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Link account</string>
   <string name="calendar_accountsync_dialog_button_syncnow">Sync now</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Account linked</string>
@@ -13,6 +16,7 @@
   <string name="calendar_accountsync_dialog_h1_enablecalendarsync">Enable calendar sync\?</string>
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Enable contact sync\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Link a Google account</string>
+  <string name="calendar_accountsync_dialog_h1_permissionsgranted">Permissions granted</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Remove account\?</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagaintocontinue">Link your account again to continue synchronizing with Google calendar</string>
   <string name="calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour">We couldn’t synchronize with your Google account, please try again</string>
@@ -27,6 +31,7 @@
   <string name="calendar_accountsync_status_settingupyouraccount">Setting up your account...</string>
   <string name="calendar_accountsync_status_syncisoff">Sync is OFF</string>
   <string name="common_button_disable">Disable</string>
+  <string name="common_button_notnow">Not now</string>
   <string name="common_button_skip">Skip</string>
   <string name="common_button_synchronize">Synchronize</string>
   <string name="common_dialog_button_cancel">Cancel</string>
