@@ -48,9 +48,11 @@ import javax.inject.Singleton
     Collection::class,
     Principal::class,
     SyncStats::class,
+    KompaktSyncOutcome::class,
     WebDavDocument::class,
     WebDavMount::class
-], exportSchema = true, version = 19, autoMigrations = [
+], exportSchema = true, version = 20, autoMigrations = [
+    AutoMigration(from = 19, to = 20),      // add kompakt_sync_outcome
     AutoMigration(from = 18, to = 19),      // collection: add pushRegisteredEndpoint
     AutoMigration(from = 17, to = 18, spec = AutoMigration18::class),
     AutoMigration(from = 16, to = 17),      // collection: add VAPID key
@@ -120,6 +122,7 @@ abstract class AppDatabase: RoomDatabase() {
     abstract fun collectionDao(): CollectionDao
     abstract fun principalDao(): PrincipalDao
     abstract fun syncStatsDao(): SyncStatsDao
+    abstract fun kompaktSyncOutcomeDao(): KompaktSyncOutcomeDao
     abstract fun webDavDocumentDao(): WebDavDocumentDao
     abstract fun webDavMountDao(): WebDavMountDao
 
