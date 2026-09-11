@@ -30,7 +30,7 @@ filter_keys = [
     'calendar_accountsync_dialog_h1_enablecontactsync',
     'calendar_accountsync_dialog_h1_linkagoogleaccount',
     'calendar_accountsync_dialog_h1_removeaccount',
-    'calendar_accountsync_error_dialog_body_linkyouraccountagaintocontinue',
+    'calendar_accountsync_error_dialog_body_linkyouraccountagain"',
     'calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour',
     'calendar_accountsync_error_dialog_button_removeaccount',
     'calendar_accountsync_error_dialog_h1_accountlinkerror',

@@ -297,7 +297,7 @@ fun KompaktLinkedAccountContent(
             KompaktModalSheet(
                 onDismissRequest = {}, // unreachable by design — all dismiss paths locked
                 title = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_h1_accountlinkerror),
-                text = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_body_linkyouraccountagaintocontinue),
+                text = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_body_linkyouraccountagain),
                 icon = painterResource(R.drawable.ic_kompakt_alert),
                 confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_linkaccount),
                 onConfirm = actions.onReauthorize,   // flag stays set; cleared on successful re-auth + reload

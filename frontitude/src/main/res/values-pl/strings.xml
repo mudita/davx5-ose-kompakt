@@ -14,7 +14,7 @@
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Włączyć synchronizację kontaktów\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Połącz konto Google</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Usunąć konto\?</string>
-  <string name="calendar_accountsync_error_dialog_body_linkyouraccountagaintocontinue">Ponownie połącz swoje konto, aby kontynuować synchronizację z Kalendarzem Google</string>
+  <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Ponownie połącz swoje konto, aby kontynuować synchronizację z Google</string>
   <string name="calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour">Nie udało się zsynchronizować z Twoim kontem Google, spróbuj ponownie</string>
   <string name="calendar_accountsync_error_dialog_button_removeaccount">Usuń konto</string>
   <string name="calendar_accountsync_error_dialog_h1_accountlinkerror">Błąd łączenia konta</string>
