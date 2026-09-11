@@ -307,6 +307,15 @@ fun KompaktLinkedAccountContent(
                 onDismiss = actions.onUnlink
             )
 
+        KompaktLinkedAccountDialog.SyncOff ->
+            KompaktMessageSheet(
+                onDismissRequest = actions.onConsumeDialog,
+                title = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_h1_yoursyncisoff),
+                text = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization),
+                icon = painterResource(R.drawable.ic_kompakt_alert),
+                buttonLabel = stringResource(RFrontitude.string.common_button_ok)
+            )
+
         KompaktLinkedAccountDialog.OutOfStorage ->
             KompaktMessageSheet(
                 onDismissRequest = actions.onConsumeDialog,

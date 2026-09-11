@@ -23,6 +23,8 @@ data class KompaktLinkedAccountState(
 
 sealed interface KompaktLinkedAccountDialog {
     data object AuthError : KompaktLinkedAccountDialog
+    /** Synchronize was asked for while no service was switched on, so nothing could start. */
+    data object SyncOff : KompaktLinkedAccountDialog
     data object OutOfStorage : KompaktLinkedAccountDialog
     data object NoInternet : KompaktLinkedAccountDialog
     /** Carries what to retry, so Try again re-syncs only the services that actually failed. */
@@ -47,6 +49,10 @@ internal fun newContactsConsentVisible(
 /**
  * The one dialog to show, in precedence order. [confirmDisable] comes last because it is an intent
  * rather than a condition: a persistent problem the user has to deal with outranks a confirmation.
+ *
+ * [syncOff] outranks both environment dialogs for the same reason `KompaktStartSyncUseCase` answers
+ * eligibility before consulting storage and the network: a switched-off account told to check its
+ * connection is being answered a question it did not ask.
  */
 internal fun linkedAccountDialog(
     authError: Boolean,
@@ -56,9 +62,11 @@ internal fun linkedAccountDialog(
     explainSyncFailure: KompaktLinkedAccountDialog.ExplainSyncFailure? = null,
     newContactsConsent: Boolean = false,
     requestConsent: KompaktSyncService? = null,
-    confirmDisable: KompaktSyncService? = null
+    confirmDisable: KompaktSyncService? = null,
+    syncOff: Boolean = false
 ): KompaktLinkedAccountDialog? = when {
     authError -> KompaktLinkedAccountDialog.AuthError
+    syncOff -> KompaktLinkedAccountDialog.SyncOff
     outOfStorage -> KompaktLinkedAccountDialog.OutOfStorage
     noInternet -> KompaktLinkedAccountDialog.NoInternet
     syncFailed != null -> KompaktLinkedAccountDialog.SyncFailed(syncFailed)

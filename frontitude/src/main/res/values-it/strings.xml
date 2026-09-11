@@ -14,11 +14,13 @@
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Attivare la sincronizzazione dei contatti\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Collega un account Google</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Rimuovere l’account\?</string>
+  <string name="calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization">Attiva la sincronizzazione di calendario e contatti per sincronizzare i dati</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Collega nuovamente il tuo account per continuare a sincronizzare con Google</string>
   <string name="calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour">Non siamo riusciti a sincronizzarci con il tuo account Google, per favore riprova</string>
   <string name="calendar_accountsync_error_dialog_button_removeaccount">Rimuovi account</string>
   <string name="calendar_accountsync_error_dialog_h1_accountlinkerror">Errore di collegamento dell\'account</string>
   <string name="calendar_accountsync_error_dialog_h1_accountsyncfailed">Sincronizzazione dell’account fallita</string>
+  <string name="calendar_accountsync_error_dialog_h1_yoursyncisoff">La tua sincronizzazione è disattivata</string>
   <string name="calendar_accountsync_error_h1_couldntconnecttogoogle">Impossibile connettersi a Google</string>
   <string name="calendar_accountsync_error_h1_couldntsetupyouraccount">Impossibile configurare il tuo account</string>
   <string name="calendar_accountsync_status_connectingtogoogle">Connessione a Google...</string>
@@ -27,6 +29,7 @@
   <string name="calendar_accountsync_status_settingupyouraccount">Configurazione del tuo account...</string>
   <string name="calendar_accountsync_status_syncisoff">Sincronizzazione disattivata</string>
   <string name="common_button_disable">Disattiva</string>
+  <string name="common_button_ok">OK</string>
   <string name="common_button_skip">Salta</string>
   <string name="common_button_synchronize">Sincronizza</string>
   <string name="common_dialog_button_cancel">Annulla</string>
