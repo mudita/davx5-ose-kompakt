@@ -70,28 +70,28 @@ class KompaktSyncAttemptTest {
 
     @Test
     fun `low storage is reported, and nothing is awaited`() = runTest {
-        coEvery { startSync(account, any(), any()) } returns KompaktSyncStart.NoStorage
+        coEvery { startSync(account, any(), any()) } returns KompaktSyncStartResult.NoStorage
 
         assertEquals(KompaktAttemptResult.BlockedNoStorage, attempt.run(account, KompaktSyncService.entries))
     }
 
     @Test
     fun `no internet is reported, and nothing is awaited`() = runTest {
-        coEvery { startSync(account, any(), any()) } returns KompaktSyncStart.NoNetwork
+        coEvery { startSync(account, any(), any()) } returns KompaktSyncStartResult.NoNetwork
 
         assertEquals(KompaktAttemptResult.BlockedNoNetwork, attempt.run(account, KompaktSyncService.entries))
     }
 
     @Test
     fun `an empty eligible set is NoneEligible, which SHP-1157 turns into a dialog`() = runTest {
-        coEvery { startSync(account, any(), any()) } returns KompaktSyncStart.NoneEligible
+        coEvery { startSync(account, any(), any()) } returns KompaktSyncStartResult.NoneEligible
 
         assertEquals(KompaktAttemptResult.NoneEligible, attempt.run(account, KompaktSyncService.entries))
     }
 
     @Test
     fun `every service already syncing is AlreadySyncing, and silent`() = runTest {
-        coEvery { startSync(account, any(), any()) } returns KompaktSyncStart.AlreadySyncing
+        coEvery { startSync(account, any(), any()) } returns KompaktSyncStartResult.AlreadySyncing
 
         assertEquals(KompaktAttemptResult.AlreadySyncing, attempt.run(account, KompaktSyncService.entries))
     }
@@ -291,7 +291,7 @@ class KompaktSyncAttemptTest {
     }
 
     private fun started(vararg runs: Pair<KompaktSyncService, UUID>) =
-        KompaktSyncStart.Started(runs.toMap())
+        KompaktSyncStartResult.Started(runs.toMap())
 
     private fun workInfo(id: UUID, state: WorkInfo.State) = WorkInfo(id, state, emptySet())
 

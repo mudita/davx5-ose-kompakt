@@ -32,7 +32,7 @@ class KompaktSyncRequestUseCase @Inject constructor(
             // No discovery wait: a receiver has no lifecycle to block on. Every precondition lives in
             // the use case, so this may enqueue nothing at all -- see docs/app-integration.md.
             val start = startSync(account, allowed, awaitDiscovery = false)
-            if (start !is KompaktSyncStart.Started)
+            if (start !is KompaktSyncStartResult.Started)
                 logger.info("Nothing enqueued for $account: $start")
         }
     }

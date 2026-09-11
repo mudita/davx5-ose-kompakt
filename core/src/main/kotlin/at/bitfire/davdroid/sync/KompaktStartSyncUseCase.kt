@@ -13,14 +13,14 @@ import java.util.logging.Logger
 import javax.inject.Inject
 
 /** Why a sync request started nothing, or what it started. */
-sealed interface KompaktSyncStart {
-    data object NoStorage : KompaktSyncStart
-    data object NoNetwork : KompaktSyncStart
+sealed interface KompaktSyncStartResult {
+    data object NoStorage : KompaktSyncStartResult
+    data object NoNetwork : KompaktSyncStartResult
     /** Nothing the caller asked for can sync: no consent, or switched off. */
-    data object NoneEligible : KompaktSyncStart
+    data object NoneEligible : KompaktSyncStartResult
     /** Everything eligible already had a run in flight, so this request added none. */
-    data object AlreadySyncing : KompaktSyncStart
-    data class Started(val runs: Map<KompaktSyncService, UUID>) : KompaktSyncStart
+    data object AlreadySyncing : KompaktSyncStartResult
+    data class Started(val runs: Map<KompaktSyncService, UUID>) : KompaktSyncStartResult
 }
 
 /**
@@ -51,22 +51,22 @@ class KompaktStartSyncUseCase @Inject constructor(
         account: Account,
         services: Collection<KompaktSyncService> = KompaktSyncService.entries,
         awaitDiscovery: Boolean = true
-    ): KompaktSyncStart {
+    ): KompaktSyncStartResult {
         val requested = services.toSet()
         val consented = eligibility.consented(account) intersect requested
         val switchedOn = eligibility.switchedOn(account) intersect consented
         val undecided = consented.filterNot { initDefaults.isApplied(account, it) }
 
         if (switchedOn.isEmpty() && undecided.isEmpty())
-            return KompaktSyncStart.NoneEligible
+            return KompaktSyncStartResult.NoneEligible
 
         // A manual run carries no storage constraint and would only fail, and nothing may be enqueued
         // that cannot run: a request parked on an unmet constraint reads as a sync in progress for as
         // long as it waits.
         if (storage.isLow())
-            return KompaktSyncStart.NoStorage
+            return KompaktSyncStartResult.NoStorage
         if (!network.isAvailable(account))
-            return KompaktSyncStart.NoNetwork
+            return KompaktSyncStartResult.NoNetwork
 
         val configured = (switchedOn + undecided).filter { service ->
             configure(account, service, awaitDiscovery)
@@ -76,7 +76,7 @@ class KompaktStartSyncUseCase @Inject constructor(
         // user's choice rather than an unwritten one.
         val toSync = configured intersect eligibility.switchedOn(account)
         if (toSync.isEmpty())
-            return KompaktSyncStart.NoneEligible
+            return KompaktSyncStartResult.NoneEligible
 
         val runs = toSync
             // No second job while one is in progress. This also covers a running *periodic* worker,
@@ -87,9 +87,9 @@ class KompaktStartSyncUseCase @Inject constructor(
             .toMap()
 
         return if (runs.isEmpty())
-            KompaktSyncStart.AlreadySyncing
+            KompaktSyncStartResult.AlreadySyncing
         else
-            KompaktSyncStart.Started(runs)
+            KompaktSyncStartResult.Started(runs)
     }
 
     private suspend fun configure(
