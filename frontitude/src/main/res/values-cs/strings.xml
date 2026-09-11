@@ -14,11 +14,13 @@
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Povolit synchronizaci kontaktů\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Propojit účet Google</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Odebrat účet\?</string>
+  <string name="calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization">Chcete-li synchronizovat data, povolte synchronizaci kalendáře a kontaktů</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Znovu propojte svůj účet pro pokračování v synchronizaci s Google</string>
   <string name="calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour">Nepodařilo se nám synchronizovat s vaším účtem Google, zkuste to prosím znovu</string>
   <string name="calendar_accountsync_error_dialog_button_removeaccount">Odebrat účet</string>
   <string name="calendar_accountsync_error_dialog_h1_accountlinkerror">Chyba propojení účtu</string>
   <string name="calendar_accountsync_error_dialog_h1_accountsyncfailed">Synchronizace účtu selhala</string>
+  <string name="calendar_accountsync_error_dialog_h1_yoursyncisoff">Vaše synchronizace je vypnutá</string>
   <string name="calendar_accountsync_error_h1_couldntconnecttogoogle">Nelze se připojit k Google</string>
   <string name="calendar_accountsync_error_h1_couldntsetupyouraccount">Nelze nastavit váš účet</string>
   <string name="calendar_accountsync_status_connectingtogoogle">Připojování k Google...</string>
@@ -27,6 +29,7 @@
   <string name="calendar_accountsync_status_settingupyouraccount">Nastavení vašeho účtu...</string>
   <string name="calendar_accountsync_status_syncisoff">Synchronizace vypnuta</string>
   <string name="common_button_disable">Zakázat</string>
+  <string name="common_button_ok">OK</string>
   <string name="common_button_skip">Přeskoč</string>
   <string name="common_button_synchronize">Synchronizovat</string>
   <string name="common_dialog_button_cancel">Zrušit</string>

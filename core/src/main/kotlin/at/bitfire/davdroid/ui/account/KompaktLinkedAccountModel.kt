@@ -101,6 +101,10 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     private val _showNoInternet = MutableStateFlow(false)
 
+    // Raised only by a request that found nothing to sync, so unlike the environment flags it never
+    // holds on screen entry.
+    private val _showSyncOff = MutableStateFlow(false)
+
     /**
      * `true` while the device is critically low on storage (system threshold; see [KompaktStorage]). Like the
      * re-auth flag this is a *persistent* condition surfaced immediately on screen entry and re-checked on
@@ -148,6 +152,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         showNewContactsConsent,
         _requestConsent,
         _confirmDisable,
+        _showSyncOff,
         ::linkedAccountDialog
     )
 
@@ -302,6 +307,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     // re-auth, which is why its sheet has every dismiss path locked.
     fun consumeDialog() {
         _showNoInternet.value = false
+        _showSyncOff.value = false
         _syncFailed.value = null
         _explainSyncFailure.value = null
         _showOutOfStorage.value = false
@@ -366,7 +372,8 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             syncFailed = null,
             newContactsConsent = false,
             requestConsent = null,
-            confirmDisable = null
+            confirmDisable = null,
+            syncOff = false
         ),
         reauthPhase = _reauthPhase.value
     )
@@ -396,17 +403,17 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         when (val result = syncAttempt.run(account, requested)) {
             KompaktAttemptResult.BlockedNoStorage -> _showOutOfStorage.value = true
             KompaktAttemptResult.BlockedNoNetwork -> _showNoInternet.value = true
+            KompaktAttemptResult.NoneEligible -> _showSyncOff.value = true
             is KompaktAttemptResult.Failed -> _syncFailed.value = result.retry
             // The connection went while the sync was running: name the cause, and deliberately not the
             // generic failure — a sibling that failed in the same moment failed *because* of this.
             is KompaktAttemptResult.Interrupted -> when (result.reason) {
                 KompaktInterruption.NoNetwork -> _showNoInternet.value = true
             }
-            // AuthFailed defers to the re-auth dialog, which outranks everything. NoneEligible is
-            // SHP-1157's dialog; AlreadySyncing already shows a spinner on the row.
+            // AuthFailed defers to the re-auth dialog, which outranks everything; AlreadySyncing
+            // already shows a spinner on the row.
             KompaktAttemptResult.AlreadySyncing,
             KompaktAttemptResult.AuthFailed,
-            KompaktAttemptResult.NoneEligible,
             KompaktAttemptResult.Succeeded -> Unit
         }
     }

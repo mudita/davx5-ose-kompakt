@@ -14,11 +14,13 @@
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Ativar sincronização de contactos\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Vincular uma conta Google</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Remover conta\?</string>
+  <string name="calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization">Ative a sincronização do calendário e dos contactos para sincronizar os dados</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Vincule a sua conta novamente para continuar a sincronizar com o Google</string>
   <string name="calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour">Não conseguimos sincronizar com a sua conta Google, por favor, tente novamente</string>
   <string name="calendar_accountsync_error_dialog_button_removeaccount">Remover conta</string>
   <string name="calendar_accountsync_error_dialog_h1_accountlinkerror">Erro de vinculação de conta</string>
   <string name="calendar_accountsync_error_dialog_h1_accountsyncfailed">Falha ao sincronizar conta</string>
+  <string name="calendar_accountsync_error_dialog_h1_yoursyncisoff">A sua sincronização está desativada</string>
   <string name="calendar_accountsync_error_h1_couldntconnecttogoogle">Não foi possível ligar ao Google</string>
   <string name="calendar_accountsync_error_h1_couldntsetupyouraccount">Não foi possível configurar a sua conta</string>
   <string name="calendar_accountsync_status_connectingtogoogle">A conectar ao Google...</string>
@@ -27,6 +29,7 @@
   <string name="calendar_accountsync_status_settingupyouraccount">A configurar a sua conta...</string>
   <string name="calendar_accountsync_status_syncisoff">Sincronização desativada</string>
   <string name="common_button_disable">Desativar</string>
+  <string name="common_button_ok">OK</string>
   <string name="common_button_skip">Ignorar</string>
   <string name="common_button_synchronize">Sincronizar</string>
   <string name="common_dialog_button_cancel">Cancelar</string>

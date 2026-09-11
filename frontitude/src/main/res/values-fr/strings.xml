@@ -14,11 +14,13 @@
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Activer la synchronisation des contacts \?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Lier un compte Google</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Supprimer le compte \?</string>
+  <string name="calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization">Activez la synchronisation de l\'agenda et des contacts pour synchroniser vos données</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Reliez votre compte à nouveau pour continuer à synchroniser avec Google</string>
   <string name="calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour">Nous n\'avons pas pu synchroniser avec votre compte Google, veuillez réessayer</string>
   <string name="calendar_accountsync_error_dialog_button_removeaccount">Supprimer le compte</string>
   <string name="calendar_accountsync_error_dialog_h1_accountlinkerror">Erreur de liaison de compte</string>
   <string name="calendar_accountsync_error_dialog_h1_accountsyncfailed">Échec de la synchronisation du compte</string>
+  <string name="calendar_accountsync_error_dialog_h1_yoursyncisoff">Votre synchronisation est désactivée</string>
   <string name="calendar_accountsync_error_h1_couldntconnecttogoogle">Connexion impossible à Google</string>
   <string name="calendar_accountsync_error_h1_couldntsetupyouraccount">Impossible de configurer votre compte</string>
   <string name="calendar_accountsync_status_connectingtogoogle">Connexion à Google...</string>
@@ -27,6 +29,7 @@
   <string name="calendar_accountsync_status_settingupyouraccount">Configuration de votre compte...</string>
   <string name="calendar_accountsync_status_syncisoff">Synchronisation désactivée</string>
   <string name="common_button_disable">Désactiver</string>
+  <string name="common_button_ok">OK</string>
   <string name="common_button_skip">Passer</string>
   <string name="common_button_synchronize">Synchroniser</string>
   <string name="common_dialog_button_cancel">Annuler</string>

@@ -14,11 +14,13 @@
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Włączyć synchronizację kontaktów\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Połącz konto Google</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Usunąć konto\?</string>
+  <string name="calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization">Włącz synchronizację kalendarza i kontaktów, aby synchronizować dane</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Ponownie połącz swoje konto, aby kontynuować synchronizację z Google</string>
   <string name="calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour">Nie udało się zsynchronizować z Twoim kontem Google, spróbuj ponownie</string>
   <string name="calendar_accountsync_error_dialog_button_removeaccount">Usuń konto</string>
   <string name="calendar_accountsync_error_dialog_h1_accountlinkerror">Błąd łączenia konta</string>
   <string name="calendar_accountsync_error_dialog_h1_accountsyncfailed">Synchronizacja konta nie powiodła się</string>
+  <string name="calendar_accountsync_error_dialog_h1_yoursyncisoff">Twoja synchronizacja jest wyłączona</string>
   <string name="calendar_accountsync_error_h1_couldntconnecttogoogle">Nie udało się połączyć z Google</string>
   <string name="calendar_accountsync_error_h1_couldntsetupyouraccount">Nie udało się skonfigurować Twojego konta</string>
   <string name="calendar_accountsync_status_connectingtogoogle">Łączenie z Google...</string>
@@ -27,6 +29,7 @@
   <string name="calendar_accountsync_status_settingupyouraccount">Konfiguracja Twojego konta...</string>
   <string name="calendar_accountsync_status_syncisoff">Synchronizacja wyłączona</string>
   <string name="common_button_disable">Wyłącz</string>
+  <string name="common_button_ok">OK</string>
   <string name="common_button_skip">Pomiń</string>
   <string name="common_button_synchronize">Synchronizuj</string>
   <string name="common_dialog_button_cancel">Anuluj</string>

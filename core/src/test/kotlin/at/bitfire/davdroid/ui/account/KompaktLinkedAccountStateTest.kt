@@ -140,6 +140,33 @@ class KompaktLinkedAccountStateTest {
     }
 
     @Test
+    fun `a request that found nothing switched on says so`() {
+        assertEquals(
+            KompaktLinkedAccountDialog.SyncOff,
+            linkedAccountDialog(authError = false, outOfStorage = false, noInternet = false, syncFailed = null, syncOff = true)
+        )
+    }
+
+    @Test
+    fun `nothing switched on outranks the environment dialogs`() {
+        // The use case answers eligibility before it consults storage or the network, so a stale
+        // environment flag must not turn "your sync is off" into "check your connection".
+        assertEquals(
+            KompaktLinkedAccountDialog.SyncOff,
+            linkedAccountDialog(authError = false, outOfStorage = true, noInternet = true, syncFailed = null, syncOff = true)
+        )
+    }
+
+    @Test
+    fun `an auth error still outranks nothing switched on`() {
+        // Its sheet has every dismiss path locked, so nothing may be shown above it.
+        assertEquals(
+            KompaktLinkedAccountDialog.AuthError,
+            linkedAccountDialog(authError = true, outOfStorage = false, noInternet = false, syncFailed = null, syncOff = true)
+        )
+    }
+
+    @Test
     fun noDialogWhenNothingIsWrong() {
         assertNull(
             linkedAccountDialog(authError = false, outOfStorage = false, noInternet = false, syncFailed = null, confirmDisable = null)
