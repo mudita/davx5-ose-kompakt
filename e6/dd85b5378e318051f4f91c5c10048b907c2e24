@@ -1,0 +1,55 @@
+frontitude/src/main/res/values-pl/strings.xml
+  0bba4377a635f100 17-18,23,32
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountModel.kt
+  bfc530d5b86252c9 29
+  0bba4377a635f100 104-107,155,310,375-376,406,413-414
+frontitude/keys_to_filter.py
+  0bba4377a635f100 33-34,39,48
+frontitude/src/main/res/values-nl/strings.xml
+  0bba4377a635f100 17-18,23,32
+core/src/test/kotlin/at/bitfire/davdroid/util/KompaktFlowCombineTest.kt
+  0bba4377a635f100 33-49
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountScreen.kt
+  0bba4377a635f100 310-318
+core/src/test/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountStateTest.kt
+  0bba4377a635f100 143-168
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountState.kt
+  0bba4377a635f100 26-27,52-55,65-66,69
+frontitude/src/main/res/values-de/strings.xml
+  0bba4377a635f100 17-18,23,32
+frontitude/src/main/res/values-it/strings.xml
+  0bba4377a635f100 17-18,23,32
+frontitude/src/main/res/values/strings.xml
+  0bba4377a635f100 17-18,23,32
+frontitude/src/main/res/values-es/strings.xml
+  0bba4377a635f100 17-18,23,32
+frontitude/src/main/res/values-cs/strings.xml
+  0bba4377a635f100 17-18,23,32
+frontitude/src/main/res/values-pt/strings.xml
+  0bba4377a635f100 17-18,23,32
+frontitude/src/main/res/values-fr/strings.xml
+  0bba4377a635f100 17-18,23,32
+core/src/main/kotlin/at/bitfire/davdroid/util/KompaktFlowCombine.kt
+  0bba4377a635f100 18-42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "e6dd85b5378e318051f4f91c5c10048b907c2e24",
+  "prompts": {
+    "0bba4377a635f100": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8d8c43d4-5538-440e-9ff8-7471d440c09a",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 715,
+      "total_deletions": 5,
+      "accepted_lines": 127,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/a277dd5a2a82c87c3690aced993658c9fb4d6f822e0f091cce6ad888c1864754"
+    }
+  }
+}
