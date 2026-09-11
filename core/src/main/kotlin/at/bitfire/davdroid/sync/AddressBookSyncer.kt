@@ -7,6 +7,7 @@ package at.bitfire.davdroid.sync
 import android.accounts.Account
 import android.accounts.AccountManager
 import android.content.ContentProviderClient
+import android.os.DeadObjectException
 import android.provider.ContactsContract
 import at.bitfire.davdroid.db.Collection
 import at.bitfire.davdroid.db.Service
@@ -21,6 +22,8 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
+import at.bitfire.davdroid.sync.account.InvalidAccountException
+import at.bitfire.synctools.storage.LocalStorageException
 import java.util.logging.Level
 
 /**
@@ -123,7 +126,23 @@ class AddressBookSyncer @AssistedInject constructor(
             // whole run instead of moving on to the remaining address books of an account that is gone
             throw e
         } catch(e: Exception) {
-            logger.log(Level.SEVERE, "Couldn't sync contacts", e)
+            // Same arms as Syncer.invoke, so a contacts failure is counted like a calendar one. Without
+            // them this catch reported success for anything thrown by the preamble above, and for the
+            // exceptions SyncManager deliberately re-throws.
+            when {
+                e is LocalStorageException && e.cause is DeadObjectException -> {
+                    logger.log(Level.WARNING, "Received DeadObjectException, treating as soft error", e)
+                    syncResult.numDeadObjectExceptions++
+                }
+
+                e is InvalidAccountException ->
+                    logger.log(Level.WARNING, "Account was removed during synchronization", e)
+
+                else -> {
+                    logger.log(Level.SEVERE, "Couldn't sync contacts", e)
+                    syncResult.numUnclassifiedErrors++
+                }
+            }
         }
 
         logger.info("Contacts sync complete")
