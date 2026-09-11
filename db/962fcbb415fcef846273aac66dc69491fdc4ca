@@ -1,0 +1,24 @@
+core/src/main/kotlin/at/bitfire/davdroid/resource/LocalAddressBookStore.kt
+  9d3876b0d03a9177 200-201,215,229,231
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "db962fcbb415fcef846273aac66dc69491fdc4ca",
+  "prompts": {
+    "9d3876b0d03a9177": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3e501698-9f47-4ab8-8f8e-eacaaad62701",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 159,
+      "total_deletions": 47,
+      "accepted_lines": 439,
+      "overriden_lines": 1,
+      "messages_url": "https://gitai.miquido.dev/cas/04e26dd3f7517c3700e32f47ff9f91a3b208bef633b58cbe512477d423a6bcab"
+    }
+  }
+}
