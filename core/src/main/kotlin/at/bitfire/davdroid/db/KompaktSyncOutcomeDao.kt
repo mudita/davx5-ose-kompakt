@@ -13,9 +13,6 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface KompaktSyncOutcomeDao {
 
-    // Callers always pass id = 0: Room binds NULL for a zero autoGenerate primary key, so the conflict
-    // lands on the unique index and REPLACE keeps one row per service and data type. Round-tripping a
-    // row that was read back into this would replace by primary key instead.
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrReplace(outcome: KompaktSyncOutcome)
 
