@@ -1,0 +1,24 @@
+docs/app-integration.md
+  bfc530d5b86252c9 111-119,157-169,196-197,214-221
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "38211d7069779cd5e2922e8a890bf34a2e7307eb",
+  "prompts": {
+    "bfc530d5b86252c9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80e02192-c7d5-419e-a3e9-a9c987ac3ecd",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 1645,
+      "total_deletions": 13,
+      "accepted_lines": 32,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/c11d5c9e9f6a1dea95c968c04b8a06fc17145742681b0e88456fe8dfe93071db"
+    }
+  }
+}
