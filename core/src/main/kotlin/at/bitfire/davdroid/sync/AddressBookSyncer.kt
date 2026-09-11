@@ -12,6 +12,7 @@ import at.bitfire.davdroid.db.Collection
 import at.bitfire.davdroid.db.Service
 import at.bitfire.davdroid.resource.LocalAddressBook
 import at.bitfire.davdroid.resource.LocalAddressBookStore
+import at.bitfire.davdroid.sync.account.InvalidAccountException
 import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.synctools.storage.contacts.AddressContract.asSyncAdapter
 import at.bitfire.synctools.util.setAndVerifyUserData
@@ -117,6 +118,10 @@ class AddressBookSyncer @AssistedInject constructor(
                 syncManager.performSync()
             }
 
+        } catch (e: InvalidAccountException) {
+            // the account was removed while this sync was running (an unlink): let the Syncer stop the
+            // whole run instead of moving on to the remaining address books of an account that is gone
+            throw e
         } catch(e: Exception) {
             logger.log(Level.SEVERE, "Couldn't sync contacts", e)
         }

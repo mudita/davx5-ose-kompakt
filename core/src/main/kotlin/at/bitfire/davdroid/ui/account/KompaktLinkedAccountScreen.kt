@@ -27,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -63,6 +62,8 @@ data class KompaktLinkedAccountActions(
     val onConfirmDisable: () -> Unit = {},
     val onSyncNow: () -> Unit = {},
     val onUnlink: () -> Unit = {},
+    val onRequestUnlink: () -> Unit = {},
+    val onConfirmUnlink: () -> Unit = {},
     val onConsumeDialog: () -> Unit = {},
     val onFailureClick: () -> Unit = {},
     val onAccountLinkedDialogDismiss: () -> Unit = {},
@@ -154,6 +155,8 @@ fun KompaktLinkedAccountScreen(
                 onConfirmDisable = model::confirmDisable,
                 onSyncNow = model::syncNow,
                 onUnlink = model::unlink,
+                onRequestUnlink = model::requestUnlink,
+                onConfirmUnlink = model::confirmUnlink,
                 onConsumeDialog = model::consumeDialog,
                 onFailureClick = model::consumeDialog,
                 onAccountLinkedDialogDismiss = onAccountLinkedDialogDismiss,
@@ -178,8 +181,6 @@ fun KompaktLinkedAccountContent(
     actions: KompaktLinkedAccountActions,
     showAccountLinkedDialog: Boolean
 ) {
-    var showUnlinkDialog by remember { mutableStateOf(false) }
-
     KompaktTheme {
         Scaffold(
             topBar = {
@@ -199,7 +200,7 @@ fun KompaktLinkedAccountContent(
                         }
                     },
                     actions = {
-                        IconButton(onClick = { showUnlinkDialog = true }) {
+                        IconButton(onClick = actions.onRequestUnlink) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_kompakt_logout),
                                 contentDescription = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_removeaccount)
@@ -262,22 +263,6 @@ fun KompaktLinkedAccountContent(
                 }
             }
         }
-    }
-
-    if (showUnlinkDialog) {
-        KompaktModalSheet(
-            onDismissRequest = { showUnlinkDialog = false },
-            title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_removeaccount),
-            text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_youwontseedatafromyourgoogle),
-            icon = painterResource(R.drawable.ic_kompakt_alert),
-            confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_button_removeaccount),
-            onConfirm = {
-                showUnlinkDialog = false
-                actions.onUnlink()
-            },
-            dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
-            onDismiss = { showUnlinkDialog = false }
-        )
     }
 
     if (showAccountLinkedDialog) {
@@ -384,6 +369,18 @@ fun KompaktLinkedAccountContent(
                 icon = painterResource(R.drawable.ic_kompakt_alert),
                 confirmLabel = stringResource(RFrontitude.string.common_button_disable),
                 onConfirm = actions.onConfirmDisable,
+                dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
+                onDismiss = actions.onConsumeDialog
+            )
+
+        KompaktLinkedAccountDialog.ConfirmUnlink ->
+            KompaktModalSheet(
+                onDismissRequest = actions.onConsumeDialog,
+                title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_removeaccount),
+                text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_youwontseedatafromyourgoogle),
+                icon = painterResource(R.drawable.ic_kompakt_alert),
+                confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_button_removeaccount),
+                onConfirm = actions.onConfirmUnlink,
                 dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
                 onDismiss = actions.onConsumeDialog
             )

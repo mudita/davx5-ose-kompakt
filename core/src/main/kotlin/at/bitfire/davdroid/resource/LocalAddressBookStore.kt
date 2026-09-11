@@ -94,6 +94,11 @@ class LocalAddressBookStore @Inject constructor(
         val service = serviceRepository.getBlocking(fromCollection.serviceId) ?: throw IllegalArgumentException("Couldn't fetch DB service from collection")
         val account = Account(service.accountName, context.getString(R.string.account_type))
 
+        // Fail fast if the main account is already gone (e.g. an unlink mid-sync) instead of creating a
+        // new address-book account for it: AccountSettings() throws InvalidAccountException as soon as
+        // the account's userdata is gone, and Syncer.invoke() already handles that exception.
+        val accountSettings = accountSettingsFactory.create(account)
+
         val name = accountName(fromCollection)
         val addressBookAccount = createAddressBookAccount(
             account = account,
@@ -101,7 +106,6 @@ class LocalAddressBookStore @Inject constructor(
             id = fromCollection.id
         ) ?: return null
 
-        val accountSettings = accountSettingsFactory.create(account)
         val addressBook = localAddressBookFactory.create(account, addressBookAccount, client, accountSettings.getGroupMethod())
 
         // update settings
@@ -208,6 +212,22 @@ class LocalAddressBookStore @Inject constructor(
             accountManager.getUserData(account, LocalAddressBook.USER_DATA_COLLECTION_ID)?.toLongOrNull() == id
         }
         if (addressBookAccount != null)
+            accountManager.removeAccountExplicitly(addressBookAccount)
+    }
+
+    /**
+     * Deletes every address book that belongs to [account], found through the address book accounts'
+     * own user data rather than through the database collection rows — an address book whose collection
+     * row is stale, duplicated or gone is invisible to [deleteByCollectionId] and would survive with all
+     * of its contacts.
+     *
+     * @param account   account which owns the address books
+     */
+    fun deleteByAccount(account: Account) {
+        val addressBookAccounts = getAddressBookAccounts(account)
+        logger.info("Deleting ${addressBookAccounts.size} address book(s) of $account: $addressBookAccounts")
+        val accountManager = AccountManager.get(context)
+        for (addressBookAccount in addressBookAccounts)
             accountManager.removeAccountExplicitly(addressBookAccount)
     }
 
