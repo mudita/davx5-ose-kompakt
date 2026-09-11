@@ -472,7 +472,7 @@ duplication `KompaktSyncEligibility` exists to prevent.
 
 *Superseded in part by Decision 9:* the `Map<KompaktSyncService, UUID?>` return and the `null`-means-gated
 convention are gone — the gate still lives at the choke point, and the result is a sealed
-`KompaktSyncStart`. **The layering note is not resolved:** `KompaktStartSyncUseCase` still imports
+`KompaktSyncStartResult`. **The layering note is not resolved:** `KompaktStartSyncUseCase` still imports
 `at.bitfire.davdroid.ui.account.KompaktAccountProgressUseCase`. Moving that class into `sync` remains the
 tidy-up, and it belongs to SHP-1155, which owns the file.
 
@@ -567,7 +567,7 @@ earlier session whose row has since gone would otherwise be enqueued to sync not
 network round-trip, which is the other reason step 4 cannot precede step 3.
 
 **What `KompaktSyncAttempt` keeps:** the ids, the drain, the offline watch and the verdict. It maps
-`KompaktSyncStart` onto `KompaktAttemptResult` and no longer holds a guard of its own. The watch stays
+`KompaktSyncStartResult` onto `KompaktAttemptResult` and no longer holds a guard of its own. The watch stays
 because it is tied to the screen's lifetime; giving a background caller one would be wrong.
 
 **Rejected: a flag to skip the guards for background callers.** That is Decision 7's rejected
@@ -600,12 +600,12 @@ New files, all in `core`:
 meant "gated" by convention is gone:
 
 ```kotlin
-sealed interface KompaktSyncStart {
-    data object NoStorage : KompaktSyncStart
-    data object NoNetwork : KompaktSyncStart
-    data object NoneEligible : KompaktSyncStart      // no consent, or switched off
-    data object AlreadySyncing : KompaktSyncStart    // everything eligible had a run in flight
-    data class Started(val runs: Map<KompaktSyncService, UUID>) : KompaktSyncStart
+sealed interface KompaktSyncStartResult {
+    data object NoStorage : KompaktSyncStartResult
+    data object NoNetwork : KompaktSyncStartResult
+    data object NoneEligible : KompaktSyncStartResult      // no consent, or switched off
+    data object AlreadySyncing : KompaktSyncStartResult    // everything eligible had a run in flight
+    data class Started(val runs: Map<KompaktSyncService, UUID>) : KompaktSyncStartResult
 }
 ```
 
@@ -618,7 +618,7 @@ Upstream files edited:
 | `sync/AddressBookSyncer.kt` | the catch arms | **first fork edit** |
 
 Kompakt files edited: `sync/KompaktStartSyncUseCase.kt` (every precondition, sealed
-`KompaktSyncStart`), `sync/KompaktSyncEligibility.kt` (granular `consented` / `switchedOn`, no row
+`KompaktSyncStartResult`), `sync/KompaktSyncEligibility.kt` (granular `consented` / `switchedOn`, no row
 check), `sync/KompaktInitDefaults.kt` (`isApplied`), `sync/KompaktSyncRequestUseCase.kt`,
 `sync/KompaktSyncService.kt`
 (`fromDataType`), `sync/KompaktSyncWork.kt` (per-service cancel already exists; no signature change),
@@ -662,8 +662,8 @@ class KompaktSyncAttempt @Inject constructor(
 }
 
 sealed interface KompaktAttemptResult {
-    data object BlockedNoStorage : KompaktAttemptResult    // mapped from KompaktSyncStart, AC 14
-    data object BlockedNoNetwork : KompaktAttemptResult    // mapped from KompaktSyncStart, AC 14
+    data object BlockedNoStorage : KompaktAttemptResult    // mapped from KompaktSyncStartResult, AC 14
+    data object BlockedNoNetwork : KompaktAttemptResult    // mapped from KompaktSyncStartResult, AC 14
     data object NoneEligible : KompaktAttemptResult        // SHP-1157 AC 6 owns the dialog
     data object AlreadySyncing : KompaktAttemptResult      // nothing to add; SHP-1157 AC 8
     data object Succeeded : KompaktAttemptResult
@@ -900,7 +900,7 @@ Rules, both surfaces:
 6. **`docs/app-integration.md` is updated in this change, and only in the places named in *Contract
    change*.** Any further edit means the design has drifted.
 7. **Every precondition is asked in one place, in one order** (Decision 9). `KompaktSyncAttempt` maps
-   `KompaktSyncStart` and holds no guard of its own; no caller re-implements one, and none opts out.
+   `KompaktSyncStartResult` and holds no guard of its own; no caller re-implements one, and none opts out.
 8. **Nothing is enqueued that cannot run** (Decision 9). A request whose constraints are unmet is
    refused, not parked — a parked run reads as a sync in progress with nothing to end it.
 
