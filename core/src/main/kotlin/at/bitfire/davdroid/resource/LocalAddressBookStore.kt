@@ -21,7 +21,6 @@ import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.settings.Settings
 import at.bitfire.davdroid.settings.SettingsManager
 import at.bitfire.davdroid.util.DavUtils.lastSegment
-import at.bitfire.synctools.storage.contacts.AddressContract.asSyncAdapter
 import at.bitfire.synctools.util.AndroidAccountUtils
 import at.bitfire.synctools.util.setAndVerifyUserData
 import com.google.common.base.CharMatcher
@@ -198,7 +197,8 @@ class LocalAddressBookStore @Inject constructor(
     }
 
     override fun delete(localCollection: LocalAddressBook) {
-        deleteAddressBookAccount(localCollection.addressBookAccount)
+        val accountManager = AccountManager.get(context)
+        accountManager.removeAccountExplicitly(localCollection.addressBookAccount)
     }
 
     /**
@@ -212,7 +212,7 @@ class LocalAddressBookStore @Inject constructor(
             accountManager.getUserData(account, LocalAddressBook.USER_DATA_COLLECTION_ID)?.toLongOrNull() == id
         }
         if (addressBookAccount != null)
-            deleteAddressBookAccount(addressBookAccount)
+            accountManager.removeAccountExplicitly(addressBookAccount)
     }
 
     /**
@@ -226,27 +226,9 @@ class LocalAddressBookStore @Inject constructor(
     fun deleteByAccount(account: Account) {
         val addressBookAccounts = getAddressBookAccounts(account)
         logger.info("Deleting ${addressBookAccounts.size} address book(s) of $account: $addressBookAccounts")
+        val accountManager = AccountManager.get(context)
         for (addressBookAccount in addressBookAccounts)
-            deleteAddressBookAccount(addressBookAccount)
-    }
-
-    /**
-     * Deletes an address book account's contacts and groups through the provider, then removes the
-     * account itself. The explicit deletion is what notifies the Contacts app and what makes the removal
-     * observable in the log; removing the account alone leaves the data to an implicit platform purge.
-     */
-    private fun deleteAddressBookAccount(addressBookAccount: Account) {
-        try {
-            acquireContentProvider(throwOnMissingPermissions = false)?.use { provider ->
-                val contacts = provider.delete(ContactsContract.RawContacts.CONTENT_URI.asSyncAdapter(addressBookAccount), null, null)
-                val groups = provider.delete(ContactsContract.Groups.CONTENT_URI.asSyncAdapter(addressBookAccount), null, null)
-                logger.info("Deleted $contacts contact(s) and $groups group(s) of $addressBookAccount")
-            }
-        } catch (e: Exception) {
-            logger.log(Level.WARNING, "Couldn't delete contacts of $addressBookAccount, removing the account anyway", e)
-        }
-
-        AccountManager.get(context).removeAccountExplicitly(addressBookAccount)
+            accountManager.removeAccountExplicitly(addressBookAccount)
     }
 
     /**
