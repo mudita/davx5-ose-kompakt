@@ -4,32 +4,22 @@
 
 package at.bitfire.davdroid.sync
 
-import at.bitfire.davdroid.TEST_ACCOUNT_NAME
-import at.bitfire.davdroid.db.Service
 import at.bitfire.davdroid.mockAccount
 import at.bitfire.davdroid.mockAuthState
 import at.bitfire.davdroid.network.KompaktOAuthGoogle
-import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.settings.KompaktAccountSettings
-import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
 class KompaktSyncEligibilityTest {
 
-    companion object {
-        private const val EMAIL = TEST_ACCOUNT_NAME
-    }
-
     private val account = mockAccount()
 
     private lateinit var accountSettings: KompaktAccountSettings
     private lateinit var toggle: KompaktServiceToggle
-    private lateinit var serviceRepository: DavServiceRepository
     private lateinit var eligibility: KompaktSyncEligibility
 
     @Before
@@ -40,13 +30,7 @@ class KompaktSyncEligibilityTest {
         toggle = mockk()
         every { toggle.isOn(account, any()) } returns true
 
-        serviceRepository = mockk()
-        coEvery { serviceRepository.getByAccountAndType(EMAIL, Service.TYPE_CALDAV) } returns
-            Service(id = 7, accountName = EMAIL, type = Service.TYPE_CALDAV)
-        coEvery { serviceRepository.getByAccountAndType(EMAIL, Service.TYPE_CARDDAV) } returns
-            Service(id = 8, accountName = EMAIL, type = Service.TYPE_CARDDAV)
-
-        eligibility = KompaktSyncEligibility(accountSettings, toggle, serviceRepository)
+        eligibility = KompaktSyncEligibility(accountSettings, toggle)
     }
 
     private fun grantScopes(vararg scopes: String) {
@@ -54,50 +38,53 @@ class KompaktSyncEligibilityTest {
     }
 
     @Test
-    fun bothServicesWhenConsentedToggledOnAndConfigured() = runTest {
+    fun everyGrantedScopeIsConsented() {
         assertEquals(
-            listOf(KompaktSyncService.CALENDAR, KompaktSyncService.CONTACTS),
-            eligibility.enabledServices(account)
+            setOf(KompaktSyncService.CALENDAR, KompaktSyncService.CONTACTS),
+            eligibility.consented(account)
         )
     }
 
     @Test
-    fun anUngrantedScopeExcludesItsService() = runTest {
+    fun anUngrantedScopeIsNotConsented() {
         // Syncing an unproven grant anyway reaches Google as a 403, which deletes the home set and the
         // collections under it.
         grantScopes(KompaktOAuthGoogle.SCOPE_CALENDAR)
 
-        assertEquals(listOf(KompaktSyncService.CALENDAR), eligibility.enabledServices(account))
+        assertEquals(setOf(KompaktSyncService.CALENDAR), eligibility.consented(account))
     }
 
     @Test
-    fun aSwitchedOffServiceIsExcluded() = runTest {
-        every { toggle.isOn(account, KompaktSyncService.CALENDAR) } returns false
-
-        assertEquals(listOf(KompaktSyncService.CONTACTS), eligibility.enabledServices(account))
-    }
-
-    @Test
-    fun aServiceWithoutARowIsExcluded() = runTest {
-        // No row means discovery has not created the service yet; a sync run would find nothing to do.
-        coEvery { serviceRepository.getByAccountAndType(EMAIL, Service.TYPE_CARDDAV) } returns null
-
-        assertEquals(listOf(KompaktSyncService.CALENDAR), eligibility.enabledServices(account))
-    }
-
-    @Test
-    fun noServicesWithoutAStoredAuthorization() = runTest {
+    fun nothingIsConsentedWithoutAStoredAuthorization() {
         every { accountSettings.getAuthState(account) } returns null
 
-        assertEquals(emptyList<KompaktSyncService>(), eligibility.enabledServices(account))
+        assertEquals(emptySet<KompaktSyncService>(), eligibility.consented(account))
     }
 
     @Test
-    fun everyConditionHasToHoldAtOnce() = runTest {
+    fun everySwitchedOnServiceIsReported() {
+        assertEquals(
+            setOf(KompaktSyncService.CALENDAR, KompaktSyncService.CONTACTS),
+            eligibility.switchedOn(account)
+        )
+    }
+
+    @Test
+    fun aSwitchedOffServiceIsNotReported() {
+        every { toggle.isOn(account, KompaktSyncService.CALENDAR) } returns false
+
+        assertEquals(setOf(KompaktSyncService.CONTACTS), eligibility.switchedOn(account))
+    }
+
+    // The two answers are independent on purpose: consent can be revoked with the switch left on, and a
+    // switch reads off before any default has been written. Composing them is the caller's job.
+    @Test
+    fun consentAndTheSwitchAreReportedSeparately() {
         grantScopes(KompaktOAuthGoogle.SCOPE_CALENDAR)
         every { toggle.isOn(account, KompaktSyncService.CALENDAR) } returns false
 
-        assertEquals(emptyList<KompaktSyncService>(), eligibility.enabledServices(account))
+        assertEquals(setOf(KompaktSyncService.CALENDAR), eligibility.consented(account))
+        assertEquals(setOf(KompaktSyncService.CONTACTS), eligibility.switchedOn(account))
     }
 
 }

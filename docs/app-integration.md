@@ -108,10 +108,15 @@ successful sync finished at least **15 minutes** ago (or it has never synced suc
 calendar sync therefore does **not** block a contacts request, and vice versa. If every requested service
 is inside its window, the broadcast is a **no‑op**.
 
-Synchronization is also gated **per service**. Each of Calendar and Contacts is enqueued only when the
-user has that service's sync toggle switched on, has granted its Google permission, and that service is
-configured. A service failing any of those is skipped — so a request may enqueue **nothing at all**, even
-for a linked and otherwise healthy account.
+Synchronization is also gated **per service**, on every condition listed under *Conditions that must be
+met* below — the toggle, the Google permission, connectivity and storage, and whether a sync for that
+service is already in progress. A service failing any of them is skipped, so a request may enqueue
+**nothing at all**, even for a linked and otherwise healthy account.
+
+A service that has never been configured is skipped too, but not silently: the request creates its
+`Service` row and starts collection discovery, without waiting for either. So the *first* request for
+such a service enqueues nothing and a later one can succeed. Nothing about the user's own settings
+changes in the meantime — the sync toggle is not switched on by a request.
 
 ### Contract
 
@@ -149,11 +154,19 @@ misspelling costs a missed sync, not an unexpected one — check logcat for
 4. **At least 15 minutes** must have elapsed since the last successful sync **of a requested service**
    (otherwise that service is silently skipped; if all of them are skipped, the request is a no‑op).
 5. An account must be linked. With no linked account the broadcast is a no‑op.
-6. Normal sync conditions still apply afterwards (e.g. connectivity) — the broadcast only *enqueues* a
-   manual sync; it does not bypass the lack of a network.
-7. **At least one requested service must be eligible.** A service is skipped when its sync toggle is off,
-   when the account has not granted that service's Google permission, or when the service is not
-   configured. If no requested service qualifies, the broadcast is a no‑op and nothing is enqueued.
+6. **The device must be online and not critically low on storage.** These are checked **before** the
+   sync is enqueued, and a request that arrives while either fails is **dropped, not deferred** —
+   nothing is enqueued and it will not run when conditions recover. (Before, such a request was
+   enqueued and waited on its network constraint; that made a request look like a sync in progress for
+   as long as it waited, with nothing to end it, which is why it now fails fast instead.)
+7. **At least one requested service must be eligible.** A service is skipped when its sync toggle is off
+   or when the account has not granted that service's Google permission. A service that has no
+   configuration yet is *set up on demand* rather than skipped, but is skipped if that set‑up fails. If
+   no requested service qualifies, the broadcast is a no‑op and nothing is enqueued.
+8. **No sync may already be in progress for that service.** A service whose sync is already running or
+   queued — including an automatic (periodic) run that happens to be executing, which the caller cannot
+   see — is skipped, and its request is **dropped rather than queued**. So a request may enqueue nothing
+   even when every other condition holds. A periodic run merely *scheduled* does not block anything.
 
 ### Caller — manifest
 
@@ -180,8 +193,8 @@ context.sendBroadcast(intent)
 
 For each requested service whose own 15‑minute window has elapsed, `KompaktSyncRequestReceiver` (in
 DAVx⁵ Mudita) enqueues a one‑time manual sync for every linked account — but **only for the services
-that qualify** (see condition 7 above), so it may enqueue for one service, both, or neither. This is the
-same path used by the in‑app "Synchronize now" button. The "Last synchronization" timestamp updates on
+that qualify** (see conditions 6, 7 and 8 above), so it may enqueue for one service, both, or neither. This
+is the same path used by the in‑app "Synchronize now" button. The "Last synchronization" timestamp updates on
 successful completion (and is left unchanged on failure).
 
 A **successful** manual sync (this broadcast or the in‑app button) also **pushes the next automatic
@@ -198,8 +211,14 @@ worker with `CANCEL_AND_REENQUEUE`). A failed manual sync does not reschedule.
   which were ineligible, and not whether any ran at all.
 - Requesting one service does not touch the other's throttle window: a calendar‑only request leaves the
   contacts window where it was.
-- Only one sync per account + data type runs at a time; if a sync is already running, the request is
-  coalesced/queued (it won't run a second concurrent sync).
+- **A request is never deferred.** Every condition above is evaluated at the moment the broadcast is
+  handled; whatever fails causes the request to be dropped there and then. Nothing is queued for later,
+  so there is no request that "will run once you're back online" — re‑send the broadcast instead.
+- Only one sync per account + data type runs at a time. If a sync for that data type is already running
+  or queued, the request for it is **dropped, not queued** — nothing is enqueued and it does not happen
+  later. The blocking run may be an automatic (periodic) one mid‑execution, which the caller cannot
+  observe, so a request can be a complete no‑op for a service that is otherwise perfectly healthy.
+  Re‑request later if it matters.
 - Testing from `adb` shell is **not** possible because of the signature permission (shell isn't
   same‑signed); it can only be exercised from a same‑signed app.
 

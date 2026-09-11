@@ -26,6 +26,7 @@ import at.bitfire.davdroid.settings.Credentials
 import at.bitfire.davdroid.settings.KompaktAccountSettings
 import at.bitfire.davdroid.sync.KompaktInitDefaults
 import at.bitfire.davdroid.sync.KompaktStartSyncUseCase
+import at.bitfire.davdroid.sync.KompaktSyncStartResult
 import at.bitfire.davdroid.sync.KompaktStorage
 import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.sync.KompaktSyncWork
@@ -511,8 +512,9 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             return
         }
         // track the specific EVENTS run this triggers, so its result is reported for this sync alone
-        startSyncUseCase(account, requested)[KompaktSyncService.CALENDAR]
-            ?.let { _trackedSync.value = it }
+        val started = startSyncUseCase(account, requested)
+        if (started is KompaktSyncStartResult.Started)
+            started.runs[KompaktSyncService.CALENDAR]?.let { _trackedSync.value = it }
     }
 
     /**
