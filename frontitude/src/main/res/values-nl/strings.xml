@@ -14,7 +14,7 @@
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Synchronisatie van contacten inschakelen\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Google-account koppelen</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Account verwijderen\?</string>
-  <string name="calendar_accountsync_error_dialog_body_linkyouraccountagaintocontinue">Koppel je account opnieuw om door te gaan met synchroniseren met Google Agenda</string>
+  <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Koppel je account opnieuw om door te gaan met synchroniseren met Google</string>
   <string name="calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour">We konden niet synchroniseren met je Google-account, probeer het opnieuw</string>
   <string name="calendar_accountsync_error_dialog_button_removeaccount">Account verwijderen</string>
   <string name="calendar_accountsync_error_dialog_h1_accountlinkerror">Fout bij accountkoppeling</string>

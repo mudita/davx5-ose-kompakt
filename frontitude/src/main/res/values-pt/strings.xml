@@ -14,7 +14,7 @@
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Ativar sincronização de contactos\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Vincular uma conta Google</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Remover conta\?</string>
-  <string name="calendar_accountsync_error_dialog_body_linkyouraccountagaintocontinue">Vincule a sua conta novamente para continuar a sincronizar com o Google Calendar</string>
+  <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Vincule a sua conta novamente para continuar a sincronizar com o Google</string>
   <string name="calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour">Não conseguimos sincronizar com a sua conta Google, por favor, tente novamente</string>
   <string name="calendar_accountsync_error_dialog_button_removeaccount">Remover conta</string>
   <string name="calendar_accountsync_error_dialog_h1_accountlinkerror">Erro de vinculação de conta</string>

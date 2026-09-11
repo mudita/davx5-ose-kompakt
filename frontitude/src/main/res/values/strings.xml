@@ -14,7 +14,7 @@
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Enable contact sync\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Link a Google account</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Remove account\?</string>
-  <string name="calendar_accountsync_error_dialog_body_linkyouraccountagaintocontinue">Link your account again to continue synchronizing with Google calendar</string>
+  <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Link your account again to continue synchronizing with Google</string>
   <string name="calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour">We couldn’t synchronize with your Google account, please try again</string>
   <string name="calendar_accountsync_error_dialog_button_removeaccount">Remove account</string>
   <string name="calendar_accountsync_error_dialog_h1_accountlinkerror">Account link error</string>
