@@ -1,0 +1,51 @@
+core/src/test/kotlin/at/bitfire/davdroid/ui/account/KompaktServiceSyncStateTest.kt
+  eba0eb0262ddb8c8 8,203
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktStartSyncUseCaseTest.kt
+  eba0eb0262ddb8c8 218-220,226-227,229-232,239,241,245,247,250,264-265
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktSyncEligibilityTest.kt
+  eba0eb0262ddb8c8 33,41,43-44,49,54,58-59,61,65-69,73-74,76,79-80,82,86-87
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktStartSyncUseCase.kt
+  eba0eb0262ddb8c8 75-92,95-111
+core/src/main/kotlin/at/bitfire/davdroid/sync/worker/BaseSyncWorker.kt
+  eba0eb0262ddb8c8 26,59,302
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktServiceSyncOutcomeTest.kt
+  eba0eb0262ddb8c8 1-172
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktInitDefaults.kt
+  eba0eb0262ddb8c8 77-83
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktServiceProvisioning.kt
+  eba0eb0262ddb8c8 1-54
+core/src/test/kotlin/at/bitfire/davdroid/repository/KompaktSyncOutcomeRepositoryTest.kt
+  eba0eb0262ddb8c8 11,17,20,28,41,44-45,47-55,60-61,64-65,69-79,83,88-90,92,96-98,100
+core/src/main/kotlin/at/bitfire/davdroid/repository/KompaktSyncOutcomeRepository.kt
+  eba0eb0262ddb8c8 9,13-17,22-23,26-31,36-37,39-41,47-48,50-51
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktServiceSyncOutcome.kt
+  eba0eb0262ddb8c8 1-82
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountModel.kt
+  eba0eb0262ddb8c8 22,70,74,254-258,350
+core/src/main/kotlin/at/bitfire/davdroid/ui/KompaktSyncRequestReceiver.kt
+  eba0eb0262ddb8c8 16,61-62
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktSyncAttempt.kt
+  eba0eb0262ddb8c8 70-77,87-103,106,108-116,118-122
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktSyncEligibility.kt
+  eba0eb0262ddb8c8 8,12-19,22,25-27,29,32-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "ab1d69c669a897311965ee5b891e6a11cca13397",
+  "prompts": {
+    "eba0eb0262ddb8c8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d48eebcc-0cbe-4e2b-b6b5-fc6ec16160fd",
+        "model": "claude-opus-5"
+      },
+      "human_author": null,
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 6,
+      "accepted_lines": 532,
+      "overriden_lines": 0
+    }
+  }
+}

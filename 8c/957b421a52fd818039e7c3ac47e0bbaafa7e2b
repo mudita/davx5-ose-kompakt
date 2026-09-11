@@ -1,0 +1,56 @@
+core/src/test/kotlin/at/bitfire/davdroid/repository/KompaktSyncOutcomeRepositoryTest.kt
+  eba0eb0262ddb8c8 11,17,20,28,41,44-45,47-55,60-61,64-65,69-79,83,88-90,92,96-98,100
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktInitDefaults.kt
+  eba0eb0262ddb8c8 77-83
+core/src/main/kotlin/at/bitfire/davdroid/ui/KompaktSyncRequestReceiver.kt
+  eba0eb0262ddb8c8 16,61-62
+docs/app-integration.md
+  eba0eb0262ddb8c8 152-156,191,209-211
+core/src/test/kotlin/at/bitfire/davdroid/ui/account/KompaktServiceSyncStateTest.kt
+  eba0eb0262ddb8c8 8,203
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktSyncEligibilityTest.kt
+  eba0eb0262ddb8c8 33,41,43-44,49,54,58-59,61,65-69,73-74,76,79-80,82,86-87
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktSyncEligibility.kt
+  eba0eb0262ddb8c8 8,12-19,22,25-27,29,32-39
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktStartSyncUseCase.kt
+  eba0eb0262ddb8c8 74-92,95-111
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktServiceSyncOutcome.kt
+  eba0eb0262ddb8c8 1-82
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountModel.kt
+  eba0eb0262ddb8c8 22,74,254-257,350
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktSyncAttemptTest.kt
+  eba0eb0262ddb8c8 40,279
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktSyncAttempt.kt
+  eba0eb0262ddb8c8 41,47,75-76,115-124
+core/src/main/kotlin/at/bitfire/davdroid/sync/worker/BaseSyncWorker.kt
+  eba0eb0262ddb8c8 26,59,302
+core/src/main/kotlin/at/bitfire/davdroid/repository/KompaktSyncOutcomeRepository.kt
+  eba0eb0262ddb8c8 9,13-17,22-23,26-31,36-37,39-41,47-48,50-51
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktServiceProvisioning.kt
+  eba0eb0262ddb8c8 1-54
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktServiceSyncOutcomeTest.kt
+  eba0eb0262ddb8c8 1-172
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktStartSyncUseCaseTest.kt
+  eba0eb0262ddb8c8 81,107,131-133,203,217-220,226-227,229-232,239,241,245,247,250,264-265
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "8c957b421a52fd818039e7c3ac47e0bbaafa7e2b",
+  "prompts": {
+    "eba0eb0262ddb8c8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d48eebcc-0cbe-4e2b-b6b5-fc6ec16160fd",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 700,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/deb04b555d624c2742923fe868652af909411649ff18ba002a01fd9639b5fe8a"
+    }
+  }
+}
