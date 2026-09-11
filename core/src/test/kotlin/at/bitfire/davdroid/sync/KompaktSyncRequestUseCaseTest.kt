@@ -44,7 +44,7 @@ class KompaktSyncRequestUseCaseTest {
         startSync = mockk()
         coEvery { startSync(any(), any(), any()) } answers {
             started += firstArg<Account>() to secondArg<Collection<KompaktSyncService>>().toList()
-            KompaktSyncStart.NoneEligible
+            KompaktSyncStartResult.NoneEligible
         }
 
         requestSync = KompaktSyncRequestUseCase(accountRepository, syncStatsRepository, startSync)

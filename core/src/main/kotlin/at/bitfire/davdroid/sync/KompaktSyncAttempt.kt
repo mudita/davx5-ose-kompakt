@@ -66,13 +66,13 @@ class KompaktSyncAttempt @Inject constructor(
         services: Collection<KompaktSyncService>
     ): KompaktAttemptResult {
         when (val start = startSync(account, services, awaitDiscovery = true)) {
-            KompaktSyncStart.NoStorage -> return KompaktAttemptResult.BlockedNoStorage
-            KompaktSyncStart.NoNetwork -> return KompaktAttemptResult.BlockedNoNetwork
-            KompaktSyncStart.NoneEligible -> return KompaktAttemptResult.NoneEligible
+            KompaktSyncStartResult.NoStorage -> return KompaktAttemptResult.BlockedNoStorage
+            KompaktSyncStartResult.NoNetwork -> return KompaktAttemptResult.BlockedNoNetwork
+            KompaktSyncStartResult.NoneEligible -> return KompaktAttemptResult.NoneEligible
             // Nothing of ours to add — but if another call is mid-drain we report its verdict rather
             // than refusing.
-            KompaktSyncStart.AlreadySyncing -> Unit
-            is KompaktSyncStart.Started -> started.update { it + start.runs }
+            KompaktSyncStartResult.AlreadySyncing -> Unit
+            is KompaktSyncStartResult.Started -> started.update { it + start.runs }
         }
 
         if (started.value.isEmpty()) {

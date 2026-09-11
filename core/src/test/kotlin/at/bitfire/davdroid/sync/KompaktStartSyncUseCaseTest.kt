@@ -110,7 +110,7 @@ class KompaktStartSyncUseCaseTest {
         val start = startSync(account)
 
         assertEquals(
-            KompaktSyncStart.Started(
+            KompaktSyncStartResult.Started(
                 mapOf(
                     KompaktSyncService.CALENDAR to calendarRun,
                     KompaktSyncService.CONTACTS to contactsRun
@@ -134,7 +134,7 @@ class KompaktStartSyncUseCaseTest {
     fun touchesOnlyTheServicesItWasAskedFor() = runTest {
         val start = startSync(account, services = listOf(KompaktSyncService.CALENDAR))
 
-        assertEquals(KompaktSyncStart.Started(mapOf(KompaktSyncService.CALENDAR to calendarRun)), start)
+        assertEquals(KompaktSyncStartResult.Started(mapOf(KompaktSyncService.CALENDAR to calendarRun)), start)
         coVerify(exactly = 0) { provisioning.ensureRow(any(), KompaktSyncService.CONTACTS) }
         coVerify(exactly = 0) { syncWork.enqueue(any(), KompaktSyncService.CONTACTS, any()) }
     }
@@ -145,7 +145,7 @@ class KompaktStartSyncUseCaseTest {
 
         val start = startSync(account)
 
-        assertEquals(KompaktSyncStart.Started(mapOf(KompaktSyncService.CALENDAR to calendarRun)), start)
+        assertEquals(KompaktSyncStartResult.Started(mapOf(KompaktSyncService.CALENDAR to calendarRun)), start)
         coVerify(exactly = 0) { syncWork.enqueue(any(), KompaktSyncService.CONTACTS, any()) }
     }
 
@@ -157,7 +157,7 @@ class KompaktStartSyncUseCaseTest {
         every { storage.isLow() } returns true
         every { network.isAvailable(account) } returns false
 
-        assertEquals(KompaktSyncStart.NoneEligible, startSync(account))
+        assertEquals(KompaktSyncStartResult.NoneEligible, startSync(account))
         coVerify(exactly = 0) { provisioning.ensureRow(any(), any()) }
         assertTrue(calls.none { it.startsWith("enqueue") })
     }
@@ -167,7 +167,7 @@ class KompaktStartSyncUseCaseTest {
         consent()
         every { network.isAvailable(account) } returns false
 
-        assertEquals(KompaktSyncStart.NoneEligible, startSync(account))
+        assertEquals(KompaktSyncStartResult.NoneEligible, startSync(account))
     }
 
     // A service that has never had a default written reads "off" without the user having chosen it, so
@@ -183,7 +183,7 @@ class KompaktStartSyncUseCaseTest {
         val start = startSync(account)
 
         assertEquals(
-            KompaktSyncStart.Started(
+            KompaktSyncStartResult.Started(
                 mapOf(
                     KompaktSyncService.CALENDAR to calendarRun,
                     KompaktSyncService.CONTACTS to contactsRun
@@ -197,7 +197,7 @@ class KompaktStartSyncUseCaseTest {
     fun lowStorageStartsNothing() = runTest {
         every { storage.isLow() } returns true
 
-        assertEquals(KompaktSyncStart.NoStorage, startSync(account))
+        assertEquals(KompaktSyncStartResult.NoStorage, startSync(account))
         coVerify(exactly = 0) { syncWork.enqueue(any(), any(), any()) }
     }
 
@@ -207,7 +207,7 @@ class KompaktStartSyncUseCaseTest {
     fun noNetworkStartsNothing() = runTest {
         every { network.isAvailable(account) } returns false
 
-        assertEquals(KompaktSyncStart.NoNetwork, startSync(account))
+        assertEquals(KompaktSyncStartResult.NoNetwork, startSync(account))
         coVerify(exactly = 0) { syncWork.enqueue(any(), any(), any()) }
     }
 
@@ -217,7 +217,7 @@ class KompaktStartSyncUseCaseTest {
 
         val start = startSync(account)
 
-        assertEquals(KompaktSyncStart.Started(mapOf(KompaktSyncService.CALENDAR to calendarRun)), start)
+        assertEquals(KompaktSyncStartResult.Started(mapOf(KompaktSyncService.CALENDAR to calendarRun)), start)
         coVerify(exactly = 0) { initDefaults.ensureApplied(any(), KompaktSyncService.CONTACTS, any()) }
         coVerify(exactly = 0) { syncWork.enqueue(any(), KompaktSyncService.CONTACTS, any()) }
     }
@@ -227,7 +227,7 @@ class KompaktStartSyncUseCaseTest {
         coEvery { provisioning.ensureRow(account, KompaktSyncService.CONTACTS) } throws RuntimeException("no")
 
         assertEquals(
-            KompaktSyncStart.Started(mapOf(KompaktSyncService.CALENDAR to calendarRun)),
+            KompaktSyncStartResult.Started(mapOf(KompaktSyncService.CALENDAR to calendarRun)),
             startSync(account)
         )
     }
@@ -238,7 +238,7 @@ class KompaktStartSyncUseCaseTest {
 
         val start = startSync(account)
 
-        assertEquals(KompaktSyncStart.Started(mapOf(KompaktSyncService.CONTACTS to contactsRun)), start)
+        assertEquals(KompaktSyncStartResult.Started(mapOf(KompaktSyncService.CONTACTS to contactsRun)), start)
         coVerify(exactly = 0) { syncWork.enqueue(any(), KompaktSyncService.CALENDAR, any()) }
     }
 
@@ -247,7 +247,7 @@ class KompaktStartSyncUseCaseTest {
     fun everyEligibleServiceAlreadySyncingIsAlreadySyncing() = runTest {
         syncing(KompaktSyncService.CALENDAR, KompaktSyncService.CONTACTS)
 
-        assertEquals(KompaktSyncStart.AlreadySyncing, startSync(account))
+        assertEquals(KompaktSyncStartResult.AlreadySyncing, startSync(account))
         coVerify(exactly = 0) { syncWork.enqueue(any(), any(), any()) }
     }
 
