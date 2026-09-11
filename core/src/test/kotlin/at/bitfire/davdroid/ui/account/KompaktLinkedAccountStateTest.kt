@@ -183,6 +183,40 @@ class KompaktLinkedAccountStateTest {
         )
     }
 
+    @Test
+    fun `the import-service-now prompt shows when it is the only thing set`() {
+        assertEquals(
+            KompaktLinkedAccountDialog.ImportServiceNow,
+            linkedAccountDialog(
+                authError = false, outOfStorage = false, noInternet = false, syncFailed = false,
+                importServiceNow = true
+            )
+        )
+    }
+
+    @Test
+    fun `the import-service-now prompt outranks a requested consent`() {
+        assertEquals(
+            KompaktLinkedAccountDialog.ImportServiceNow,
+            linkedAccountDialog(
+                authError = false, outOfStorage = false, noInternet = false, syncFailed = false,
+                requestConsent = KompaktSyncService.CALENDAR,
+                importServiceNow = true
+            )
+        )
+    }
+
+    @Test
+    fun `a failed run outranks the import-service-now prompt`() {
+        assertEquals(
+            KompaktLinkedAccountDialog.SyncFailed,
+            linkedAccountDialog(
+                authError = false, outOfStorage = false, noInternet = false, syncFailed = true,
+                importServiceNow = true
+            )
+        )
+    }
+
 
     // isLoading
 

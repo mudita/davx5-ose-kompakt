@@ -25,6 +25,7 @@ sealed interface KompaktLinkedAccountDialog {
     data object OutOfStorage : KompaktLinkedAccountDialog
     data object NoInternet : KompaktLinkedAccountDialog
     data object SyncFailed : KompaktLinkedAccountDialog
+    data object ImportServiceNow : KompaktLinkedAccountDialog
     data object NewContactsConsent : KompaktLinkedAccountDialog
     data class RequestConsent(val service: KompaktSyncService) : KompaktLinkedAccountDialog
     /** Carries the service so the sheet can name it, rather than the screen remembering which was tapped. */
@@ -48,12 +49,14 @@ internal fun linkedAccountDialog(
     syncFailed: Boolean,
     newContactsConsent: Boolean = false,
     requestConsent: KompaktSyncService? = null,
-    confirmDisable: KompaktSyncService? = null
+    confirmDisable: KompaktSyncService? = null,
+    importServiceNow: Boolean = false
 ): KompaktLinkedAccountDialog? = when {
     authError -> KompaktLinkedAccountDialog.AuthError
     outOfStorage -> KompaktLinkedAccountDialog.OutOfStorage
     noInternet -> KompaktLinkedAccountDialog.NoInternet
     syncFailed -> KompaktLinkedAccountDialog.SyncFailed
+    importServiceNow -> KompaktLinkedAccountDialog.ImportServiceNow
     requestConsent != null -> KompaktLinkedAccountDialog.RequestConsent(requestConsent)
     newContactsConsent -> KompaktLinkedAccountDialog.NewContactsConsent
     confirmDisable != null -> KompaktLinkedAccountDialog.ConfirmDisable(confirmDisable)

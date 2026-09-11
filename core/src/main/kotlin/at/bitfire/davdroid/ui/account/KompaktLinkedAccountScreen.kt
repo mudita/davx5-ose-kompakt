@@ -28,6 +28,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,7 +68,8 @@ data class KompaktLinkedAccountActions(
     val onAccountLinkedDialogDismiss: () -> Unit = {},
     val onReauthorize: () -> Unit = {},
     val onGrantConsent: (serviceType: String) -> Unit = {},
-    val onNewContactsConsentShown: () -> Unit = {}
+    val onNewContactsConsentShown: () -> Unit = {},
+    val onImportServiceNow: () -> Unit = {}
 )
 
 /**
@@ -120,10 +122,16 @@ fun KompaktLinkedAccountScreen(
         )
     }
 
+    var requestedConsentService by rememberSaveable { mutableStateOf<KompaktSyncService?>(null) }
+    val addConsentLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        model.onAddConsentReturned(requestedConsentService)
+        requestedConsentService = null
+    }
     val onGrantConsent = { serviceType: String ->
-        // No result to read: KompaktAddConsentModel.apply() already notified the authStateChanges
-        // ContentObserver before this activity finished, so calendar/contactsSwitch have re-read by now.
-        context.startActivity(
+        requestedConsentService = KompaktSyncService.entries.find { it.serviceType == serviceType }
+        addConsentLauncher.launch(
             Intent(context, KompaktLoginActivity::class.java)
                 .putExtra(KompaktLoginActivity.EXTRA_ADD_CONSENT_ACCOUNT_NAME, account.name)
                 .putExtra(KompaktLoginActivity.EXTRA_ADD_CONSENT_SERVICE_TYPE, serviceType)
@@ -151,7 +159,8 @@ fun KompaktLinkedAccountScreen(
                 onAccountLinkedDialogDismiss = onAccountLinkedDialogDismiss,
                 onReauthorize = onReauthorize,
                 onGrantConsent = onGrantConsent,
-                onNewContactsConsentShown = model::newContactsConsentShown
+                onNewContactsConsentShown = model::newContactsConsentShown,
+                onImportServiceNow = model::importServiceNow
             ),
             showAccountLinkedDialog = showAccountLinkedDialog
         )
@@ -336,6 +345,18 @@ fun KompaktLinkedAccountContent(
                 onDismiss = actions.onConsumeDialog
             )
 
+        KompaktLinkedAccountDialog.ImportServiceNow ->
+            KompaktModalSheet(
+                onDismissRequest = actions.onConsumeDialog,
+                title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_permissionsgranted),
+                text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_youcannowimportselectedgoogle),
+                icon = painterResource(R.drawable.ic_kompakt_success),
+                confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_importnow),
+                onConfirm = actions.onImportServiceNow,
+                dismissLabel = stringResource(RFrontitude.string.common_button_notnow),
+                onDismiss = actions.onConsumeDialog
+            )
+
         is KompaktLinkedAccountDialog.RequestConsent ->
             ConsentDialog(
                 service = state.dialog.service,
@@ -412,7 +433,11 @@ private fun ConsentDialog(
             if (isCalendar) RFrontitude.string.calendar_accountsync_dialog_body_sharecalendarandeventsbetween
             else RFrontitude.string.calendar_accountsync_dialog_body_sharecontactsbetweenyourlinked
         ),
-        confirmLabel = stringResource(RFrontitude.string.common_dialog_button_enable),
+        icon = painterResource(R.drawable.ic_google_g),
+        confirmLabel = stringResource(
+            if (isCalendar) RFrontitude.string.calendar_accountsync_dialog_button_enablecalendarsync
+            else RFrontitude.string.calendar_accountsync_dialog_h1_enablecontactsync
+        ),
         onConfirm = {
             onDismiss()
             onGrantConsent(service.serviceType)
@@ -506,6 +531,19 @@ private fun KompaktLinkedAccountContent_Loading_Preview() {
             on(KompaktSyncStatus.Synced(PREVIEW_LAST_SYNC)),
             KompaktServiceSyncState(KompaktSyncSwitch.Resolving, KompaktSyncStatus.Resolving)
         ),
+        actions = KompaktLinkedAccountActions(),
+        showAccountLinkedDialog = false
+    )
+}
+
+@Preview
+@Composable
+private fun KompaktLinkedAccountContent_ImportServiceNow_Preview() {
+    KompaktLinkedAccountContent(
+        state = previewState(
+            on(KompaktSyncStatus.Synced(PREVIEW_LAST_SYNC)),
+            on(KompaktSyncStatus.NeverSynced)
+        ).copy(dialog = KompaktLinkedAccountDialog.ImportServiceNow),
         actions = KompaktLinkedAccountActions(),
         showAccountLinkedDialog = false
     )
