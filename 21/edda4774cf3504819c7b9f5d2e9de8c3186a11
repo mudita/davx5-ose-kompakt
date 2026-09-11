@@ -1,0 +1,30 @@
+core/schemas/at.bitfire.davdroid.db.AppDatabase/20.json
+  c6e900e8a94caff7 5,482,526,528-529,716
+core/src/main/kotlin/at/bitfire/davdroid/db/KompaktSyncOutcome.kt
+  c6e900e8a94caff7 16
+core/src/test/kotlin/at/bitfire/davdroid/repository/KompaktSyncOutcomeRepositoryTest.kt
+  c6e900e8a94caff7 45
+docs/superpowers/specs/2026-09-09-sync-error-handling-design.md
+  c6e900e8a94caff7 219,223,257,261-271,947-949
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "21edda4774cf3504819c7b9f5d2e9de8c3186a11",
+  "prompts": {
+    "c6e900e8a94caff7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bba862df-f3a3-4396-8b4d-e6ebee3b5d68",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 25,
+      "total_deletions": 57,
+      "accepted_lines": 947,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/73482bf0fb0e7b5b64503cdc531dc2416927d5098785aaf928bd8721bc1d3492"
+    }
+  }
+}
