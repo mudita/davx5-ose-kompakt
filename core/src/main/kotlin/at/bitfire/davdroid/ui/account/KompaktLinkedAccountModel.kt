@@ -97,7 +97,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     private val _syncFailed = MutableStateFlow<Set<KompaktSyncService>?>(null)
 
     // One service's stored cause, raised by tapping its alert icon.
-    private val _explainFailure = MutableStateFlow<KompaktLinkedAccountDialog.ExplainFailure?>(null)
+    private val _explainSyncFailure = MutableStateFlow<KompaktLinkedAccountDialog.ExplainSyncFailure?>(null)
 
     private val _showNoInternet = MutableStateFlow(false)
 
@@ -144,7 +144,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         _showOutOfStorage,
         _showNoInternet,
         _syncFailed,
-        _explainFailure,
+        _explainSyncFailure,
         showNewContactsConsent,
         _requestConsent,
         _confirmDisable,
@@ -285,13 +285,13 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }
 
     /** Opens the stored cause for one service. Silent if that row is not currently a failure. */
-    fun explainFailure(service: KompaktSyncService) {
+    fun explainSyncFailure(service: KompaktSyncService) {
         val status = when (service) {
             KompaktSyncService.CALENDAR -> state.value.calendar.status
             KompaktSyncService.CONTACTS -> state.value.contacts.status
         }
-        _explainFailure.value = (status as? KompaktSyncStatus.Failed)
-            ?.let { KompaktLinkedAccountDialog.ExplainFailure(service, it.cause) }
+        _explainSyncFailure.value = (status as? KompaktSyncStatus.Failed)
+            ?.let { KompaktLinkedAccountDialog.ExplainSyncFailure(service, it.cause) }
     }
 
     private fun requestConsent(service: KompaktSyncService) {
@@ -303,7 +303,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     fun consumeDialog() {
         _showNoInternet.value = false
         _syncFailed.value = null
-        _explainFailure.value = null
+        _explainSyncFailure.value = null
         _showOutOfStorage.value = false
         _requestConsent.value = null
         _confirmDisable.value = null
