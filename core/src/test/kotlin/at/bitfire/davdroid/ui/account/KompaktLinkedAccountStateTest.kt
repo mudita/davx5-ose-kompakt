@@ -112,7 +112,7 @@ class KompaktLinkedAccountStateTest {
     fun theAggregatedFailureOutranksASingleServicesCause() {
         // Both can be pending: a run finishes and raises the modal while a cause sheet is open. The
         // modal speaks for the whole attempt, so it wins rather than stacking two bottom sheets.
-        val cause = KompaktLinkedAccountDialog.ExplainFailure(
+        val cause = KompaktLinkedAccountDialog.ExplainSyncFailure(
             KompaktSyncService.CONTACTS,
             KompaktSyncFailure.ServerProblem
         )
@@ -124,7 +124,7 @@ class KompaktLinkedAccountStateTest {
                 outOfStorage = false,
                 noInternet = false,
                 syncFailed = failedCalendar,
-                explainFailure = cause
+                explainSyncFailure = cause
             )
         )
         assertEquals(
@@ -134,7 +134,7 @@ class KompaktLinkedAccountStateTest {
                 outOfStorage = false,
                 noInternet = false,
                 syncFailed = null,
-                explainFailure = cause
+                explainSyncFailure = cause
             )
         )
     }

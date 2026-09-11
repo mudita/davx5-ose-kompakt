@@ -28,7 +28,7 @@ sealed interface KompaktLinkedAccountDialog {
     /** Carries what to retry, so Try again re-syncs only the services that actually failed. */
     data class SyncFailed(val retry: Set<KompaktSyncService>) : KompaktLinkedAccountDialog
     /** One service's stored cause, opened by tapping its alert icon. */
-    data class ExplainFailure(
+    data class ExplainSyncFailure(
         val service: KompaktSyncService,
         val cause: KompaktSyncFailure
     ) : KompaktLinkedAccountDialog
@@ -56,7 +56,7 @@ internal fun linkedAccountDialog(
     outOfStorage: Boolean,
     noInternet: Boolean,
     syncFailed: Set<KompaktSyncService>?,
-    explainFailure: KompaktLinkedAccountDialog.ExplainFailure? = null,
+    explainSyncFailure: KompaktLinkedAccountDialog.ExplainSyncFailure? = null,
     newContactsConsent: Boolean = false,
     requestConsent: KompaktSyncService? = null,
     confirmDisable: KompaktSyncService? = null,
@@ -67,7 +67,7 @@ internal fun linkedAccountDialog(
     outOfStorage -> KompaktLinkedAccountDialog.OutOfStorage
     noInternet -> KompaktLinkedAccountDialog.NoInternet
     syncFailed != null -> KompaktLinkedAccountDialog.SyncFailed(syncFailed)
-    explainFailure != null -> explainFailure
+    explainSyncFailure != null -> explainSyncFailure
     importServiceNow -> KompaktLinkedAccountDialog.ImportServiceNow
     requestConsent != null -> KompaktLinkedAccountDialog.RequestConsent(requestConsent)
     newContactsConsent -> KompaktLinkedAccountDialog.NewContactsConsent

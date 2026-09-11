@@ -160,7 +160,7 @@ fun KompaktLinkedAccountScreen(
                 onRequestUnlink = model::requestUnlink,
                 onConfirmUnlink = model::confirmUnlink,
                 onConsumeDialog = model::consumeDialog,
-                onFailureClick = model::explainFailure,
+                onFailureClick = model::explainSyncFailure,
                 onRetry = model::retry,
                 onAccountLinkedDialogDismiss = onAccountLinkedDialogDismiss,
                 onReauthorize = onReauthorize,
@@ -332,7 +332,7 @@ fun KompaktLinkedAccountContent(
                 onDismiss = actions.onConsumeDialog
             )
 
-        is KompaktLinkedAccountDialog.ExplainFailure ->
+        is KompaktLinkedAccountDialog.ExplainSyncFailure ->
             KompaktSyncFailureSheet(
                 cause = dialog.cause,
                 onRetry = { actions.onRetry(setOf(dialog.service)) },
