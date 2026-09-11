@@ -310,14 +310,20 @@ context.sendBroadcast(intent)
 
 `KompaktLogoutRequestReceiver` (in DAVx⁵ Mudita) iterates over all accounts of type
 `bitfire.at.davdroid.mudita` and calls `AccountRepository.delete(accountName)` for each one.
-`delete()` calls `AccountManager.removeAccountExplicitly`, then removes any linked CardDAV address‑book
-accounts and deletes the account row from the local database. As a result, all calendars and events
-previously synced from the server disappear from `CalendarContract`.
+`delete()` first cancels all sync work for the account, then calls
+`AccountManager.removeAccountExplicitly`, deletes the contacts and groups of every linked CardDAV
+address‑book account through the Contacts provider before removing that account, and finally deletes
+the account row from the local database. As a result, all calendars and events previously synced from
+the server disappear from `CalendarContract`, and the synced contacts disappear from
+`ContactsContract`.
 
 ### Notes / limitations
 
 - It's a **fire‑and‑forget** broadcast: there is no result or callback. The calling app should observe
   the effect via the absence of calendar data, not a return value.
+- The contacts are deleted **through the provider**, so an observer on `ContactsContract` is notified
+  of their removal. The calendar rows are purged by the platform when the account goes, which sends no
+  such notification — a caller that has to react to that re‑queries on foreground instead.
 - If no account is linked, the broadcast is a no‑op.
 - Testing from `adb` shell is **not** possible because of the signature permission; it can only be
   exercised from a same‑signed app.

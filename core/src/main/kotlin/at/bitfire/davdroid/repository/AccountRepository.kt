@@ -148,15 +148,34 @@ class AccountRepository @Inject constructor(
 
     suspend fun delete(accountName: String): Boolean = withContext(defaultDispatcher) {
         val account = fromName(accountName)
-        // remove account directly (bypassing the authenticator, which is our own)
         try {
+            // best-effort: a failure here must not stop the removal below. Address-book accounts are
+            // never enqueued under their own identity (see SyncAdapterImpl.onPerformSync()), so
+            // cancelling the main account's work already covers all sync work.
+            try {
+                syncWorkerManager.get().cancelAllWork(account)
+            } catch (e: Exception) {
+                logger.log(Level.WARNING, "Couldn't cancel sync work for $accountName, removing account anyway", e)
+            }
+
+            // remove account directly (bypassing the authenticator, which is our own)
             accountManager.removeAccountExplicitly(account)
 
-            // delete address books (= address book accounts)
-            serviceRepository.getByAccountAndType(accountName, Service.TYPE_CARDDAV)?.let { service ->
-                collectionRepository.getByService(service.id).forEach { collection ->
-                    localAddressBookStore.get().deleteByCollectionId(collection.id)
+            // delete address books (= address book accounts). Best-effort, like the cancellation above:
+            // the account itself is already gone, so a failure here must not skip the database cleanup
+            // below and report the whole unlink as failed.
+            try {
+                // by owner account first: an address book whose collection row is stale, duplicated or
+                // already gone is invisible to the per-collection lookup, and used to survive the
+                // unlink with all of its contacts
+                localAddressBookStore.get().deleteByAccount(account)
+                serviceRepository.getByAccountAndType(accountName, Service.TYPE_CARDDAV)?.let { service ->
+                    collectionRepository.getByService(service.id).forEach { collection ->
+                        localAddressBookStore.get().deleteByCollectionId(collection.id)
+                    }
                 }
+            } catch (e: Exception) {
+                logger.log(Level.WARNING, "Couldn't purge address books of $accountName, removing account anyway", e)
             }
 
             // delete from database

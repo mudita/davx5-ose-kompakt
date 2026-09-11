@@ -143,7 +143,10 @@ open class LocalAddressBook @AssistedInject constructor(
 
     /**
      * Renames an address book account and moves the contacts and groups (without making them dirty).
-     * Does not keep user data of the old account, so these have to be set again.
+     * Carries [USER_DATA_ACCOUNT_NAME], [USER_DATA_ACCOUNT_TYPE] and [USER_DATA_COLLECTION_ID] over to
+     * the new account, so it is never on the device without the keys that account teardown and sync look
+     * an address book up by. All other user data is not kept and has to be set again — today that is
+     * AddressBookSyncer.PREVIOUS_GROUP_METHOD and AndroidAddressBook.USER_DATA_READ_ONLY.
      *
      * On success, [addressBookAccount] will be updated to the new account name.
      *
@@ -158,9 +161,16 @@ open class LocalAddressBook @AssistedInject constructor(
         val oldAccount = addressBookAccount
         logger.info("Renaming address book from \"${oldAccount.name}\" to \"$newName\"")
 
-        // create new account
+        /* Create the new account with the old account's identifying user data already set, not empty.
+        Account teardown and sync both look address books up by exactly these keys, so an account that
+        holds contacts but carries none of them is invisible to both: an unlink landing between the
+        contact move below and the caller re-setting the user data would delete the old account whose
+        contacts have already moved away, and leave this one behind with all of them. */
         val newAccount = Account(newName, oldAccount.type)
-        if (!AndroidAccountUtils.createAccount(context, newAccount, emptyMap()))
+        val carriedUserData = listOf(USER_DATA_ACCOUNT_NAME, USER_DATA_ACCOUNT_TYPE, USER_DATA_COLLECTION_ID)
+            .mapNotNull { key -> accountManager.getUserData(oldAccount, key)?.let { key to it } }
+            .toMap()
+        if (!AndroidAccountUtils.createAccount(context, newAccount, carriedUserData))
             return false
 
         // move contacts and groups to new account

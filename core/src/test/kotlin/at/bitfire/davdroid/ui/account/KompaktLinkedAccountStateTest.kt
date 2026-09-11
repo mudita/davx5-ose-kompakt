@@ -183,6 +183,51 @@ class KompaktLinkedAccountStateTest {
         )
     }
 
+    @Test
+    fun `the unlink confirmation shows when it is the only thing set`() {
+        assertEquals(
+            KompaktLinkedAccountDialog.ConfirmUnlink,
+            linkedAccountDialog(
+                authError = false,
+                outOfStorage = false,
+                noInternet = false,
+                syncFailed = false,
+                confirmUnlink = true
+            )
+        )
+    }
+
+    @Test
+    fun `an auth error locks out the unlink confirmation instead of stacking with it`() {
+        assertEquals(
+            KompaktLinkedAccountDialog.AuthError,
+            linkedAccountDialog(
+                authError = true,
+                outOfStorage = false,
+                noInternet = false,
+                syncFailed = false,
+                confirmUnlink = true
+            )
+        )
+    }
+
+    @Test
+    fun `the disable confirmation outranks the unlink confirmation`() {
+        // Both are intents rather than conditions, so ordering between them is a pure design choice --
+        // this locks in that disabling a service, already in progress, is resolved before a fresh unlink.
+        assertEquals(
+            KompaktLinkedAccountDialog.ConfirmDisable(KompaktSyncService.CALENDAR),
+            linkedAccountDialog(
+                authError = false,
+                outOfStorage = false,
+                noInternet = false,
+                syncFailed = false,
+                confirmDisable = KompaktSyncService.CALENDAR,
+                confirmUnlink = true
+            )
+        )
+    }
+
 
     // isLoading
 

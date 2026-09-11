@@ -29,6 +29,7 @@ sealed interface KompaktLinkedAccountDialog {
     data class RequestConsent(val service: KompaktSyncService) : KompaktLinkedAccountDialog
     /** Carries the service so the sheet can name it, rather than the screen remembering which was tapped. */
     data class ConfirmDisable(val service: KompaktSyncService) : KompaktLinkedAccountDialog
+    data object ConfirmUnlink : KompaktLinkedAccountDialog
 }
 
 internal fun newContactsConsentVisible(
@@ -38,8 +39,9 @@ internal fun newContactsConsentVisible(
     contacts == KompaktSyncSwitch.ConsentMissing && !alreadyShown
 
 /**
- * The one dialog to show, in precedence order. [confirmDisable] comes last because it is an intent
- * rather than a condition: a persistent problem the user has to deal with outranks a confirmation.
+ * The one dialog to show, in precedence order. [confirmDisable] and [confirmUnlink] come last because
+ * they are intents rather than conditions: a persistent problem the user has to deal with outranks a
+ * confirmation.
  */
 internal fun linkedAccountDialog(
     authError: Boolean,
@@ -48,7 +50,8 @@ internal fun linkedAccountDialog(
     syncFailed: Boolean,
     newContactsConsent: Boolean = false,
     requestConsent: KompaktSyncService? = null,
-    confirmDisable: KompaktSyncService? = null
+    confirmDisable: KompaktSyncService? = null,
+    confirmUnlink: Boolean = false
 ): KompaktLinkedAccountDialog? = when {
     authError -> KompaktLinkedAccountDialog.AuthError
     outOfStorage -> KompaktLinkedAccountDialog.OutOfStorage
@@ -57,5 +60,6 @@ internal fun linkedAccountDialog(
     requestConsent != null -> KompaktLinkedAccountDialog.RequestConsent(requestConsent)
     newContactsConsent -> KompaktLinkedAccountDialog.NewContactsConsent
     confirmDisable != null -> KompaktLinkedAccountDialog.ConfirmDisable(confirmDisable)
+    confirmUnlink -> KompaktLinkedAccountDialog.ConfirmUnlink
     else -> null
 }

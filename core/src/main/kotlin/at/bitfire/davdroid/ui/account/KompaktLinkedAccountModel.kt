@@ -187,6 +187,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     private val _requestConsent = MutableStateFlow<KompaktSyncService?>(null)
     private val _confirmDisable = MutableStateFlow<KompaktSyncService?>(null)
+    private val _confirmUnlink = MutableStateFlow(false)
 
     private val dialog: Flow<KompaktLinkedAccountDialog?> = combine(
         needsReauth,
@@ -196,6 +197,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         showNewContactsConsent,
         _requestConsent,
         _confirmDisable,
+        _confirmUnlink,
         ::linkedAccountDialog
     )
 
@@ -374,6 +376,16 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         _showOutOfStorage.value = false
         _requestConsent.value = null
         _confirmDisable.value = null
+        _confirmUnlink.value = false
+    }
+
+    fun requestUnlink() {
+        _confirmUnlink.value = true
+    }
+
+    fun confirmUnlink() {
+        _confirmUnlink.value = false
+        unlink()
     }
 
     fun unlink() {

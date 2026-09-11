@@ -5,6 +5,7 @@
 package at.bitfire.davdroid.sync
 
 import android.accounts.Account
+import android.accounts.AccountManager
 import android.content.Context
 import android.os.DeadObjectException
 import android.os.RemoteException
@@ -121,6 +122,19 @@ abstract class SyncManager<LocalType : LocalResource, out CollectionType : Local
     protected lateinit var davCollection: RemoteType
 
     protected var hasCollectionSync = false
+
+    private val accountManager by lazy { AccountManager.get(context) }
+
+    /**
+     * Throws if [account] has been removed since this sync started. Cancelling the sync work does not
+     * interrupt a sync that is already running, so an unlink can happen underneath one at any point;
+     * both this class and [Syncer] treat [InvalidAccountException] as "the account was removed" and
+     * abort the run.
+     */
+    protected fun requireAccountExists() {
+        if (!accountManager.getAccountsByType(account.type).contains(account))
+            throw InvalidAccountException(account)
+    }
 
     private val syncNotificationManager by lazy {
         syncNotificationManagerFactory.create(account)
@@ -608,6 +622,7 @@ abstract class SyncManager<LocalType : LocalResource, out CollectionType : Local
                     val bunch = LinkedList<HttpUrl>()
                     toDownload.drainTo(bunch, MAX_MULTIGET_RESOURCES)
                     launch {
+                        requireAccountExists()
                         downloadRemote(bunch)
                     }
                 }
