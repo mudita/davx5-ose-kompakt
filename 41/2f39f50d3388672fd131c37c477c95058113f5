@@ -1,0 +1,58 @@
+frontitude/src/main/res/values-cs/strings.xml
+  6240d042982c54ac 9
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountScreen.kt
+  6240d042982c54ac 435-439
+frontitude/src/main/res/values-es/strings.xml
+  6240d042982c54ac 9
+frontitude/src/main/res/values/strings.xml
+  6240d042982c54ac 9
+frontitude/src/main/res/values-pl/strings.xml
+  6240d042982c54ac 9
+frontitude/src/main/res/values-nl/strings.xml
+  6240d042982c54ac 9
+frontitude/src/main/res/values-fr/strings.xml
+  6240d042982c54ac 9
+frontitude/src/main/res/values-pt/strings.xml
+  6240d042982c54ac 9
+frontitude/keys_to_filter.py
+  6240d042982c54ac 25
+frontitude/src/main/res/values-de/strings.xml
+  6240d042982c54ac 9
+frontitude/src/main/res/values-it/strings.xml
+  6240d042982c54ac 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "412f39f50d3388672fd131c37c477c95058113f5",
+  "prompts": {
+    "6240d042982c54ac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d25db870-14bf-4ea2-918d-f46b1e2a8cb6",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 15756,
+      "total_deletions": 923,
+      "accepted_lines": 39,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/1f8df0e3c382d6c2b4414c8f0b054cc455de666b7d8849747028cb7c33419052"
+    },
+    "9d3876b0d03a9177": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3e501698-9f47-4ab8-8f8e-eacaaad62701",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 430,
+      "overriden_lines": 1,
+      "messages_url": "https://gitai.miquido.dev/cas/5e216bdb7c61f85bd07a2a030e8d3a8700f5b1bf8016de63210cf2dab86b05a6"
+    }
+  }
+}
