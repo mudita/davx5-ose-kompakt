@@ -1,0 +1,24 @@
+docs/superpowers/specs/2026-09-11-linked-account-dialog-management-design.md
+  c70ce7a3bfe71e05 3-7,11,52,54,64-65,71-72,78-80,87,104-111,116,139-144,155-158,280-281,296,332-333,359-368,370-373,375,377-380,384-385
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "ea3b06be1ceef20b820ec20687e3736c1f7f2843",
+  "prompts": {
+    "c70ce7a3bfe71e05": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2456d5ba-d56f-488b-810f-db6ddd0092f7",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 65,
+      "total_deletions": 41,
+      "accepted_lines": 63,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/7efe99ed66d7d0352d342e0b2fc8177c1b3bce0f6b9440778d407bba3d737621"
+    }
+  }
+}
