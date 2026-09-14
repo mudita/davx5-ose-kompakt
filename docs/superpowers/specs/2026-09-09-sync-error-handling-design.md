@@ -859,7 +859,7 @@ The modal therefore carries data: `KompaktLinkedAccountDialog.SyncFailed` become
 `syncFailed: Boolean` becomes `Set<KompaktSyncService>?` — the same shape `requestConsent` and
 `confirmDisable` already use, so precedence ordering and the existing test style carry over.
 
-The cause sheet is a new `KompaktLinkedAccountDialog.ExplainFailure(service, cause)`, ranked **below**
+The cause sheet is a new `KompaktLinkedAccountDialog.ExplainSyncFailure(service, cause)`, ranked **below**
 `SyncFailed`, so a modal raised while the sheet is open replaces it rather than stacking two
 `ModalBottomSheetMMD`s. Verb-first, like `RequestConsent` and `ConfirmDisable`: those and this one are
 raised because the user asked for them, where `SyncFailed` and its neighbours are conditions the app
