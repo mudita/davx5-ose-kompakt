@@ -20,11 +20,9 @@ import at.bitfire.davdroid.sync.KompaktInitDefaults
 import at.bitfire.davdroid.sync.KompaktInterruption
 import at.bitfire.davdroid.sync.KompaktServiceProvisioning
 import at.bitfire.davdroid.sync.KompaktServiceSyncOutcome
-import at.bitfire.davdroid.sync.KompaktStorage
 import at.bitfire.davdroid.sync.KompaktSyncAttempt
 import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.sync.isConsented
-import at.bitfire.davdroid.util.combine
 import at.bitfire.davdroid.util.dateformat.KompaktLastSyncFormatSource
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -169,11 +167,6 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
 
     // actions
-
-    /** Re-check live free storage (call on screen entry / resume). */
-    fun refreshStorageState() {
-        dialogSlot.condition(KompaktLinkedAccountDialog.OutOfStorage, KompaktStorage.isStorageLow(context))
-    }
 
     fun newContactsConsentShown() {
         viewModelScope.launch(ioDispatcher) {
@@ -386,7 +379,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     private suspend fun startSync(requested: Collection<KompaktSyncService>) {
         when (val result = syncAttempt.run(account, requested)) {
             KompaktAttemptResult.BlockedNoStorage ->
-                dialogSlot.condition(KompaktLinkedAccountDialog.OutOfStorage, true)
+                dialogSlot.raise(KompaktLinkedAccountDialog.OutOfStorage)
             KompaktAttemptResult.BlockedNoNetwork ->
                 dialogSlot.raise(KompaktLinkedAccountDialog.NoInternet)
             KompaktAttemptResult.NoneEligible ->

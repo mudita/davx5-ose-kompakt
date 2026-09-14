@@ -98,12 +98,6 @@ fun KompaktLinkedAccountScreen(
 ) {
     val state by model.state.collectAsStateWithLifecycle()
 
-    // Free storage has no change notification, so re-check it whenever the screen comes to the
-    // foreground. The re-auth flag is observed instead.
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        model.refreshStorageState()
-    }
-
     // re-authorize the existing account in place (refresh OAuth token, keeping all local data)
     val context = LocalContext.current
     val reauthLauncher = rememberLauncherForActivityResult(
