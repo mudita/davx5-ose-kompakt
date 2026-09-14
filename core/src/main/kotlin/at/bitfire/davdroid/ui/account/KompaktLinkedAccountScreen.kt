@@ -39,8 +39,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.sync.KompaktSyncFailure
@@ -262,7 +260,9 @@ fun KompaktLinkedAccountContent(
         }
     }
 
-    if (showAccountLinkedDialog) {
+    // The model's slot outranks this screen's own sheet, so the two never compose at once. It latches
+    // until dismissed or ON_PAUSE, so an occupied slot defers this rather than losing it.
+    if (state.dialog == null && showAccountLinkedDialog) {
         KompaktModalSheet(
             onDismissRequest = actions.onAccountLinkedDialogDismiss,
             title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_accountlinked),
