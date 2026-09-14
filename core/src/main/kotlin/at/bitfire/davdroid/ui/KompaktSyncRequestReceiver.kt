@@ -13,6 +13,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.logging.Level
 import java.util.logging.Logger
 import javax.inject.Inject
 
@@ -57,6 +58,8 @@ class KompaktSyncRequestReceiver : BroadcastReceiver() {
         CoroutineScope(Dispatchers.Default).launch {
             try {
                 requestSync(requested)
+            } catch (e: Exception) {
+                logger.log(Level.WARNING, "Kompakt sync request failed", e)
             } finally {
                 pendingResult.finish()
             }

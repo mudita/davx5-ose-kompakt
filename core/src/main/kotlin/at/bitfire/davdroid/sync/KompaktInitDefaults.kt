@@ -74,6 +74,13 @@ class KompaktInitDefaults @Inject constructor(
             DEFAULTS_VERSION   // account gone → treat as up to date so we stop retrying
         }
 
+    /**
+     * Whether this service's defaults have been written yet. Until they have, a switch reading "off"
+     * only means no default has been applied — not that the user chose off.
+     */
+    fun isApplied(account: Account, service: KompaktSyncService): Boolean =
+        appliedVersion(account, service) >= DEFAULTS_VERSION
+
     suspend fun markApplied(account: Account, service: KompaktSyncService) {
         try {
             kompaktAccountSettings.setDefaultsApplied(account, service, DEFAULTS_VERSION)
