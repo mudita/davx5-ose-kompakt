@@ -1,0 +1,27 @@
+frontitude/src/main/res/values-cs/strings.xml
+  0bba4377a635f100 22
+frontitude/src/main/res/values/strings.xml
+  0bba4377a635f100 22
+frontitude/src/main/res/values-de/strings.xml
+  0bba4377a635f100 22
+frontitude/src/main/res/values-es/strings.xml
+  0bba4377a635f100 22
+frontitude/keys_to_filter.py
+  0bba4377a635f100 38
+frontitude/src/main/res/values-pl/strings.xml
+  0bba4377a635f100 22
+frontitude/src/main/res/values-it/strings.xml
+  0bba4377a635f100 22
+frontitude/src/main/res/values-fr/strings.xml
+  0bba4377a635f100 22
+frontitude/src/main/res/values-nl/strings.xml
+  0bba4377a635f100 22
+frontitude/src/main/res/values-pt/strings.xml
+  0bba4377a635f100 22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "dc7546872ea968c52a67b5a75038918fc856ca79",
+  "prompts": {}
+}
