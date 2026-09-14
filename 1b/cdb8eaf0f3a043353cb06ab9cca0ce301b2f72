@@ -1,0 +1,28 @@
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktSyncRequestUseCase.kt
+  44d206a6b1378ec1 27,40-49,51-54,56
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktSyncRequestUseCaseTest.kt
+  44d206a6b1378ec1 42,63,101-105
+docs/app-integration.md
+  44d206a6b1378ec1 107-109,116-119,154-157,165-166,195-198
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "1bcdb8eaf0f3a043353cb06ab9cca0ce301b2f72",
+  "prompts": {
+    "44d206a6b1378ec1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0eb521b5-2abe-476d-8f2b-5978f793edd7",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 77,
+      "total_deletions": 42,
+      "accepted_lines": 72,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/6ad51d676eded322d7ebb772b0b681d845b6dd3e55de501674fd8eef42ea7509"
+    }
+  }
+}
