@@ -4,7 +4,10 @@
   <string name="calendar_accountsync_dialog_body_sharecalendarandeventsbetween">Partagez votre calendrier et vos événements entre votre compte Google lié et Kompakt</string>
   <string name="calendar_accountsync_dialog_body_sharecontactsbetweenyourlinked">Partagez vos contacts entre votre compte Google lié et Kompakt</string>
   <string name="calendar_accountsync_dialog_body_synchronizenowtoimportyourselected">Synchronisez maintenant pour importer vos données Google sélectionnées</string>
+  <string name="calendar_accountsync_dialog_body_youcannowimportselectedgoogle">Vous pouvez maintenant importer les données Google sélectionnées</string>
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">Vous ne verrez plus les données de votre compte Google</string>
+  <string name="calendar_accountsync_dialog_button_enablecalendarsync">Activer la synchronisation du calendrier</string>
+  <string name="calendar_accountsync_dialog_button_importnow">Importer maintenant</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Lier le compte</string>
   <string name="calendar_accountsync_dialog_button_syncnow">Synchroniser maintenant</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Compte lié</string>
@@ -13,6 +16,7 @@
   <string name="calendar_accountsync_dialog_h1_enablecalendarsync">Activer la synchronisation du calendrier \?</string>
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Activer la synchronisation des contacts \?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Lier un compte Google</string>
+  <string name="calendar_accountsync_dialog_h1_permissionsgranted">Autorisations accordées</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Supprimer le compte \?</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagaintocontinue">Reliez votre compte à nouveau pour continuer à synchroniser avec l\'agenda Google</string>
   <string name="calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour">Nous n\'avons pas pu synchroniser avec votre compte Google, veuillez réessayer</string>
@@ -27,6 +31,7 @@
   <string name="calendar_accountsync_status_settingupyouraccount">Configuration de votre compte...</string>
   <string name="calendar_accountsync_status_syncisoff">Synchronisation désactivée</string>
   <string name="common_button_disable">Désactiver</string>
+  <string name="common_button_notnow">Pas maintenant</string>
   <string name="common_button_skip">Passer</string>
   <string name="common_button_synchronize">Synchroniser</string>
   <string name="common_dialog_button_cancel">Annuler</string>

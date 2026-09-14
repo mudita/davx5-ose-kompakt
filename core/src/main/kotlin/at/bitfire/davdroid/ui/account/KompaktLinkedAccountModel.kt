@@ -30,6 +30,7 @@ import at.bitfire.davdroid.sync.KompaktStorage
 import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.sync.KompaktSyncWork
 import at.bitfire.davdroid.sync.SyncConditions
+import at.bitfire.davdroid.sync.isConsented
 import at.bitfire.davdroid.util.combine
 import at.bitfire.davdroid.util.dateformat.KompaktLastSyncFormatSource
 import dagger.assisted.Assisted
@@ -187,6 +188,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     private val _requestConsent = MutableStateFlow<KompaktSyncService?>(null)
     private val _confirmDisable = MutableStateFlow<KompaktSyncService?>(null)
+    private val _importServiceNow = MutableStateFlow<KompaktSyncService?>(null)
     private val _confirmUnlink = MutableStateFlow(false)
 
     private val dialog: Flow<KompaktLinkedAccountDialog?> = combine(
@@ -197,6 +199,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         showNewContactsConsent,
         _requestConsent,
         _confirmDisable,
+        _importServiceNow.map { it != null },
         _confirmUnlink,
         ::linkedAccountDialog
     )
@@ -368,6 +371,20 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         _requestConsent.value = service
     }
 
+    fun onAddConsentReturned(service: KompaktSyncService?) {
+        if (service == null) return
+        viewModelScope.launch(ioDispatcher) {
+            if (service.isConsented(kompaktAccountSettings.getAuthState(account)))
+                _importServiceNow.value = service
+        }
+    }
+
+    fun importServiceNow() {
+        val service = _importServiceNow.value ?: return
+        _importServiceNow.value = null
+        viewModelScope.launch(ioDispatcher) { startSync(listOf(service)) }
+    }
+
     // The auth error is deliberately not cleared: KEY_NEEDS_REAUTH is cleared only by a successful
     // re-auth, which is why its sheet has every dismiss path locked.
     fun consumeDialog() {
@@ -376,6 +393,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         _showOutOfStorage.value = false
         _requestConsent.value = null
         _confirmDisable.value = null
+        _importServiceNow.value = null
         _confirmUnlink.value = false
     }
 
@@ -446,7 +464,9 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             syncFailed = false,
             newContactsConsent = false,
             requestConsent = null,
-            confirmDisable = null
+            confirmDisable = null,
+            importServiceNow = false,
+            confirmUnlink = false
         ),
         reauthPhase = _reauthPhase.value
     )
