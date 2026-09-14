@@ -47,16 +47,7 @@ import kotlinx.coroutines.launch
 import java.util.logging.Level
 import java.util.logging.Logger
 
-/**
- * ViewModel for the Kompakt "Linked Account" detail screen.
- *
- * Drives the single-account screen: shows the account email, a sync toggle and last synchronization
- * time per service, and offers actions to toggle a service, sync now and unlink the account.
- *
- * It also applies the Kompakt initialization defaults exactly once per account and service: after
- * collection discovery completes, the service's collections are selected for synchronization and
- * automatic sync is enabled by default (the user can turn it off via the toggle).
- */
+/** Drives the Kompakt "Linked Account" screen, which shows the one linked account and its two services. */
 @HiltViewModel(assistedFactory = KompaktLinkedAccountModel.Factory::class)
 class KompaktLinkedAccountModel @AssistedInject constructor(
     @Assisted val account: Account,
@@ -83,8 +74,8 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         fun create(account: Account, initialReauth: Boolean): KompaktLinkedAccountModel
     }
 
-    // Blank the screen while redirecting into the OAuth flow so it and the "Account not linked" dialog
-    // don't flash. Released on the re-auth result — not when needsReauth clears — so a cancelled re-auth
+    // Blanks the screen while the OAuth flow is launched, so neither it nor the auth sheet flashes on the
+    // way in. Released by the launcher result rather than by the flag clearing, so a cancelled re-auth
     // returns to content instead of a permanent blank.
     enum class ReauthPhase { SHOW_CONTENT, PENDING_LAUNCH, AWAITING_RESULT }
 
@@ -144,8 +135,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
                     }
             }
 
-        // Both hold until their source says otherwise, so they are reported to the slot as conditions
-        // rather than raised once: outranked on arrival, they keep their place instead of being lost.
+        // These two are the slot's conditions: outranked on arrival, they keep their place.
         viewModelScope.launch {
             kompaktAccountSettings.observeReauthNeeded(account).collect { needed ->
                 dialogSlot.condition(KompaktLinkedAccountDialog.AuthError, needed)
@@ -214,19 +204,14 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     private fun setServiceSync(service: KompaktSyncService, enabled: Boolean) {
         viewModelScope.launch(ioDispatcher) {
             // The cell renders ConsentMissing exactly like Off, so its switch reports an enable.
-            // Persisting one would arm the periodic worker for a service Google answers 403 for, and
-            // that path never passes the eligibility filter — granting consent is the caller's job,
-            // via the dialog KompaktLinkedAccountScreen shows before this is ever called with
-            // enabled == true for a ConsentMissing service. Re-read rather than trusting the rendered
-            // position, which may be minutes old.
+            // Persisting one would arm the periodic worker for a service Google answers 403 for.
+            // Re-read rather than trust a rendered position that may be minutes old.
             if (enabled && readSwitch(service) == KompaktSyncSwitch.ConsentMissing)
                 return@launch
 
-            // A plain re-auth requests every scope, so consent for this service can already exist with
-            // no row behind it, and the switch reads Off rather than ConsentMissing for exactly that
-            // state. The row has to exist before the interval is written: setEnabled writes it, and
-            // AutomaticSyncManager.updateAutomaticSync arms the periodic worker and the content trigger
-            // only for a service that already has one.
+            // A plain re-auth grants every scope, so consent can exist with no row behind it — the switch
+            // reads Off rather than ConsentMissing for exactly that state. The row must exist first:
+            // AutomaticSyncManager.updateAutomaticSync arms the worker only for a service that has one.
             if (enabled && !provisioning.ensureRow(account, service)) {
                 logger.warning("Couldn't find a $service for $account; leaving the switch off")
                 return@launch
@@ -341,12 +326,11 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             .flowOn(ioDispatcher)
 
 
-    // synchronous seeds and helpers
+    // helpers
 
-    // Every input must carry an immediate first value or combine emits nothing at all, so these seeds
-    // are read synchronously rather than defaulted. The slot starts empty: the conditions raise
-    // themselves as soon as their collectors emit, which costs one frame and saves a blocking read on
-    // a screen that is withholding its rows anyway.
+    // combine emits nothing until every input has a value, so this stands in until the first real one.
+    // The slot starts empty: its conditions arrive a frame later with their collectors, which is free
+    // here because the screen withholds its rows until the switches resolve anyway.
     private fun initialState() = KompaktLinkedAccountState(
         email = email,
         calendar = KompaktServiceSyncState(KompaktSyncSwitch.Resolving, KompaktSyncStatus.Resolving),

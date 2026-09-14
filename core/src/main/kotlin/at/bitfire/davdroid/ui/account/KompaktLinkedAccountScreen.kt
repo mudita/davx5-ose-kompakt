@@ -73,10 +73,7 @@ data class KompaktLinkedAccountActions(
     val onImportServiceNow: (KompaktSyncService) -> Unit = {}
 )
 
-/**
- * Stateful entry point for the Kompakt "Linked Account" detail screen: collects the view model state
- * and delegates rendering to the stateless [KompaktLinkedAccountContent].
- */
+/** Stateful half of the screen; [KompaktLinkedAccountContent] renders and is previewable. */
 @Composable
 fun KompaktLinkedAccountScreen(
     account: Account,
@@ -87,7 +84,7 @@ fun KompaktLinkedAccountScreen(
     initialReauth: Boolean = false,
     model: KompaktLinkedAccountModel = hiltViewModel(
         // Key by account so switching the linked account (unlink A → link B) builds a fresh
-        // ViewModel instead of reusing the cached one for the previous account (SHP-571).
+        // ViewModel instead of reusing the cached one for the previous account.
         key = account.name,
         creationCallback = { factory: KompaktLinkedAccountModel.Factory ->
             factory.create(account, initialReauth)
@@ -96,18 +93,15 @@ fun KompaktLinkedAccountScreen(
 ) {
     val state by model.state.collectAsStateWithLifecycle()
 
-    // re-authorize the existing account in place (refresh OAuth token, keeping all local data)
     val context = LocalContext.current
     val reauthLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        // re-read the persisted flag: cleared if re-auth succeeded, still set if it was aborted/failed
+        // Release the blank screen whatever the outcome; the flag itself is observed, not read here.
         model.onReauthResult()
-        // RESULT_OK from the re-auth flow means a different account was linked (a switch) — surface the
-        // "Account linked" dialog, just like the normal add-account flow
+        // RESULT_OK means a different account was linked — a switch, which gets the same "Account
+        // linked" dialog. Pass the old account explicitly: the accounts flow may already report the new.
         if (result.resultCode == Activity.RESULT_OK)
-            // pass the re-auth target — the stable old account this screen owns — instead of letting
-            // the caller read it from the live accounts flow (which could already report the new one)
             onAccountSwitched(account.name)
     }
     val onReauthorize = {
@@ -401,7 +395,6 @@ fun KompaktLinkedAccountContent(
     }
 }
 
-/** Google icon + account email header. */
 @Composable
 private fun AccountHeader(email: String) {
     Column(
