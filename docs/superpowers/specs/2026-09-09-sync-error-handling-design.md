@@ -216,14 +216,13 @@ the sentence above as "WorkManager never tells us why".
 
 ```kotlin
 @Entity(tableName = "kompakt_sync_outcome",
+    primaryKeys = ["serviceId", "dataType"],
     foreignKeys = [ForeignKey(
         childColumns = ["serviceId"], entity = Service::class,
         parentColumns = ["id"], onDelete = ForeignKey.CASCADE
-    )],
-    indices = [Index(value = ["serviceId", "dataType"], unique = true)]
+    )]
 )
 data class KompaktSyncOutcome(
-    @PrimaryKey(autoGenerate = true) val id: Long,
     val serviceId: Long,
     val dataType: String,
     val at: Long,
@@ -255,16 +254,21 @@ cascade fires on unlink and on the cross-app `LOGOUT` broadcast with no code of 
 
 **Migration.** `AppDatabase` gains `KompaktSyncOutcome::class` in `entities`, an
 `abstract fun kompaktSyncOutcomeDao()` accessor, `version = 20`, and `AutoMigration(from = 19, to = 20)`
-— **no spec class**, since Room generates the `CREATE TABLE` and index for a new entity. Commit the
+— **no spec class**, since Room generates the `CREATE TABLE` for a new entity. Commit the
 generated `core/schemas/…/20.json` and add a concrete `AutoMigration20Test : DatabaseMigrationTest(20)`,
 matching `AutoMigration16Test` / `AutoMigration18Test`.
 
-Room's missing-index diagnostic accepts an index whose leading columns are the FK child columns, so
-`["serviceId", "dataType"]` covers the FK — `SyncStats` is the exact precedent. The upsert is
-`@Insert(onConflict = REPLACE)` with the repository always constructing `id = 0`: Room binds NULL for a
-zero autoGenerate PK, so the conflict lands on the unique index. **Never round-trip a read row back into
-the upsert** — a non-zero id would replace by primary key instead. `DavSyncStatsRepository.logSyncTime`
-is the pattern.
+`(serviceId, dataType)` is the primary key itself; there is no synthetic row id. `@Insert(onConflict =
+REPLACE)` therefore conflicts on the key that carries the constraint, so the upsert asks nothing of the
+caller and a row read back can be re-inserted unchanged. Room's missing-index diagnostic accepts the
+primary key's implicit index as covering the FK, so no separate `Index` is declared.
+
+**This departs from `SyncStats`, deliberately.** Upstream's table pairs
+`@PrimaryKey(autoGenerate = true) val id: Long` with a unique index on `(collectionId, dataType)`, which
+obliges every writer to pass `id = 0` so that Room binds NULL and the conflict falls through to the index
+— `DavSyncStatsRepository.logSyncTime` is that pattern, and round-tripping a read row through it would
+replace by row id instead. That is an upstream file and stays as it is; ours is new, so it states the
+constraint as the key and needs none of the ceremony. Expect the two to read differently side by side.
 
 Last-only, no history.
 
@@ -940,10 +944,9 @@ JVM, in `core`:
   `KompaktLinkedAccountStateTest` for `SyncFailed(retry)` and the new `SyncFailure` rank;
   `KompaktFlowCombineTest` for the 8-arity overload.
 
-Instrumented, on the PR only: `AutoMigration20Test : DatabaseMigrationTest(20)`. No DAO test — "REPLACE
-resolves on the unique index" is SQLite behaviour a mock cannot assert, and the JVM test covers the half
-that is ours: that `record` always writes `id = 0`, which is what makes the conflict land on the index at
-all.
+Instrumented, on the PR only: `AutoMigration20Test : DatabaseMigrationTest(20)`. No DAO test — REPLACE
+resolving on the primary key is SQLite behaviour a mock cannot assert, and the JVM test covers the half
+that is ours: that `record` writes the values it was handed.
 
 No test is written for a cancellation producing `numUnclassifiedErrors`: that path is unreachable
 (Decision 4).
