@@ -60,19 +60,19 @@ import com.mudita.mmd.components.text.TextMMD
 data class KompaktLinkedAccountActions(
     val onBack: () -> Unit = {},
     val onRequestServiceToggle: (KompaktSyncService, Boolean) -> Unit = { _, _ -> },
-    val onConfirmDisable: () -> Unit = {},
+    val onConfirmDisable: (KompaktSyncService) -> Unit = {},
     val onSyncNow: () -> Unit = {},
     val onUnlink: () -> Unit = {},
     val onRequestUnlink: () -> Unit = {},
     val onConfirmUnlink: () -> Unit = {},
-    val onConsumeDialog: () -> Unit = {},
+    val onDismissDialog: () -> Unit = {},
     val onFailureClick: (KompaktSyncService) -> Unit = {},
     val onRetry: (Set<KompaktSyncService>) -> Unit = {},
     val onAccountLinkedDialogDismiss: () -> Unit = {},
     val onReauthorize: () -> Unit = {},
     val onGrantConsent: (serviceType: String) -> Unit = {},
     val onNewContactsConsentShown: () -> Unit = {},
-    val onImportServiceNow: () -> Unit = {}
+    val onImportServiceNow: (KompaktSyncService) -> Unit = {}
 )
 
 /**
@@ -159,7 +159,7 @@ fun KompaktLinkedAccountScreen(
                 onUnlink = model::unlink,
                 onRequestUnlink = model::requestUnlink,
                 onConfirmUnlink = model::confirmUnlink,
-                onConsumeDialog = model::consumeDialog,
+                onDismissDialog = model::dismiss,
                 onFailureClick = model::explainSyncFailure,
                 onRetry = model::retry,
                 onAccountLinkedDialogDismiss = onAccountLinkedDialogDismiss,
@@ -303,7 +303,7 @@ fun KompaktLinkedAccountContent(
 
         KompaktLinkedAccountDialog.SyncOff ->
             KompaktMessageSheet(
-                onDismissRequest = actions.onConsumeDialog,
+                onDismissRequest = actions.onDismissDialog,
                 title = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_h1_yoursyncisoff),
                 text = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization),
                 icon = painterResource(R.drawable.ic_kompakt_alert),
@@ -312,7 +312,7 @@ fun KompaktLinkedAccountContent(
 
         KompaktLinkedAccountDialog.OutOfStorage ->
             KompaktMessageSheet(
-                onDismissRequest = actions.onConsumeDialog,
+                onDismissRequest = actions.onDismissDialog,
                 title = stringResource(RFrontitude.string.common_error_dialog_h1_storageisfull),
                 text = stringResource(RFrontitude.string.common_error_dialog_body_changestorage),
                 icon = painterResource(R.drawable.ic_kompakt_alert),
@@ -321,7 +321,7 @@ fun KompaktLinkedAccountContent(
 
         KompaktLinkedAccountDialog.NoInternet ->
             KompaktMessageSheet(
-                onDismissRequest = actions.onConsumeDialog,
+                onDismissRequest = actions.onDismissDialog,
                 title = stringResource(RFrontitude.string.common_label_nointernetconnection),
                 text = stringResource(RFrontitude.string.common_error_body_opensettingstocheck),
                 icon = painterResource(R.drawable.ic_kompakt_alert)
@@ -329,7 +329,7 @@ fun KompaktLinkedAccountContent(
 
         is KompaktLinkedAccountDialog.SyncFailed ->
             KompaktModalSheet(
-                onDismissRequest = actions.onConsumeDialog,
+                onDismissRequest = actions.onDismissDialog,
                 title = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_h1_accountsyncfailed),
                 text = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour),
                 icon = painterResource(R.drawable.ic_kompakt_alert),
@@ -338,32 +338,32 @@ fun KompaktLinkedAccountContent(
                 // cost a second worker and push the periodic schedule back another interval.
                 onConfirm = { actions.onRetry(dialog.retry) },
                 dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
-                onDismiss = actions.onConsumeDialog
+                onDismiss = actions.onDismissDialog
             )
 
         is KompaktLinkedAccountDialog.ExplainSyncFailure ->
             KompaktSyncFailureSheet(
                 cause = dialog.cause,
                 onRetry = { actions.onRetry(setOf(dialog.service)) },
-                onDismissRequest = actions.onConsumeDialog
+                onDismissRequest = actions.onDismissDialog
             )
 
-        KompaktLinkedAccountDialog.ImportServiceNow ->
+        is KompaktLinkedAccountDialog.ImportServiceNow ->
             KompaktModalSheet(
-                onDismissRequest = actions.onConsumeDialog,
+                onDismissRequest = actions.onDismissDialog,
                 title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_permissionsgranted),
                 text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_youcannowimportselectedgoogle),
                 icon = painterResource(R.drawable.ic_kompakt_success),
                 confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_importnow),
-                onConfirm = actions.onImportServiceNow,
+                onConfirm = { actions.onImportServiceNow(dialog.service) },
                 dismissLabel = stringResource(RFrontitude.string.common_button_notnow),
-                onDismiss = actions.onConsumeDialog
+                onDismiss = actions.onDismissDialog
             )
 
         is KompaktLinkedAccountDialog.RequestConsent ->
             ConsentDialog(
                 service = state.dialog.service,
-                onDismiss = actions.onConsumeDialog,
+                onDismiss = actions.onDismissDialog,
                 onGrantConsent = actions.onGrantConsent
             )
 
@@ -376,7 +376,7 @@ fun KompaktLinkedAccountContent(
 
         is KompaktLinkedAccountDialog.ConfirmDisable ->
             KompaktModalSheet(
-                onDismissRequest = actions.onConsumeDialog,
+                onDismissRequest = actions.onDismissDialog,
                 title = stringResource(
                     when (state.dialog.service) {
                         KompaktSyncService.CALENDAR -> RFrontitude.string.calendar_accountsync_dialog_h1_disablecalendarsync
@@ -386,21 +386,21 @@ fun KompaktLinkedAccountContent(
                 text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_nothingwillsynchronizewithyour),
                 icon = painterResource(R.drawable.ic_kompakt_alert),
                 confirmLabel = stringResource(RFrontitude.string.common_button_disable),
-                onConfirm = actions.onConfirmDisable,
+                onConfirm = { actions.onConfirmDisable(dialog.service) },
                 dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
-                onDismiss = actions.onConsumeDialog
+                onDismiss = actions.onDismissDialog
             )
 
         KompaktLinkedAccountDialog.ConfirmUnlink ->
             KompaktModalSheet(
-                onDismissRequest = actions.onConsumeDialog,
+                onDismissRequest = actions.onDismissDialog,
                 title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_removeaccount),
                 text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_youwontseedatafromyourgoogle),
                 icon = painterResource(R.drawable.ic_kompakt_alert),
                 confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_button_removeaccount),
                 onConfirm = actions.onConfirmUnlink,
                 dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
-                onDismiss = actions.onConsumeDialog
+                onDismiss = actions.onDismissDialog
             )
 
         null -> {}
@@ -558,7 +558,7 @@ private fun KompaktLinkedAccountContent_ImportServiceNow_Preview() {
         state = previewState(
             on(KompaktSyncStatus.Synced(PREVIEW_LAST_SYNC)),
             on(KompaktSyncStatus.NeverSynced)
-        ).copy(dialog = KompaktLinkedAccountDialog.ImportServiceNow),
+        ).copy(dialog = KompaktLinkedAccountDialog.ImportServiceNow(KompaktSyncService.CONTACTS)),
         actions = KompaktLinkedAccountActions(),
         showAccountLinkedDialog = false
     )
