@@ -12,7 +12,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -22,21 +21,20 @@ import kotlin.time.Duration.Companion.milliseconds
 
 sealed interface KompaktAttemptResult {
     data object BlockedNoStorage : KompaktAttemptResult
+    data object BlockedOfflinePlus : KompaktAttemptResult
     data object BlockedNoNetwork : KompaktAttemptResult
     data object NoneEligible : KompaktAttemptResult
     data object AlreadySyncing : KompaktAttemptResult
     data object Succeeded : KompaktAttemptResult
     data object AuthFailed : KompaktAttemptResult
     data class Failed(val retry: Set<KompaktSyncService>) : KompaktAttemptResult
-    data class Interrupted(val reason: KompaktInterruption) : KompaktAttemptResult
+    data class Interrupted(val reason: KompaktOfflineCause) : KompaktAttemptResult
 }
-
-enum class KompaktInterruption { NoNetwork }
 
 /**
  * Waits for the runs a screen has started and turns them into one verdict. Whether a sync may start at
  * all is [KompaktStartSyncUseCase]'s answer, mapped here; what this owns is the ids, the watch that
- * gives up when the network goes, and the outcome.
+ * gives up when [KompaktConnectivity] reports the connection gone, and the outcome.
  *
  * The unit is the set of runs this component has started, not a single call. A second [run] while an
  * earlier one is waiting is never refused: it contributes its runs to the same set, both callers await
@@ -53,7 +51,7 @@ class KompaktSyncAttempt @Inject constructor(
     private val startSync: KompaktStartSyncUseCase,
     private val outcomes: KompaktServiceSyncOutcome,
     private val accountSettings: KompaktAccountSettings,
-    private val network: KompaktNetworkAvailability,
+    private val connectivity: KompaktConnectivity,
     private val syncWork: KompaktSyncWork,
     private val workManager: WorkManager
 ) {
@@ -67,6 +65,7 @@ class KompaktSyncAttempt @Inject constructor(
     ): KompaktAttemptResult {
         when (val start = startSync(account, services, awaitDiscovery = true)) {
             KompaktSyncStartResult.NoStorage -> return KompaktAttemptResult.BlockedNoStorage
+            KompaktSyncStartResult.OfflinePlus -> return KompaktAttemptResult.BlockedOfflinePlus
             KompaktSyncStartResult.NoNetwork -> return KompaktAttemptResult.BlockedNoNetwork
             KompaktSyncStartResult.NoneEligible -> return KompaktAttemptResult.NoneEligible
             // Nothing of ours to add — but if another call is mid-drain we report its verdict rather
@@ -79,25 +78,31 @@ class KompaktSyncAttempt @Inject constructor(
             return KompaktAttemptResult.AlreadySyncing
         }
 
-        var interrupted = false
+        var interruption: KompaktOfflineCause? = null
         val endedAs = mutableMapOf<KompaktSyncService, WorkInfo.State?>()
         try {
             coroutineScope {
                 val watch = launch {
-                    network.observe()
-                        .distinctUntilChanged()
-                        .collectLatest { online ->
-                            if (!online) {
-                                // collectLatest, so coming back online inside the grace cancels this and a
-                                // short blip costs nothing.
+                    connectivity.observe()
+                        .collectLatest { reason ->
+                            if (reason == null)
+                                return@collectLatest
+                            // Only a connection that dropped by itself gets the grace: Offline+ is a switch
+                            // the user just moved, so there is no blip to wait out. collectLatest means
+                            // recovering inside the grace cancels this, and a short blip costs nothing.
+                            if (reason == KompaktOfflineCause.NoNetwork)
                                 delay(OFFLINE_GRACE_MS.milliseconds)
-                                interrupted = true
-                                val inFlight = started.getAndClear()
-                                // One-time work names only: cancelling periodic work would stop automatic
-                                // sync for good.
-                                for (service in inFlight.keys) {
-                                    syncWork.cancel(account, service)
-                                }
+                            // The cause outranks the symptom here as it does everywhere else, rather than
+                            // whichever landed first: the radios can be seen going before the switch
+                            // broadcast arrives, and reporting that would name the connection the user
+                            // just turned off.
+                            if (interruption == null || reason == KompaktOfflineCause.OfflinePlus)
+                                interruption = reason
+                            val inFlight = started.getAndClear()
+                            // One-time work names only: cancelling periodic work would stop automatic
+                            // sync for good.
+                            for (service in inFlight.keys) {
+                                syncWork.cancel(account, service)
                             }
                         }
                 }
@@ -119,8 +124,8 @@ class KompaktSyncAttempt @Inject constructor(
             started.value = emptyMap()
         }
 
-        if (interrupted) {
-            return KompaktAttemptResult.Interrupted(KompaktInterruption.NoNetwork)
+        interruption?.let { reason ->
+            return KompaktAttemptResult.Interrupted(reason)
         }
         if (accountSettings.getReauthNeeded(account)) {
             return KompaktAttemptResult.AuthFailed

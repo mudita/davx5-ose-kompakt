@@ -25,17 +25,68 @@ adb shell dumpsys jobscheduler | grep -A3 -i "at.bitfire.davdroid.mudita"
 ## Sync error handling — what shows when
 
 The Kompakt "Linked Account" screen (`KompaktLinkedAccountModel` / `KompaktLinkedAccountScreen`) surfaces
-three distinct sync problems, each with its own UI:
+five distinct sync problems, each with its own UI:
 
 | Situation | Detected via | UI shown |
 |---|---|---|
-| No connectivity (before / during a sync) | `SyncConditions.internetAvailable()` pre-check + connectivity watcher | **"No internet connection"** message (`KompaktMessageSheet`) |
+| Offline+ (before / during a sync, and before the login flow) | `KompaktOfflinePlus` via `KompaktConnectivity` | **"You're using Offline+"** message (`KompaktOfflinePlusSheet`) |
+| No connectivity (before / during a sync) | `SyncConditions.internetAvailable()` pre-check + connectivity watcher | **"No internet connection"** message (`KompaktNoInternetSheet`) |
+| Nothing switched on when Synchronize was tapped | `KompaktStartSyncUseCase` answers `NoneEligible` | **"Your sync is off"** dialog |
 | OAuth token invalid / access revoked (HTTP 401) | `numAuthExceptions > 0` in the worker result, persisted to `AccountSettings.KEY_NEEDS_REAUTH` | **"Account not linked"** dialog (Link account / Cancel) |
 | Any other failure: server 5xx/4xx≠401, malformed response, local/provider error, soft errors after retries | EVENTS `OneTimeSyncWorker` reaches `FAILED` (non-auth) on a user‑initiated (`armed`) sync | **"Account sync failed / Try again"** dialog |
 
-> The generic **"Account sync failed"** dialog only appears for the third category. Airplane mode / no
-> network is routed to **"No internet connection"**, and 401 to **"Account not linked"** — so those are
-> *not* the way to trigger the generic dialog.
+The per-service alert icon (`KompaktSyncFailureSheet`) has its own "No internet connection" wording for
+a stored `NetworkProblem` outcome, and deliberately has no Offline+ variant: an Offline+ event cancels
+the in-flight worker before it writes an outcome, and periodic work never starts at all while the
+connection is gone, so Offline+ cannot produce that row.
+
+> The generic **"Account sync failed"** dialog only appears for the last category. Airplane mode / no
+> network is routed to **"No internet connection"**, the Offline+ switch to **"You're using Offline+"**,
+> and 401 to **"Account not linked"** — so none of those is the way to trigger the generic dialog.
+
+## Offline+ — handling & testing
+
+Offline+ is the hardware switch on the left side of the device; while Offline+ is on the Kompakt has no
+connection at all. (The switch is moved *down* to turn Offline+ *on*, so everything below says on/off
+rather than up/down.) It is reported ahead of "no internet" everywhere, because it is the cause rather than
+the symptom — `KompaktConnectivity` ranks the two, and `KompaktStartSyncUseCase` asks about it before it
+consults the network.
+
+Where it shows:
+
+- **Synchronize, or switching a service on** — the pre-flight answers `OfflinePlus`, so nothing is
+  enqueued and the sheet names the switch.
+- **During a running sync** — the watch in `KompaktSyncAttempt` cancels the in-flight runs. Unlike a
+  connection that dropped by itself, this does **not** wait out `OFFLINE_GRACE_MS`: the switch was just
+  moved, so there is no blip to absorb.
+- **Link account** (both from settings and in onboarding) — asked before `KompaktLoginActivity` is
+  launched, since the OAuth page would otherwise only reach the WebView's own "couldn't load" error.
+
+On a device, just move the switch. Without one, the two broadcasts can be sent by hand — they are
+received `RECEIVER_EXPORTED` with no permission, and the app must be in the foreground for its receiver
+to be registered:
+
+```bash
+# Offline+ on
+adb shell am broadcast -a android.intent.action.ACTION_HWSWITCH_LOCKED
+
+# Offline+ off
+adb shell am broadcast -a android.intent.action.ACTION_HWSWITCH_UNLOCKED
+```
+
+The *initial* state is not read from the broadcasts but from the `HWSwitch_lock` setting (`0` = Offline+
+off, `1` = Offline+ on), so a broadcast alone will not survive a re-read:
+
+```bash
+adb shell settings get global HWSwitch_lock
+```
+
+The row is KompaktOS's own, so it is absent on any other hardware, where it reads as Offline+ off.
+Confirmed on a device across a reboot taken with Offline+ already on: it still read `1` before any
+broadcast had been sent.
+
+Offline+ does **not** go through airplane mode — `airplane_mode_on` stays `0` while Offline+ is on, so
+that is not the flag to watch. What does change alongside it is `wifi_on`, which goes to `0`.
 
 ## Forcing a generic sync error (Method A — break the calendar URL → HTTP 404)
 
