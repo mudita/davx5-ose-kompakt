@@ -17,7 +17,7 @@ import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
 import at.bitfire.davdroid.settings.KompaktAccountSettings
 import at.bitfire.davdroid.sync.KompaktAttemptResult
 import at.bitfire.davdroid.sync.KompaktInitDefaults
-import at.bitfire.davdroid.sync.KompaktInterruption
+import at.bitfire.davdroid.sync.KompaktOfflineCause
 import at.bitfire.davdroid.sync.KompaktServiceProvisioning
 import at.bitfire.davdroid.sync.KompaktServiceSyncOutcome
 import at.bitfire.davdroid.sync.KompaktSyncAttempt
@@ -364,6 +364,8 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         when (val result = syncAttempt.run(account, requested)) {
             KompaktAttemptResult.BlockedNoStorage ->
                 dialogSlot.raise(KompaktLinkedAccountDialog.OutOfStorage)
+            KompaktAttemptResult.BlockedOfflinePlus ->
+                dialogSlot.raise(KompaktLinkedAccountDialog.OfflinePlus)
             KompaktAttemptResult.BlockedNoNetwork ->
                 dialogSlot.raise(KompaktLinkedAccountDialog.NoInternet)
             KompaktAttemptResult.NoneEligible ->
@@ -373,7 +375,8 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             // The connection went while the sync was running: name the cause, and deliberately not the
             // generic failure — a sibling that failed in the same moment failed *because* of this.
             is KompaktAttemptResult.Interrupted -> when (result.reason) {
-                KompaktInterruption.NoNetwork -> dialogSlot.raise(KompaktLinkedAccountDialog.NoInternet)
+                KompaktOfflineCause.OfflinePlus -> dialogSlot.raise(KompaktLinkedAccountDialog.OfflinePlus)
+                KompaktOfflineCause.NoNetwork -> dialogSlot.raise(KompaktLinkedAccountDialog.NoInternet)
             }
             // AuthFailed defers to the re-auth dialog, which outranks everything; AlreadySyncing
             // already shows a spinner on the row.

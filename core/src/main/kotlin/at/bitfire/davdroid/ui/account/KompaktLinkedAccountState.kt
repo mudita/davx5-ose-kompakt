@@ -36,6 +36,8 @@ sealed interface KompaktLinkedAccountDialog {
     /** Synchronize was asked for while no service was switched on, so nothing could start. */
     data object SyncOff : KompaktLinkedAccountDialog
     data object OutOfStorage : KompaktLinkedAccountDialog
+    /** There is no connection because Offline+ is on, which is the more useful of the two to say. */
+    data object OfflinePlus : KompaktLinkedAccountDialog
     data object NoInternet : KompaktLinkedAccountDialog
     /** Carries what to retry, so Try again re-syncs only the services that actually failed. */
     data class SyncFailed(val retry: Set<KompaktSyncService>) : KompaktLinkedAccountDialog
@@ -67,14 +69,15 @@ internal fun rank(dialog: KompaktLinkedAccountDialog): Int = when (dialog) {
     KompaktLinkedAccountDialog.AuthError -> 0
     KompaktLinkedAccountDialog.SyncOff -> 1
     KompaktLinkedAccountDialog.OutOfStorage -> 2
-    KompaktLinkedAccountDialog.NoInternet -> 3
-    is KompaktLinkedAccountDialog.SyncFailed -> 4
-    is KompaktLinkedAccountDialog.ExplainSyncFailure -> 5
-    is KompaktLinkedAccountDialog.ImportServiceNow -> 6
-    is KompaktLinkedAccountDialog.RequestConsent -> 7
-    KompaktLinkedAccountDialog.NewContactsConsent -> 8
-    is KompaktLinkedAccountDialog.ConfirmDisable -> 9
-    KompaktLinkedAccountDialog.ConfirmUnlink -> 10
+    KompaktLinkedAccountDialog.OfflinePlus -> 3
+    KompaktLinkedAccountDialog.NoInternet -> 4
+    is KompaktLinkedAccountDialog.SyncFailed -> 5
+    is KompaktLinkedAccountDialog.ExplainSyncFailure -> 6
+    is KompaktLinkedAccountDialog.ImportServiceNow -> 7
+    is KompaktLinkedAccountDialog.RequestConsent -> 8
+    KompaktLinkedAccountDialog.NewContactsConsent -> 9
+    is KompaktLinkedAccountDialog.ConfirmDisable -> 10
+    KompaktLinkedAccountDialog.ConfirmUnlink -> 11
 }
 
 internal fun newContactsConsentVisible(

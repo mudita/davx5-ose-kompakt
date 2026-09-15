@@ -64,6 +64,7 @@ class KompaktLinkedAccountStateTest {
         KompaktLinkedAccountDialog.AuthError,
         KompaktLinkedAccountDialog.SyncOff,
         KompaktLinkedAccountDialog.OutOfStorage,
+        KompaktLinkedAccountDialog.OfflinePlus,
         KompaktLinkedAccountDialog.NoInternet,
         KompaktLinkedAccountDialog.SyncFailed(failedCalendar),
         KompaktLinkedAccountDialog.ExplainSyncFailure(
@@ -110,7 +111,15 @@ class KompaktLinkedAccountStateTest {
         // The use case answers eligibility before it consults storage or the network, so a stale
         // environment flag must not turn "your sync is off" into "check your connection".
         assertTrue(outranks(KompaktLinkedAccountDialog.SyncOff, KompaktLinkedAccountDialog.OutOfStorage))
+        assertTrue(outranks(KompaktLinkedAccountDialog.SyncOff, KompaktLinkedAccountDialog.OfflinePlus))
         assertTrue(outranks(KompaktLinkedAccountDialog.SyncOff, KompaktLinkedAccountDialog.NoInternet))
+    }
+
+    @Test
+    fun `the cause of the missing connection outranks the symptom`() {
+        // The use case answers Offline+ before it consults the network, so the two are never raised
+        // together -- but ranked the other way, a switch the user moved would read as a flaky connection.
+        assertTrue(outranks(KompaktLinkedAccountDialog.OfflinePlus, KompaktLinkedAccountDialog.NoInternet))
     }
 
     @Test
