@@ -20,6 +20,7 @@
   <string name="calendar_accountsync_dialog_h1_removeaccount">Account verwijderen\?</string>
   <string name="calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization">Schakel kalender- en contactensynchronisatie in om gegevens te synchroniseren</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Koppel je account opnieuw om door te gaan met synchroniseren met Google</string>
+  <string name="calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountsyncronization">Gebruik de linkerschakelaar om accountsynchronisatie toe te staan</string>
   <string name="calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour">We konden niet synchroniseren met je Google-account, probeer het opnieuw</string>
   <string name="calendar_accountsync_error_dialog_button_removeaccount">Account verwijderen</string>
   <string name="calendar_accountsync_error_dialog_h1_accountlinkerror">Fout bij accountkoppeling</string>
@@ -32,6 +33,7 @@
   <string name="calendar_accountsync_status_notsyncedyet">Nog niet gesynchroniseerd</string>
   <string name="calendar_accountsync_status_settingupyouraccount">Je account configureren...</string>
   <string name="calendar_accountsync_status_syncisoff">Synchronisatie uit</string>
+  <string name="common_all_error_h1_youreusingoffline">U gebruikt Offline+</string>
   <string name="common_button_disable">Uitschakelen</string>
   <string name="common_button_notnow">Niet nu</string>
   <string name="common_button_ok">OK</string>
