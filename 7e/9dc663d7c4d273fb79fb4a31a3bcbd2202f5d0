@@ -1,0 +1,70 @@
+frontitude/src/main/res/values-it/strings.xml
+  3da9a1f4e40f4936 10,20,23
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountState.kt
+  3da9a1f4e40f4936 49-50,67-70,81-84
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktReauthModel.kt
+  3da9a1f4e40f4936 15,35-37,56-61,98,110-113,118,121,123
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktConsentChange.kt
+  3da9a1f4e40f4936 1-19
+frontitude/src/main/res/values-pt/strings.xml
+  3da9a1f4e40f4936 10,20,23
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountScreen.kt
+  3da9a1f4e40f4936 73-74,77-82,113,125,128,164-165,368-382
+frontitude/src/main/res/values-de/strings.xml
+  3da9a1f4e40f4936 10,20,23
+frontitude/src/main/res/values-fr/strings.xml
+  3da9a1f4e40f4936 10,20,23
+frontitude/src/main/res/values/strings.xml
+  3da9a1f4e40f4936 6,10,20,23-24
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktAddConsentScreen.kt
+  3da9a1f4e40f4936 32,39,50,52-57
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountModel.kt
+  3da9a1f4e40f4936 171-188
+frontitude/src/main/res/values-cs/strings.xml
+  3da9a1f4e40f4936 10,20,23
+core/src/test/kotlin/at/bitfire/davdroid/ui/setup/KompaktAddConsentModelTest.kt
+  3da9a1f4e40f4936 153,204
+frontitude/src/main/res/values-pl/strings.xml
+  3da9a1f4e40f4936 10,20,23
+core/src/test/kotlin/at/bitfire/davdroid/ui/setup/KompaktConsentChangeTest.kt
+  3da9a1f4e40f4936 1-56
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktAddConsentDecision.kt
+  3da9a1f4e40f4936 8,18-22,25-33,35-36,38-40,54-56,59
+core/src/test/kotlin/at/bitfire/davdroid/ui/setup/KompaktAddConsentDecisionTest.kt
+  3da9a1f4e40f4936 10,48,61,88,92,101,119-122,131-147,151-163,174
+frontitude/src/main/res/values-es/strings.xml
+  3da9a1f4e40f4936 10,20,23
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktReauthScreen.kt
+  3da9a1f4e40f4936 20,40,62,85-88,92
+core/src/test/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountStateTest.kt
+  3da9a1f4e40f4936 75,139-156
+frontitude/src/main/res/values-nl/strings.xml
+  3da9a1f4e40f4936 10,20,23
+frontitude/keys_to_filter.py
+  3da9a1f4e40f4936 26,36,39
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktAddConsentModel.kt
+  3da9a1f4e40f4936 74-78,93-98,127-130,139,148,162-164,167-178
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktLoginActivity.kt
+  3da9a1f4e40f4936 8,37-43,81-90,99,101-107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "7e9dc663d7c4d273fb79fb4a31a3bcbd2202f5d0",
+  "prompts": {
+    "3da9a1f4e40f4936": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6df365e4-eeee-4a29-94ae-5a9a6b2de8c0",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 348,
+      "total_deletions": 58,
+      "accepted_lines": 1052,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/c53cf818c00930cc95790df0373da8ebe9367a0c4b5cef082d96d09bbfc73465"
+    }
+  }
+}
