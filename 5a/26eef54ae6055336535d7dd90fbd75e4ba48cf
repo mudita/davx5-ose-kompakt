@@ -1,0 +1,62 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/composable/KompaktNoInternetSheet.kt
+  b6aad515679eb905 1-32
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktSyncAttempt.kt
+  b6aad515679eb905 24,31,37,54,68,81,86-93,95-102,124-125
+core/src/test/kotlin/at/bitfire/davdroid/ui/KompaktLinkAccountModelTest.kt
+  b6aad515679eb905 1-70
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktConnectivityTest.kt
+  b6aad515679eb905 1-104
+core/src/main/kotlin/at/bitfire/davdroid/ui/composable/KompaktOfflinePlusSheet.kt
+  b6aad515679eb905 1-32
+docs/app-integration.md
+  b6aad515679eb905 157-163
+core/src/main/kotlin/at/bitfire/davdroid/ui/KompaktLinkAccountModel.kt
+  b6aad515679eb905 1-34
+core/src/test/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountStateTest.kt
+  b6aad515679eb905 67,114,118-122
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktConnectivity.kt
+  b6aad515679eb905 1-37
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountScreen.kt
+  b6aad515679eb905 51-52,312-314,316
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktStartSyncUseCaseTest.kt
+  b6aad515679eb905 40,67-69,87-88,219-252
+core/src/main/kotlin/at/bitfire/davdroid/ui/KompaktAccountsScreen.kt
+  b6aad515679eb905 28,45,48-49,74-75,102-105,107-110,150-155
+docs/kompakt-testing.md
+  b6aad515679eb905 28,32-33,37-93
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktSyncAttemptTest.kt
+  b6aad515679eb905 35-37,44,58-60,69,199,204,209-248,284,286,328,332
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktOfflinePlus.kt
+  b6aad515679eb905 1-102
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountModel.kt
+  b6aad515679eb905 20,367-368,378-379
+core/src/main/res/drawable/ic_kompakt_offline_plus.xml
+  b6aad515679eb905 1-42
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktStartSyncUseCase.kt
+  b6aad515679eb905 18-19,46,71-74
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktOfflinePlusTest.kt
+  b6aad515679eb905 1-75
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountState.kt
+  b6aad515679eb905 39-40,72-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "5a26eef54ae6055336535d7dd90fbd75e4ba48cf",
+  "prompts": {
+    "b6aad515679eb905": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9ff4c116-62ca-4958-80f3-4ec5f9c28ab7",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 3894,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/f30324409daf7450884a9f55d4f2466b464df4435fe66d8ce50de4207ee324c4"
+    }
+  }
+}
