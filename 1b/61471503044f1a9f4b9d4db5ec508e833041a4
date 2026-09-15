@@ -1,0 +1,26 @@
+docs/kompakt-testing.md
+  b6aad515679eb905 77-87
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktOfflinePlus.kt
+  b6aad515679eb905 38-40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "1b61471503044f1a9f4b9d4db5ec508e833041a4",
+  "prompts": {
+    "b6aad515679eb905": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9ff4c116-62ca-4958-80f3-4ec5f9c28ab7",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 17,
+      "total_deletions": 9,
+      "accepted_lines": 43078,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/f41c2aa45b8fe3e9fe9ad0c8946bfdf04c1f465188ed6b74e081fa8838203957"
+    }
+  }
+}
