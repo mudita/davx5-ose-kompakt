@@ -14,7 +14,7 @@ class KompaktFlowCombineTest {
 
     // Nine distinct types so a swapped array index fails the test, not just the type checker.
     @Test
-    fun `combines ten flows into their own typed parameters, in order`() = runTest {
+    fun `combines eleven flows into their own typed parameters, in order`() = runTest {
         val result = combine(
             MutableStateFlow(1),
             MutableStateFlow("two"),
@@ -26,8 +26,9 @@ class KompaktFlowCombineTest {
             MutableStateFlow(8.toByte()),
             MutableStateFlow(9.toShort()),
             MutableStateFlow(10.toLong()),
-        ) { a, b, c, d, e, f, g, h, i, j -> "$a-$b-$c-$d-$e-$f-$g-$h-$i-$j" }.first()
+            MutableStateFlow(11.toLong()),
+        ) { a, b, c, d, e, f, g, h, i, j, k -> "$a-$b-$c-$d-$e-$f-$g-$h-$i-$j-$k" }.first()
 
-        assertEquals("1-two-3-4.0-true-f-[g]-8-9-10", result)
+        assertEquals("1-two-3-4.0-true-f-[g]-8-9-10-11", result)
     }
 }
