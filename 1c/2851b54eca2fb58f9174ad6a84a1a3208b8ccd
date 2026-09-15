@@ -1,0 +1,53 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountModel.kt
+  f6364155f5512ab0 25,44,73-74,89-90,93,95,128-133,135-137,163-166,170-174,176-179,181-197,202,219-221,225-226,254,260,277,279-280,282-283,287-289,348,350-351,355,357-362,364-366,369-372,377-378,382,391,396-397,410,417-422,425-429,434
+  90a9cf2b9fc06857 412
+frontitude/src/main/res/values-es/strings.xml
+  0bba4377a635f100 22
+core/src/test/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountStateTest.kt
+  b6aad515679eb905 160
+frontitude/src/main/res/values-cs/strings.xml
+  0bba4377a635f100 22
+frontitude/src/main/res/values-pt/strings.xml
+  0bba4377a635f100 22
+frontitude/src/main/res/values-nl/strings.xml
+  0bba4377a635f100 22
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountScreen.kt
+  f6364155f5512ab0 47,54,214-216,219,221-232,244-249,251,253-254,256-259,261,263-264,529,533-547
+  c70ce7a3bfe71e05 90,110,113,269-270,273-275
+frontitude/keys_to_filter.py
+  0bba4377a635f100 38
+frontitude/src/main/res/values-fr/strings.xml
+  0bba4377a635f100 22
+frontitude/src/main/res/values/strings.xml
+  b6aad515679eb905 6,21
+  0bba4377a635f100 22
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountState.kt
+  c70ce7a3bfe71e05 42
+frontitude/src/main/res/values-de/strings.xml
+  0bba4377a635f100 22
+frontitude/src/main/res/values-it/strings.xml
+  0bba4377a635f100 22
+frontitude/src/main/res/values-pl/strings.xml
+  0bba4377a635f100 22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "1c2851b54eca2fb58f9174ad6a84a1a3208b8ccd",
+  "prompts": {
+    "b6aad515679eb905": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9ff4c116-62ca-4958-80f3-4ec5f9c28ab7",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 28,
+      "total_deletions": 27,
+      "accepted_lines": 3,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/fbad0fcfe164b249ec1a01eed59fc2adf71a1ebb482728336d00f1f65558c9df"
+    }
+  }
+}
