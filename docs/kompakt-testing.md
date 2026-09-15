@@ -86,13 +86,14 @@ Notes / caveats:
   moment the system reports `STORAGE_OK`** again. No cancel/re-enable logic, no app interaction needed.
   This constraint uses the system's own low-storage signal (`DeviceStorageMonitorService`,
   `ACTION_DEVICE_STORAGE_LOW/OK`), i.e. the same `min(500 MB, 10 %)` threshold as `KompaktStorage`.
-- **Manual "Sync now"** is pre-checked in `KompaktLinkedAccountModel.syncNow()`: if
-  `KompaktStorage.isStorageLow(context)`, it shows the **"Your storage is full"** message and does not enqueue
-  (manual workers have no storage constraint, so we must guard here — same pattern as the no-internet check).
-- **The UI message is persistent/live**, like the re-auth dialog: `showOutOfStorage` is seeded from
-  `KompaktStorage.isStorageLow()` on screen entry and re-checked on `ON_RESUME`
-  (`model.refreshStorageState()`), so entering the app with low storage shows the message immediately and it
-  clears once space frees.
+- **Every requested sync** is pre-checked in `KompaktStartSyncUseCase`, which answers `NoStorage` before it
+  enqueues anything (manual workers have no storage constraint, so the guard has to be here — same pattern as
+  the no-internet check). `KompaktSyncAttempt` maps that to `BlockedNoStorage`.
+- **The UI message answers a blocked action, and nothing else.** `KompaktLinkedAccountModel` raises
+  "Your storage is full" only on `BlockedNoStorage`, so it appears when the user asked for something that low
+  storage stopped — **Synchronize**, or switching a service on — and never on screen entry or resume.
+  Dismissing it is final until the next blocked request. This is the same shape as "No internet"; the device
+  reports low storage on its own, so the app does not repeat that warning passively.
 
 `KompaktStorage.isStorageLow(context)` mirrors the framework `StorageManager.getStorageLowBytes()` formula:
 `min(sys_storage_threshold_max_bytes [default 500 MB], total * sys_storage_threshold_percentage% [default
@@ -102,9 +103,10 @@ Notes / caveats:
 ### Testing
 
 - **UI message + manual guard:** fill storage below the system threshold (e.g. `adb shell` write a large file
-  until free space drops past the "storage running out" point), open the linked-account screen → the
-  **"Your storage is full"** message appears immediately; tapping **Synchronize** keeps showing it and
-  does not start a sync. Delete the file → on next resume the message clears.
+  until free space drops past the "storage running out" point), then open the linked-account screen → **no**
+  message. Tap **Synchronize** → the **"Your storage is full"** message appears and no sync starts. Dismiss
+  it, leave the screen and come back → still no message; tap **Synchronize** again → it returns. Switching a
+  service on raises it too. Delete the file, tap **Synchronize** → it syncs.
 - **Automatic park & auto-resume:** with auto-sync on, fill storage low → the periodic/one-time sync workers
   sit ENQUEUED with the storage-not-low constraint unmet (no `SQLITE_FULL` loop in logcat). Free space → the
   worker runs automatically (no app interaction), typically within ~1 min. Verified on the emulator
@@ -129,8 +131,9 @@ Notes / caveats:
 
 Therefore we deliberately **do not add our own polling / re-enable mechanism** for automatic sync — it would be
 redundant with the platform. The only first-party storage check we keep is the synchronous
-`KompaktStorage.isStorageLow()` used for the live UI message and the manual-sync pre-check (manual workers carry
-no constraint); that is state-read, not a recovery loop.
+`KompaktStorage.isStorageLow()` behind `KompaktStorageAvailability`, read once per requested sync by
+`KompaktStartSyncUseCase` (manual workers carry no constraint); that is a state-read on a request, not a
+recovery loop and not a poll.
 
 > One-time confirmation on the target Mudita device: fill storage below the threshold → the automatic worker
 > parks (no `SQLITE_FULL` loop), then free space → it resumes on its own within ~1 min. If for some reason it

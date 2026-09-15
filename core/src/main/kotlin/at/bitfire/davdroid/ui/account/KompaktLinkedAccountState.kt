@@ -22,7 +22,17 @@ data class KompaktLinkedAccountState(
 }
 
 sealed interface KompaktLinkedAccountDialog {
-    data object AuthError : KompaktLinkedAccountDialog
+
+    /**
+     * Whether a dismissal may clear this dialog. Overriding it to `false` obliges you to give it a
+     * clearer that is not the user, or it masks everything below it forever.
+     */
+    val dismissible: Boolean get() = true
+
+    /** Cleared only when `needs_reauth` is, so no dismissal path can hide it. */
+    data object AuthError : KompaktLinkedAccountDialog {
+        override val dismissible = false
+    }
     /** Synchronize was asked for while no service was switched on, so nothing could start. */
     data object SyncOff : KompaktLinkedAccountDialog
     data object OutOfStorage : KompaktLinkedAccountDialog
@@ -34,7 +44,8 @@ sealed interface KompaktLinkedAccountDialog {
         val service: KompaktSyncService,
         val cause: KompaktSyncFailure
     ) : KompaktLinkedAccountDialog
-    data object ImportServiceNow : KompaktLinkedAccountDialog
+    /** Carries the service, so confirming imports the one the sheet named. */
+    data class ImportServiceNow(val service: KompaktSyncService) : KompaktLinkedAccountDialog
     data object NewContactsConsent : KompaktLinkedAccountDialog
     data class RequestConsent(val service: KompaktSyncService) : KompaktLinkedAccountDialog
     /** Carries the service so the sheet can name it, rather than the screen remembering which was tapped. */
@@ -42,44 +53,32 @@ sealed interface KompaktLinkedAccountDialog {
     data object ConfirmUnlink : KompaktLinkedAccountDialog
 }
 
+/**
+ * Precedence, lowest number first. Exhaustive on purpose: a new dialog cannot be added without
+ * placing it here.
+ *
+ * Confirmations come last because they are intents rather than conditions — a persistent problem the
+ * user has to deal with outranks a confirmation. [KompaktLinkedAccountDialog.SyncOff] outranks both
+ * environment dialogs for the same reason `KompaktStartSyncUseCase` answers eligibility before
+ * consulting storage and the network: a switched-off account told to check its connection is being
+ * answered a question it did not ask.
+ */
+internal fun rank(dialog: KompaktLinkedAccountDialog): Int = when (dialog) {
+    KompaktLinkedAccountDialog.AuthError -> 0
+    KompaktLinkedAccountDialog.SyncOff -> 1
+    KompaktLinkedAccountDialog.OutOfStorage -> 2
+    KompaktLinkedAccountDialog.NoInternet -> 3
+    is KompaktLinkedAccountDialog.SyncFailed -> 4
+    is KompaktLinkedAccountDialog.ExplainSyncFailure -> 5
+    is KompaktLinkedAccountDialog.ImportServiceNow -> 6
+    is KompaktLinkedAccountDialog.RequestConsent -> 7
+    KompaktLinkedAccountDialog.NewContactsConsent -> 8
+    is KompaktLinkedAccountDialog.ConfirmDisable -> 9
+    KompaktLinkedAccountDialog.ConfirmUnlink -> 10
+}
+
 internal fun newContactsConsentVisible(
     contacts: KompaktSyncSwitch,
     alreadyShown: Boolean
 ): Boolean =
     contacts == KompaktSyncSwitch.ConsentMissing && !alreadyShown
-
-/**
- * The one dialog to show, in precedence order. [confirmDisable] and [confirmUnlink] come last because
- * they are intents rather than conditions: a persistent problem the user has to deal with outranks a
- * confirmation.
- *
- * [syncOff] outranks both environment dialogs for the same reason `KompaktStartSyncUseCase` answers
- * eligibility before consulting storage and the network: a switched-off account told to check its
- * connection is being answered a question it did not ask.
- */
-internal fun linkedAccountDialog(
-    authError: Boolean,
-    outOfStorage: Boolean,
-    noInternet: Boolean,
-    syncFailed: Set<KompaktSyncService>?,
-    explainSyncFailure: KompaktLinkedAccountDialog.ExplainSyncFailure? = null,
-    newContactsConsent: Boolean = false,
-    requestConsent: KompaktSyncService? = null,
-    confirmDisable: KompaktSyncService? = null,
-    importServiceNow: Boolean = false,
-    confirmUnlink: Boolean = false,
-    syncOff: Boolean = false
-): KompaktLinkedAccountDialog? = when {
-    authError -> KompaktLinkedAccountDialog.AuthError
-    syncOff -> KompaktLinkedAccountDialog.SyncOff
-    outOfStorage -> KompaktLinkedAccountDialog.OutOfStorage
-    noInternet -> KompaktLinkedAccountDialog.NoInternet
-    syncFailed != null -> KompaktLinkedAccountDialog.SyncFailed(syncFailed)
-    explainSyncFailure != null -> explainSyncFailure
-    importServiceNow -> KompaktLinkedAccountDialog.ImportServiceNow
-    requestConsent != null -> KompaktLinkedAccountDialog.RequestConsent(requestConsent)
-    newContactsConsent -> KompaktLinkedAccountDialog.NewContactsConsent
-    confirmDisable != null -> KompaktLinkedAccountDialog.ConfirmDisable(confirmDisable)
-    confirmUnlink -> KompaktLinkedAccountDialog.ConfirmUnlink
-    else -> null
-}

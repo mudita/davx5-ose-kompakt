@@ -20,11 +20,9 @@ import at.bitfire.davdroid.sync.KompaktInitDefaults
 import at.bitfire.davdroid.sync.KompaktInterruption
 import at.bitfire.davdroid.sync.KompaktServiceProvisioning
 import at.bitfire.davdroid.sync.KompaktServiceSyncOutcome
-import at.bitfire.davdroid.sync.KompaktStorage
 import at.bitfire.davdroid.sync.KompaktSyncAttempt
 import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.sync.isConsented
-import at.bitfire.davdroid.util.combine
 import at.bitfire.davdroid.util.dateformat.KompaktLastSyncFormatSource
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -49,16 +47,7 @@ import kotlinx.coroutines.launch
 import java.util.logging.Level
 import java.util.logging.Logger
 
-/**
- * ViewModel for the Kompakt "Linked Account" detail screen.
- *
- * Drives the single-account screen: shows the account email, a sync toggle and last synchronization
- * time per service, and offers actions to toggle a service, sync now and unlink the account.
- *
- * It also applies the Kompakt initialization defaults exactly once per account and service: after
- * collection discovery completes, the service's collections are selected for synchronization and
- * automatic sync is enabled by default (the user can turn it off via the toggle).
- */
+/** Drives the Kompakt "Linked Account" screen, which shows the one linked account and its two services. */
 @HiltViewModel(assistedFactory = KompaktLinkedAccountModel.Factory::class)
 class KompaktLinkedAccountModel @AssistedInject constructor(
     @Assisted val account: Account,
@@ -75,6 +64,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     private val outcomeSource: KompaktServiceSyncOutcome,
     private val syncAttempt: KompaktSyncAttempt,
     private val accountProgress: KompaktAccountProgressUseCase,
+    private val dialogSlot: KompaktLinkedAccountDialogSlot,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     private val logger: Logger
 ) : ViewModel() {
@@ -84,8 +74,8 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         fun create(account: Account, initialReauth: Boolean): KompaktLinkedAccountModel
     }
 
-    // Blank the screen while redirecting into the OAuth flow so it and the "Account not linked" dialog
-    // don't flash. Released on the re-auth result — not when needsReauth clears — so a cancelled re-auth
+    // Blanks the screen while the OAuth flow is launched, so neither it nor the auth sheet flashes on the
+    // way in. Released by the launcher result rather than by the flag clearing, so a cancelled re-auth
     // returns to content instead of a permanent blank.
     enum class ReauthPhase { SHOW_CONTENT, PENDING_LAUNCH, AWAITING_RESULT }
 
@@ -94,35 +84,8 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     private val email: String = account.name
 
-    // What the aggregated failure modal offers to retry; null while no modal is raised.
-    private val _syncFailed = MutableStateFlow<Set<KompaktSyncService>?>(null)
-
-    // One service's stored cause, raised by tapping its alert icon.
-    private val _explainSyncFailure = MutableStateFlow<KompaktLinkedAccountDialog.ExplainSyncFailure?>(null)
-
-    private val _showNoInternet = MutableStateFlow(false)
-
-    // Raised only by a request that found nothing to sync, so unlike the environment flags it never
-    // holds on screen entry.
-    private val _showSyncOff = MutableStateFlow(false)
-
-    /**
-     * `true` while the device is critically low on storage (system threshold; see [KompaktStorage]). Like the
-     * re-auth flag this is a *persistent* condition surfaced immediately on screen entry and re-checked on
-     * resume, so the "Your storage is full" message stays visible until space frees. Storage state is queried
-     * live, so no extra persistence is needed.
-     */
-    private val _showOutOfStorage = MutableStateFlow(KompaktStorage.isStorageLow(context))
-
-    // needsReauth (persistent, account-global; KEY_NEEDS_REAUTH) is written only by the sync worker
-    // (HTTP 401 / clean sync) and the re-auth flow, both through KompaktAccountSettings — so this
-    // follows the key, including for background and periodic syncs.
-    private val needsReauth: StateFlow<Boolean> =
-        kompaktAccountSettings.observeReauthNeeded(account)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), readNeedsReauth())
-
     private val _reauthPhase = MutableStateFlow(
-        if (initialReauth && needsReauth.value) ReauthPhase.PENDING_LAUNCH else ReauthPhase.SHOW_CONTENT
+        if (initialReauth && readNeedsReauth()) ReauthPhase.PENDING_LAUNCH else ReauthPhase.SHOW_CONTENT
     )
 
     private val serviceStates: Map<KompaktSyncService, Flow<KompaktServiceSyncState>> =
@@ -136,35 +99,10 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             )
         }
 
-    private val showNewContactsConsent: Flow<Boolean> = combine(
-        serviceStates.getValue(KompaktSyncService.CONTACTS),
-        kompaktAccountSettings.observeNewContactsConsentShown(account)
-    ) { contacts, shown -> newContactsConsentVisible(contacts.switch, shown) }
-
-    private val _requestConsent = MutableStateFlow<KompaktSyncService?>(null)
-    private val _confirmDisable = MutableStateFlow<KompaktSyncService?>(null)
-    private val _importServiceNow = MutableStateFlow<KompaktSyncService?>(null)
-    private val _confirmUnlink = MutableStateFlow(false)
-
-    private val dialog: Flow<KompaktLinkedAccountDialog?> = combine(
-        needsReauth,
-        _showOutOfStorage,
-        _showNoInternet,
-        _syncFailed,
-        _explainSyncFailure,
-        showNewContactsConsent,
-        _requestConsent,
-        _confirmDisable,
-        _importServiceNow.map { it != null },
-        _confirmUnlink,
-        _showSyncOff,
-        ::linkedAccountDialog
-    )
-
     val state: StateFlow<KompaktLinkedAccountState> = combine(
         serviceStates.getValue(KompaktSyncService.CALENDAR),
         serviceStates.getValue(KompaktSyncService.CONTACTS),
-        dialog,
+        dialogSlot.dialog,
         _reauthPhase
     ) { calendar, contacts, dialog, phase ->
         KompaktLinkedAccountState(
@@ -196,15 +134,29 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
                         }
                     }
             }
+
+        // These two are the slot's conditions: outranked on arrival, they keep their place.
+        viewModelScope.launch {
+            kompaktAccountSettings.observeReauthNeeded(account).collect { needed ->
+                dialogSlot.condition(KompaktLinkedAccountDialog.AuthError, needed)
+            }
+        }
+        // The switch alone, not the whole row: this collector outlives the screen, and the row also
+        // carries a WorkManager flow, a database flow and the formatter's broadcast receiver.
+        viewModelScope.launch {
+            combine(
+                switchOf(KompaktSyncService.CONTACTS),
+                kompaktAccountSettings.observeNewContactsConsentShown(account)
+            ) { switch, shown ->
+                newContactsConsentVisible(switch, shown)
+            }.distinctUntilChanged().collect { offer ->
+                dialogSlot.condition(KompaktLinkedAccountDialog.NewContactsConsent, offer)
+            }
+        }
     }
 
 
     // actions
-
-    /** Re-check live free storage (call on screen entry / resume). */
-    fun refreshStorageState() {
-        _showOutOfStorage.value = KompaktStorage.isStorageLow(context)
-    }
 
     fun newContactsConsentShown() {
         viewModelScope.launch(ioDispatcher) {
@@ -238,33 +190,28 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         }
     }
 
-    /** Switching a service off asks first; the answer arrives via [confirmDisable] or [consumeDialog]. */
+    /** Switching a service off asks first; the answer arrives via [confirmDisable] or [dismiss]. */
     private fun requestDisable(service: KompaktSyncService) {
-        _confirmDisable.value = service
+        dialogSlot.raise(KompaktLinkedAccountDialog.ConfirmDisable(service))
     }
 
-    fun confirmDisable() {
-        val service = _confirmDisable.value ?: return
-        _confirmDisable.value = null
+    /** [service] comes from the sheet that asked, so this acts on the one the user was shown. */
+    fun confirmDisable(service: KompaktSyncService) {
+        dismiss()
         setServiceSync(service, false)
     }
 
     private fun setServiceSync(service: KompaktSyncService, enabled: Boolean) {
         viewModelScope.launch(ioDispatcher) {
             // The cell renders ConsentMissing exactly like Off, so its switch reports an enable.
-            // Persisting one would arm the periodic worker for a service Google answers 403 for, and
-            // that path never passes the eligibility filter — granting consent is the caller's job,
-            // via the dialog KompaktLinkedAccountScreen shows before this is ever called with
-            // enabled == true for a ConsentMissing service. Re-read rather than trusting the rendered
-            // position, which may be minutes old.
+            // Persisting one would arm the periodic worker for a service Google answers 403 for.
+            // Re-read rather than trust a rendered position that may be minutes old.
             if (enabled && readSwitch(service) == KompaktSyncSwitch.ConsentMissing)
                 return@launch
 
-            // A plain re-auth requests every scope, so consent for this service can already exist with
-            // no row behind it, and the switch reads Off rather than ConsentMissing for exactly that
-            // state. The row has to exist before the interval is written: setEnabled writes it, and
-            // AutomaticSyncManager.updateAutomaticSync arms the periodic worker and the content trigger
-            // only for a service that already has one.
+            // A plain re-auth grants every scope, so consent can exist with no row behind it — the switch
+            // reads Off rather than ConsentMissing for exactly that state. The row must exist first:
+            // AutomaticSyncManager.updateAutomaticSync arms the worker only for a service that has one.
             if (enabled && !provisioning.ensureRow(account, service)) {
                 logger.warning("Couldn't find a $service for $account; leaving the switch off")
                 return@launch
@@ -290,7 +237,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     /** Re-syncs only what failed, through the same guards an ordinary request passes. */
     fun retry(services: Set<KompaktSyncService>) {
-        consumeDialog()
+        dismiss()
         viewModelScope.launch(ioDispatcher) { startSync(services.toList()) }
     }
 
@@ -300,48 +247,40 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             KompaktSyncService.CALENDAR -> state.value.calendar.status
             KompaktSyncService.CONTACTS -> state.value.contacts.status
         }
-        _explainSyncFailure.value = (status as? KompaktSyncStatus.Failed)
-            ?.let { KompaktLinkedAccountDialog.ExplainSyncFailure(service, it.cause) }
+        (status as? KompaktSyncStatus.Failed)?.let {
+            dialogSlot.raise(KompaktLinkedAccountDialog.ExplainSyncFailure(service, it.cause))
+        }
     }
 
     private fun requestConsent(service: KompaktSyncService) {
-        _requestConsent.value = service
+        dialogSlot.raise(KompaktLinkedAccountDialog.RequestConsent(service))
     }
 
     fun onAddConsentReturned(service: KompaktSyncService?) {
         if (service == null) return
         viewModelScope.launch(ioDispatcher) {
             if (service.isConsented(kompaktAccountSettings.getAuthState(account)))
-                _importServiceNow.value = service
+                dialogSlot.raise(KompaktLinkedAccountDialog.ImportServiceNow(service))
         }
     }
 
-    fun importServiceNow() {
-        val service = _importServiceNow.value ?: return
-        _importServiceNow.value = null
+    /** [service] comes from the sheet that asked, so this imports the one the user was shown. */
+    fun importServiceNow(service: KompaktSyncService) {
+        dismiss()
         viewModelScope.launch(ioDispatcher) { startSync(listOf(service)) }
     }
 
-    // The auth error is deliberately not cleared: KEY_NEEDS_REAUTH is cleared only by a successful
-    // re-auth, which is why its sheet has every dismiss path locked.
-    fun consumeDialog() {
-        _showNoInternet.value = false
-        _showSyncOff.value = false
-        _syncFailed.value = null
-        _explainSyncFailure.value = null
-        _showOutOfStorage.value = false
-        _requestConsent.value = null
-        _confirmDisable.value = null
-        _importServiceNow.value = null
-        _confirmUnlink.value = false
+    /** Retires whatever is showing. The auth error declines, which is what keeps it up until re-auth. */
+    fun dismiss() {
+        dialogSlot.dismiss()
     }
 
     fun requestUnlink() {
-        _confirmUnlink.value = true
+        dialogSlot.raise(KompaktLinkedAccountDialog.ConfirmUnlink)
     }
 
     fun confirmUnlink() {
-        _confirmUnlink.value = false
+        dismiss()
         unlink()
     }
 
@@ -387,26 +326,16 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             .flowOn(ioDispatcher)
 
 
-    // synchronous seeds and helpers
+    // helpers
 
-    // Every input must carry an immediate first value or combine emits nothing at all, so these seeds
-    // are read synchronously rather than defaulted.
+    // combine emits nothing until every input has a value, so this stands in until the first real one.
+    // The slot starts empty: its conditions arrive a frame later with their collectors, which is free
+    // here because the screen withholds its rows until the switches resolve anyway.
     private fun initialState() = KompaktLinkedAccountState(
         email = email,
         calendar = KompaktServiceSyncState(KompaktSyncSwitch.Resolving, KompaktSyncStatus.Resolving),
         contacts = KompaktServiceSyncState(KompaktSyncSwitch.Resolving, KompaktSyncStatus.Resolving),
-        dialog = linkedAccountDialog(
-            authError = readNeedsReauth(),
-            outOfStorage = KompaktStorage.isStorageLow(context),
-            noInternet = false,
-            syncFailed = null,
-            newContactsConsent = false,
-            requestConsent = null,
-            confirmDisable = null,
-            importServiceNow = false,
-            confirmUnlink = false,
-            syncOff = false
-        ),
+        dialog = null,
         reauthPhase = _reauthPhase.value
     )
 
@@ -433,14 +362,18 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     // offline watch all live in KompaktSyncAttempt now.
     private suspend fun startSync(requested: Collection<KompaktSyncService>) {
         when (val result = syncAttempt.run(account, requested)) {
-            KompaktAttemptResult.BlockedNoStorage -> _showOutOfStorage.value = true
-            KompaktAttemptResult.BlockedNoNetwork -> _showNoInternet.value = true
-            KompaktAttemptResult.NoneEligible -> _showSyncOff.value = true
-            is KompaktAttemptResult.Failed -> _syncFailed.value = result.retry
+            KompaktAttemptResult.BlockedNoStorage ->
+                dialogSlot.raise(KompaktLinkedAccountDialog.OutOfStorage)
+            KompaktAttemptResult.BlockedNoNetwork ->
+                dialogSlot.raise(KompaktLinkedAccountDialog.NoInternet)
+            KompaktAttemptResult.NoneEligible ->
+                dialogSlot.raise(KompaktLinkedAccountDialog.SyncOff)
+            is KompaktAttemptResult.Failed ->
+                dialogSlot.raise(KompaktLinkedAccountDialog.SyncFailed(result.retry))
             // The connection went while the sync was running: name the cause, and deliberately not the
             // generic failure — a sibling that failed in the same moment failed *because* of this.
             is KompaktAttemptResult.Interrupted -> when (result.reason) {
-                KompaktInterruption.NoNetwork -> _showNoInternet.value = true
+                KompaktInterruption.NoNetwork -> dialogSlot.raise(KompaktLinkedAccountDialog.NoInternet)
             }
             // AuthFailed defers to the re-auth dialog, which outranks everything; AlreadySyncing
             // already shows a spinner on the row.

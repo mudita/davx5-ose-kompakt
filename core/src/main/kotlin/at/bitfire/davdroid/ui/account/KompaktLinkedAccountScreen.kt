@@ -39,8 +39,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.sync.KompaktSyncFailure
@@ -60,25 +58,22 @@ import com.mudita.mmd.components.text.TextMMD
 data class KompaktLinkedAccountActions(
     val onBack: () -> Unit = {},
     val onRequestServiceToggle: (KompaktSyncService, Boolean) -> Unit = { _, _ -> },
-    val onConfirmDisable: () -> Unit = {},
+    val onConfirmDisable: (KompaktSyncService) -> Unit = {},
     val onSyncNow: () -> Unit = {},
     val onUnlink: () -> Unit = {},
     val onRequestUnlink: () -> Unit = {},
     val onConfirmUnlink: () -> Unit = {},
-    val onConsumeDialog: () -> Unit = {},
+    val onDismissDialog: () -> Unit = {},
     val onFailureClick: (KompaktSyncService) -> Unit = {},
     val onRetry: (Set<KompaktSyncService>) -> Unit = {},
     val onAccountLinkedDialogDismiss: () -> Unit = {},
     val onReauthorize: () -> Unit = {},
     val onGrantConsent: (serviceType: String) -> Unit = {},
     val onNewContactsConsentShown: () -> Unit = {},
-    val onImportServiceNow: () -> Unit = {}
+    val onImportServiceNow: (KompaktSyncService) -> Unit = {}
 )
 
-/**
- * Stateful entry point for the Kompakt "Linked Account" detail screen: collects the view model state
- * and delegates rendering to the stateless [KompaktLinkedAccountContent].
- */
+/** Stateful half of the screen; [KompaktLinkedAccountContent] renders and is previewable. */
 @Composable
 fun KompaktLinkedAccountScreen(
     account: Account,
@@ -89,7 +84,7 @@ fun KompaktLinkedAccountScreen(
     initialReauth: Boolean = false,
     model: KompaktLinkedAccountModel = hiltViewModel(
         // Key by account so switching the linked account (unlink A → link B) builds a fresh
-        // ViewModel instead of reusing the cached one for the previous account (SHP-571).
+        // ViewModel instead of reusing the cached one for the previous account.
         key = account.name,
         creationCallback = { factory: KompaktLinkedAccountModel.Factory ->
             factory.create(account, initialReauth)
@@ -98,24 +93,15 @@ fun KompaktLinkedAccountScreen(
 ) {
     val state by model.state.collectAsStateWithLifecycle()
 
-    // Free storage has no change notification, so re-check it whenever the screen comes to the
-    // foreground. The re-auth flag is observed instead.
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        model.refreshStorageState()
-    }
-
-    // re-authorize the existing account in place (refresh OAuth token, keeping all local data)
     val context = LocalContext.current
     val reauthLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        // re-read the persisted flag: cleared if re-auth succeeded, still set if it was aborted/failed
+        // Release the blank screen whatever the outcome; the flag itself is observed, not read here.
         model.onReauthResult()
-        // RESULT_OK from the re-auth flow means a different account was linked (a switch) — surface the
-        // "Account linked" dialog, just like the normal add-account flow
+        // RESULT_OK means a different account was linked — a switch, which gets the same "Account
+        // linked" dialog. Pass the old account explicitly: the accounts flow may already report the new.
         if (result.resultCode == Activity.RESULT_OK)
-            // pass the re-auth target — the stable old account this screen owns — instead of letting
-            // the caller read it from the live accounts flow (which could already report the new one)
             onAccountSwitched(account.name)
     }
     val onReauthorize = {
@@ -159,7 +145,7 @@ fun KompaktLinkedAccountScreen(
                 onUnlink = model::unlink,
                 onRequestUnlink = model::requestUnlink,
                 onConfirmUnlink = model::confirmUnlink,
-                onConsumeDialog = model::consumeDialog,
+                onDismissDialog = model::dismiss,
                 onFailureClick = model::explainSyncFailure,
                 onRetry = model::retry,
                 onAccountLinkedDialogDismiss = onAccountLinkedDialogDismiss,
@@ -268,7 +254,9 @@ fun KompaktLinkedAccountContent(
         }
     }
 
-    if (showAccountLinkedDialog) {
+    // The model's slot outranks this screen's own sheet, so the two never compose at once. It latches
+    // until dismissed or ON_PAUSE, so an occupied slot defers this rather than losing it.
+    if (state.dialog == null && showAccountLinkedDialog) {
         KompaktModalSheet(
             onDismissRequest = actions.onAccountLinkedDialogDismiss,
             title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_accountlinked),
@@ -303,7 +291,7 @@ fun KompaktLinkedAccountContent(
 
         KompaktLinkedAccountDialog.SyncOff ->
             KompaktMessageSheet(
-                onDismissRequest = actions.onConsumeDialog,
+                onDismissRequest = actions.onDismissDialog,
                 title = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_h1_yoursyncisoff),
                 text = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization),
                 icon = painterResource(R.drawable.ic_kompakt_alert),
@@ -312,7 +300,7 @@ fun KompaktLinkedAccountContent(
 
         KompaktLinkedAccountDialog.OutOfStorage ->
             KompaktMessageSheet(
-                onDismissRequest = actions.onConsumeDialog,
+                onDismissRequest = actions.onDismissDialog,
                 title = stringResource(RFrontitude.string.common_error_dialog_h1_storageisfull),
                 text = stringResource(RFrontitude.string.common_error_dialog_body_changestorage),
                 icon = painterResource(R.drawable.ic_kompakt_alert),
@@ -321,7 +309,7 @@ fun KompaktLinkedAccountContent(
 
         KompaktLinkedAccountDialog.NoInternet ->
             KompaktMessageSheet(
-                onDismissRequest = actions.onConsumeDialog,
+                onDismissRequest = actions.onDismissDialog,
                 title = stringResource(RFrontitude.string.common_label_nointernetconnection),
                 text = stringResource(RFrontitude.string.common_error_body_opensettingstocheck),
                 icon = painterResource(R.drawable.ic_kompakt_alert)
@@ -329,7 +317,7 @@ fun KompaktLinkedAccountContent(
 
         is KompaktLinkedAccountDialog.SyncFailed ->
             KompaktModalSheet(
-                onDismissRequest = actions.onConsumeDialog,
+                onDismissRequest = actions.onDismissDialog,
                 title = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_h1_accountsyncfailed),
                 text = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour),
                 icon = painterResource(R.drawable.ic_kompakt_alert),
@@ -338,32 +326,32 @@ fun KompaktLinkedAccountContent(
                 // cost a second worker and push the periodic schedule back another interval.
                 onConfirm = { actions.onRetry(dialog.retry) },
                 dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
-                onDismiss = actions.onConsumeDialog
+                onDismiss = actions.onDismissDialog
             )
 
         is KompaktLinkedAccountDialog.ExplainSyncFailure ->
             KompaktSyncFailureSheet(
                 cause = dialog.cause,
                 onRetry = { actions.onRetry(setOf(dialog.service)) },
-                onDismissRequest = actions.onConsumeDialog
+                onDismissRequest = actions.onDismissDialog
             )
 
-        KompaktLinkedAccountDialog.ImportServiceNow ->
+        is KompaktLinkedAccountDialog.ImportServiceNow ->
             KompaktModalSheet(
-                onDismissRequest = actions.onConsumeDialog,
+                onDismissRequest = actions.onDismissDialog,
                 title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_permissionsgranted),
                 text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_youcannowimportselectedgoogle),
                 icon = painterResource(R.drawable.ic_kompakt_success),
                 confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_importnow),
-                onConfirm = actions.onImportServiceNow,
+                onConfirm = { actions.onImportServiceNow(dialog.service) },
                 dismissLabel = stringResource(RFrontitude.string.common_button_notnow),
-                onDismiss = actions.onConsumeDialog
+                onDismiss = actions.onDismissDialog
             )
 
         is KompaktLinkedAccountDialog.RequestConsent ->
             ConsentDialog(
                 service = state.dialog.service,
-                onDismiss = actions.onConsumeDialog,
+                onDismiss = actions.onDismissDialog,
                 onGrantConsent = actions.onGrantConsent
             )
 
@@ -376,7 +364,7 @@ fun KompaktLinkedAccountContent(
 
         is KompaktLinkedAccountDialog.ConfirmDisable ->
             KompaktModalSheet(
-                onDismissRequest = actions.onConsumeDialog,
+                onDismissRequest = actions.onDismissDialog,
                 title = stringResource(
                     when (state.dialog.service) {
                         KompaktSyncService.CALENDAR -> RFrontitude.string.calendar_accountsync_dialog_h1_disablecalendarsync
@@ -386,28 +374,27 @@ fun KompaktLinkedAccountContent(
                 text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_nothingwillsynchronizewithyour),
                 icon = painterResource(R.drawable.ic_kompakt_alert),
                 confirmLabel = stringResource(RFrontitude.string.common_button_disable),
-                onConfirm = actions.onConfirmDisable,
+                onConfirm = { actions.onConfirmDisable(dialog.service) },
                 dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
-                onDismiss = actions.onConsumeDialog
+                onDismiss = actions.onDismissDialog
             )
 
         KompaktLinkedAccountDialog.ConfirmUnlink ->
             KompaktModalSheet(
-                onDismissRequest = actions.onConsumeDialog,
+                onDismissRequest = actions.onDismissDialog,
                 title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_removeaccount),
                 text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_youwontseedatafromyourgoogle),
                 icon = painterResource(R.drawable.ic_kompakt_alert),
                 confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_button_removeaccount),
                 onConfirm = actions.onConfirmUnlink,
                 dismissLabel = stringResource(RFrontitude.string.common_dialog_button_cancel),
-                onDismiss = actions.onConsumeDialog
+                onDismiss = actions.onDismissDialog
             )
 
         null -> {}
     }
 }
 
-/** Google icon + account email header. */
 @Composable
 private fun AccountHeader(email: String) {
     Column(
@@ -558,7 +545,7 @@ private fun KompaktLinkedAccountContent_ImportServiceNow_Preview() {
         state = previewState(
             on(KompaktSyncStatus.Synced(PREVIEW_LAST_SYNC)),
             on(KompaktSyncStatus.NeverSynced)
-        ).copy(dialog = KompaktLinkedAccountDialog.ImportServiceNow),
+        ).copy(dialog = KompaktLinkedAccountDialog.ImportServiceNow(KompaktSyncService.CONTACTS)),
         actions = KompaktLinkedAccountActions(),
         showAccountLinkedDialog = false
     )
