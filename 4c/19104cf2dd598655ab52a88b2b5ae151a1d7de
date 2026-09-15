@@ -1,16 +1,16 @@
-core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountScreen.kt
-  f6364155f5512ab0 45,52,200-202,205,207-218,230-235,237,239-240,242-245,247,249-250,516,520-534
-  c70ce7a3bfe71e05 85,98,101,255-256,261-263,100,257
 core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountState.kt
   c70ce7a3bfe71e05 53,56-69,78-79
+docs/superpowers/specs/2026-09-11-linked-account-dialog-management-design.md
+  c70ce7a3bfe71e05 1-574
+docs/kompakt-testing.md
+  c70ce7a3bfe71e05 39-41,51-54,79-81
 core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountModel.kt
   f6364155f5512ab0 24,42,62-63,79-80,83,85,91-96,98-100,102-104,108-112,114-117,119-135,159,171-173,177-178,206,209,224,226-227,229-230,234-236,287,289-290,294,296-301,303-305,308-311,316-317,321,330,336-337,339,346-351,354-358,363,142-143,154-155,252
   90a9cf2b9fc06857 341,137
   c70ce7a3bfe71e05 50,77-78,138,147-152,207-208,212-214,329,331-333
-docs/kompakt-testing.md
-  c70ce7a3bfe71e05 39-41,51-54,79-81
-docs/superpowers/specs/2026-09-11-linked-account-dialog-management-design.md
-  c70ce7a3bfe71e05 1-574
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountScreen.kt
+  f6364155f5512ab0 45,52,200-202,205,207-218,230-235,237,239-240,242-245,247,249-250,516,520-534
+  c70ce7a3bfe71e05 85,98,101,255-256,261-263,100,257
 ---
 {
   "schema_version": "authorship/3.0.0",
