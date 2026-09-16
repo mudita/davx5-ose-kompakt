@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+  <string name="calendar_accountsync_button_synchronizenow">Nu synchroniseren</string>
   <string name="calendar_accountsync_dialog_body_nothingwillsynchronizewithyour">Niets synchroniseert met je Google-account</string>
   <string name="calendar_accountsync_dialog_body_sharecalendarandeventsbetween">Deel agenda en afspraken tussen je gekoppelde Google-account en Kompakt</string>
   <string name="calendar_accountsync_dialog_body_sharecontactsbetweenyourlinked">Deel contacten tussen je gekoppelde Google-account en Kompakt</string>
@@ -9,7 +10,6 @@
   <string name="calendar_accountsync_dialog_button_enablecalendarsync">Synchronisatie van agenda inschakelen</string>
   <string name="calendar_accountsync_dialog_button_importnow">Nu importeren</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Account koppelen</string>
-  <string name="calendar_accountsync_dialog_button_syncnow">Nu synchroniseren</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Account gekoppeld</string>
   <string name="calendar_accountsync_dialog_h1_disablecalendarsync">Synchronisatie van agenda uitschakelen\?</string>
   <string name="calendar_accountsync_dialog_h1_disablecontactsync">Synchronisatie van contacten uitschakelen\?</string>

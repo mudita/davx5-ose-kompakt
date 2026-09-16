@@ -264,7 +264,7 @@ fun KompaktLinkedAccountContent(
             title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_accountlinked),
             text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_synchronizenowtoimportyourselected),
             icon = painterResource(R.drawable.ic_kompakt_success),
-            confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_syncnow),
+            confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_button_synchronizenow),
             onConfirm = {
                 actions.onAccountLinkedDialogDismiss()
                 actions.onSyncNow()
