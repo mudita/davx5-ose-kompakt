@@ -49,7 +49,7 @@ import at.bitfire.davdroid.ui.composable.KompaktFramedIcon
 import at.bitfire.davdroid.ui.composable.KompaktMessageSheet
 import at.bitfire.davdroid.ui.composable.KompaktModalSheet
 import at.bitfire.davdroid.ui.composable.KompaktNoInternetSheet
-import at.bitfire.davdroid.ui.composable.KompaktOfflinePlusSheet
+import at.bitfire.davdroid.ui.composable.KompaktOfflinePlusSyncSheet
 import at.bitfire.davdroid.ui.composable.KompaktTheme
 import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
 import at.bitfire.davdroid.ui.setup.KompaktLoginActivity
@@ -310,7 +310,7 @@ fun KompaktLinkedAccountContent(
             )
 
         KompaktLinkedAccountDialog.OfflinePlus ->
-            KompaktOfflinePlusSheet(onDismissRequest = actions.onDismissDialog)
+            KompaktOfflinePlusSyncSheet(onDismissRequest = actions.onDismissDialog)
 
         KompaktLinkedAccountDialog.NoInternet ->
             KompaktNoInternetSheet(onDismissRequest = actions.onDismissDialog)

@@ -21,6 +21,7 @@
   <string name="calendar_accountsync_dialog_h1_removeaccount">Rimuovere l’account\?</string>
   <string name="calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization">Attiva la sincronizzazione di calendario e contatti per sincronizzare i dati</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Collega nuovamente il tuo account per continuare a sincronizzare con Google</string>
+  <string name="calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountlinking">Usa l’interruttore sul lato sinistro per consentire il collegamento dell’account</string>
   <string name="calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountsyncronization">Usa l’interruttore sul lato sinistro per consentire la sincronizzazione dell’account</string>
   <string name="calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour">Non siamo riusciti a sincronizzarci con il tuo account Google, per favore riprova</string>
   <string name="calendar_accountsync_error_dialog_button_removeaccount">Rimuovi account</string>

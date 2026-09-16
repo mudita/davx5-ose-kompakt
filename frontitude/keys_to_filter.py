@@ -37,6 +37,7 @@ filter_keys = [
     'calendar_accountsync_dialog_h1_removeaccount',
     'calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization',
     'calendar_accountsync_error_dialog_body_linkyouraccountagain"',
+    'calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountlinking',
     'calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountsyncronization',
     'calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour',
     'calendar_accountsync_error_dialog_button_removeaccount',

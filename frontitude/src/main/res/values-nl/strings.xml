@@ -21,6 +21,7 @@
   <string name="calendar_accountsync_dialog_h1_removeaccount">Account verwijderen\?</string>
   <string name="calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization">Schakel kalender- en contactensynchronisatie in om gegevens te synchroniseren</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Koppel je account opnieuw om door te gaan met synchroniseren met Google</string>
+  <string name="calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountlinking">Gebruik de linkerschakelaar om accountkoppeling toe te staan</string>
   <string name="calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountsyncronization">Gebruik de linkerschakelaar om accountsynchronisatie toe te staan</string>
   <string name="calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour">We konden niet synchroniseren met je Google-account, probeer het opnieuw</string>
   <string name="calendar_accountsync_error_dialog_button_removeaccount">Account verwijderen</string>

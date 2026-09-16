@@ -46,7 +46,7 @@ import at.bitfire.davdroid.sync.KompaktOfflineCause
 import at.bitfire.davdroid.ui.account.KompaktLinkedAccountScreen
 import at.bitfire.davdroid.ui.composable.KompaktFramedIcon
 import at.bitfire.davdroid.ui.composable.KompaktNoInternetSheet
-import at.bitfire.davdroid.ui.composable.KompaktOfflinePlusSheet
+import at.bitfire.davdroid.ui.composable.KompaktOfflinePlusLinkingSheet
 import at.bitfire.davdroid.ui.composable.KompaktTheme
 import at.bitfire.davdroid.ui.setup.KompaktLoginActivity
 import com.mudita.mmd.components.buttons.ButtonMMD
@@ -154,7 +154,7 @@ fun KompaktAccountsScreen(
     }
 
     when (blockedLink) {
-        KompaktOfflineCause.OfflinePlus -> KompaktOfflinePlusSheet { blockedLink = null }
+        KompaktOfflineCause.OfflinePlus -> KompaktOfflinePlusLinkingSheet { blockedLink = null }
         KompaktOfflineCause.NoNetwork -> KompaktNoInternetSheet { blockedLink = null }
         null -> Unit
     }
