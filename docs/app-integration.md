@@ -154,11 +154,13 @@ misspelling costs a missed sync, not an unexpected one — check logcat for
 4. **At least 15 minutes** must have elapsed since the last successful sync **of a requested service**
    (otherwise that service is silently skipped; if all of them are skipped, the request is a no‑op).
 5. An account must be linked. With no linked account the broadcast is a no‑op.
-6. **The device must be online and not critically low on storage.** These are checked **before** the
-   sync is enqueued, and a request that arrives while either fails is **dropped, not deferred** —
-   nothing is enqueued and it will not run when conditions recover. (Before, such a request was
-   enqueued and waited on its network constraint; that made a request look like a sync in progress for
-   as long as it waited, with nothing to end it, which is why it now fails fast instead.)
+6. **The device must be online and not critically low on storage.** (Offline+ counts as offline: the
+   switch takes the connection down, and a request made while it is on is refused for that reason.)
+   These are checked **before** the sync is enqueued, and a request that arrives while either fails is
+   **dropped, not deferred** — nothing is enqueued and it will not run when conditions recover.
+   (Before, such a request was enqueued and waited on its network constraint; that made a request look
+   like a sync in progress for as long as it waited, with nothing to end it, which is why it now fails
+   fast instead.)
 7. **At least one requested service must be eligible.** A service is skipped when its sync toggle is off
    or when the account has not granted that service's Google permission. A service that has no
    configuration yet is *set up on demand* rather than skipped, but is skipped if that set‑up fails. If

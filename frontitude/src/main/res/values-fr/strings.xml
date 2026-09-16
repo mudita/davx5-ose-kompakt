@@ -20,6 +20,7 @@
   <string name="calendar_accountsync_dialog_h1_removeaccount">Supprimer le compte \?</string>
   <string name="calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization">Activez la synchronisation de l\'agenda et des contacts pour synchroniser vos données</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Reliez votre compte à nouveau pour continuer à synchroniser avec Google</string>
+  <string name="calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountsyncronization">Utiliser le bouton de gauche pour autoriser la synchronisation du compte</string>
   <string name="calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour">Nous n\'avons pas pu synchroniser avec votre compte Google, veuillez réessayer</string>
   <string name="calendar_accountsync_error_dialog_button_removeaccount">Supprimer le compte</string>
   <string name="calendar_accountsync_error_dialog_h1_accountlinkerror">Erreur de liaison de compte</string>
@@ -32,6 +33,7 @@
   <string name="calendar_accountsync_status_notsyncedyet">Pas encore synchronisé</string>
   <string name="calendar_accountsync_status_settingupyouraccount">Configuration de votre compte...</string>
   <string name="calendar_accountsync_status_syncisoff">Synchronisation désactivée</string>
+  <string name="common_all_error_h1_youreusingoffline">Vous utilisez Offline+</string>
   <string name="common_button_disable">Désactiver</string>
   <string name="common_button_notnow">Pas maintenant</string>
   <string name="common_button_ok">OK</string>

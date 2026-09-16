@@ -48,6 +48,8 @@ import at.bitfire.davdroid.ui.account.KompaktLinkedAccountModel.ReauthPhase
 import at.bitfire.davdroid.ui.composable.KompaktFramedIcon
 import at.bitfire.davdroid.ui.composable.KompaktMessageSheet
 import at.bitfire.davdroid.ui.composable.KompaktModalSheet
+import at.bitfire.davdroid.ui.composable.KompaktNoInternetSheet
+import at.bitfire.davdroid.ui.composable.KompaktOfflinePlusSheet
 import at.bitfire.davdroid.ui.composable.KompaktTheme
 import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
 import at.bitfire.davdroid.ui.setup.KompaktLoginActivity
@@ -307,13 +309,11 @@ fun KompaktLinkedAccountContent(
                 buttonLabel = stringResource(RFrontitude.string.common_dialog_button_cancel)
             )
 
+        KompaktLinkedAccountDialog.OfflinePlus ->
+            KompaktOfflinePlusSheet(onDismissRequest = actions.onDismissDialog)
+
         KompaktLinkedAccountDialog.NoInternet ->
-            KompaktMessageSheet(
-                onDismissRequest = actions.onDismissDialog,
-                title = stringResource(RFrontitude.string.common_label_nointernetconnection),
-                text = stringResource(RFrontitude.string.common_error_body_opensettingstocheck),
-                icon = painterResource(R.drawable.ic_kompakt_alert)
-            )
+            KompaktNoInternetSheet(onDismissRequest = actions.onDismissDialog)
 
         is KompaktLinkedAccountDialog.SyncFailed ->
             KompaktModalSheet(

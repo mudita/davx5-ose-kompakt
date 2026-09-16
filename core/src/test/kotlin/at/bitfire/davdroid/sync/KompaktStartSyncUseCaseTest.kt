@@ -37,6 +37,7 @@ class KompaktStartSyncUseCaseTest {
     private lateinit var provisioning: KompaktServiceProvisioning
     private lateinit var storage: KompaktStorageAvailability
     private lateinit var network: KompaktNetworkAvailability
+    private lateinit var offlinePlus: KompaktOfflinePlus
     private lateinit var syncWork: KompaktSyncWork
     private lateinit var accountProgress: KompaktAccountProgressUseCase
     private lateinit var startSync: KompaktStartSyncUseCase
@@ -63,6 +64,9 @@ class KompaktStartSyncUseCaseTest {
         storage = mockk()
         every { storage.isLow() } returns false
 
+        offlinePlus = mockk()
+        every { offlinePlus.isOn() } returns false
+
         network = mockk()
         every { network.isAvailable(account) } returns true
 
@@ -80,7 +84,8 @@ class KompaktStartSyncUseCaseTest {
         syncing()
 
         startSync = KompaktStartSyncUseCase(
-            initDefaults, eligibility, provisioning, storage, network, syncWork, accountProgress,
+            initDefaults, eligibility, provisioning, storage, offlinePlus, network, syncWork,
+            accountProgress,
             Logger.getAnonymousLogger()
         )
     }
@@ -209,6 +214,42 @@ class KompaktStartSyncUseCaseTest {
 
         assertEquals(KompaktSyncStartResult.NoNetwork, startSync(account))
         coVerify(exactly = 0) { syncWork.enqueue(any(), any(), any()) }
+    }
+
+    @Test
+    fun offlinePlusStartsNothing() = runTest {
+        every { offlinePlus.isOn() } returns true
+
+        assertEquals(KompaktSyncStartResult.OfflinePlus, startSync(account))
+        coVerify(exactly = 0) { syncWork.enqueue(any(), any(), any()) }
+    }
+
+    // Offline+ takes the connection with it, so both refusals apply at once and only the order decides
+    // which is reported. The cause is the more useful of the two, so it is asked first.
+    @Test
+    fun offlinePlusIsReportedRatherThanTheMissingNetworkItCauses() = runTest {
+        every { offlinePlus.isOn() } returns true
+        every { network.isAvailable(account) } returns false
+
+        assertEquals(KompaktSyncStartResult.OfflinePlus, startSync(account))
+    }
+
+    // Storage is local state and turning Offline+ off would not fix it, so it stays the first answer.
+    @Test
+    fun lowStorageOutranksOfflinePlus() = runTest {
+        every { storage.isLow() } returns true
+        every { offlinePlus.isOn() } returns true
+
+        assertEquals(KompaktSyncStartResult.NoStorage, startSync(account))
+    }
+
+    // A switched-off account asked about its connection is answered a question it did not ask.
+    @Test
+    fun nothingEligibleOutranksOfflinePlus() = runTest {
+        switchOn()
+        every { offlinePlus.isOn() } returns true
+
+        assertEquals(KompaktSyncStartResult.NoneEligible, startSync(account))
     }
 
     @Test

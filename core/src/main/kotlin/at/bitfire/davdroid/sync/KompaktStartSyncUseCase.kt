@@ -15,6 +15,8 @@ import javax.inject.Inject
 /** Why a sync request started nothing, or what it started. */
 sealed interface KompaktSyncStartResult {
     data object NoStorage : KompaktSyncStartResult
+    /** Offline+ is on, so the device is disconnected by the switch rather than by circumstance. */
+    data object OfflinePlus : KompaktSyncStartResult
     data object NoNetwork : KompaktSyncStartResult
     /** Nothing the caller asked for can sync: no consent, or switched off. */
     data object NoneEligible : KompaktSyncStartResult
@@ -41,6 +43,7 @@ class KompaktStartSyncUseCase @Inject constructor(
     private val eligibility: KompaktSyncEligibility,
     private val provisioning: KompaktServiceProvisioning,
     private val storage: KompaktStorageAvailability,
+    private val offlinePlus: KompaktOfflinePlus,
     private val network: KompaktNetworkAvailability,
     private val syncWork: KompaktSyncWork,
     private val accountProgress: KompaktAccountProgressUseCase,
@@ -65,6 +68,10 @@ class KompaktStartSyncUseCase @Inject constructor(
         // long as it waits.
         if (storage.isLow())
             return KompaktSyncStartResult.NoStorage
+        // Before the network, because it is why the network is gone: asked afterwards, every Offline+
+        // request would already have been answered with the symptom.
+        if (offlinePlus.isOn())
+            return KompaktSyncStartResult.OfflinePlus
         if (!network.isAvailable(account))
             return KompaktSyncStartResult.NoNetwork
 

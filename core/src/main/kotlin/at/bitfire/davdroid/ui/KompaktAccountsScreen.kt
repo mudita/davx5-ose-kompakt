@@ -25,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -41,8 +42,11 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
 import com.mudita.frontitude.R as RFrontitude
+import at.bitfire.davdroid.sync.KompaktOfflineCause
 import at.bitfire.davdroid.ui.account.KompaktLinkedAccountScreen
 import at.bitfire.davdroid.ui.composable.KompaktFramedIcon
+import at.bitfire.davdroid.ui.composable.KompaktNoInternetSheet
+import at.bitfire.davdroid.ui.composable.KompaktOfflinePlusSheet
 import at.bitfire.davdroid.ui.composable.KompaktTheme
 import at.bitfire.davdroid.ui.setup.KompaktLoginActivity
 import com.mudita.mmd.components.buttons.ButtonMMD
@@ -67,7 +71,8 @@ fun KompaktAccountsScreen(
         creationCallback = { factory: AccountsViewModel.Factory ->
             factory.create(false)
         }
-    )
+    ),
+    linkModel: KompaktLinkAccountModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val accounts by model.accountInfos.collectAsStateWithLifecycle(initialValue = null)
@@ -83,9 +88,15 @@ fun KompaktAccountsScreen(
     // disappears, so the just-removed account never flashes under the "Account linked" dialog (SHP-555).
     var switchedFromAccount by rememberSaveable { mutableStateOf<String?>(null) }
 
+    // What stopped the last Link account tap, if anything stopped it.
+    var blockedLink by remember { mutableStateOf<KompaktOfflineCause?>(null) }
+
     LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) {
         justLinked = false
         switchedFromAccount = null
+        // Answers an action the user took before leaving, so it must not outlast the visit: they may
+        // well have left to move the switch this sheet asked them to move.
+        blockedLink = null
     }
 
     val loginLauncher = rememberLauncherForActivityResult(
@@ -94,8 +105,14 @@ fun KompaktAccountsScreen(
         if (result.resultCode == Activity.RESULT_OK)
             justLinked = true
     }
+    // Asked before the flow is launched rather than after it fails: with no connection the OAuth page
+    // would only reach the WebView's own "couldn't load" error, which says nothing about the switch.
+    val offlineCause by linkModel.offlineCause.collectAsStateWithLifecycle()
     val onAddAccount = {
-        loginLauncher.launch(Intent(context, KompaktLoginActivity::class.java))
+        when (val cause = offlineCause) {
+            null -> loginLauncher.launch(Intent(context, KompaktLoginActivity::class.java))
+            else -> blockedLink = cause
+        }
     }
 
     when {
@@ -134,6 +151,12 @@ fun KompaktAccountsScreen(
                     switchedFromAccount = oldAccountName
                 }
             )
+    }
+
+    when (blockedLink) {
+        KompaktOfflineCause.OfflinePlus -> KompaktOfflinePlusSheet { blockedLink = null }
+        KompaktOfflineCause.NoNetwork -> KompaktNoInternetSheet { blockedLink = null }
+        null -> Unit
     }
 }
 

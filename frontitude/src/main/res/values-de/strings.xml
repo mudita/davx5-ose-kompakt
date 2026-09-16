@@ -20,6 +20,7 @@
   <string name="calendar_accountsync_dialog_h1_removeaccount">Konto entfernen\?</string>
   <string name="calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization">Aktivieren Sie die Kalender- und Kontaktsynchronisierung, um Daten zu synchronisieren</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Verknüpfen Sie Ihr Konto erneut, um weiterhin mit Google zu synchronisieren</string>
+  <string name="calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountsyncronization">Benutze den Schalter auf der linken Seite, um die Kontosynchronisierung zu erlauben</string>
   <string name="calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour">Wir konnten nicht mit Ihrem Google-Konto synchronisieren, bitte versuchen Sie es erneut</string>
   <string name="calendar_accountsync_error_dialog_button_removeaccount">Konto entfernen</string>
   <string name="calendar_accountsync_error_dialog_h1_accountlinkerror">Kontoverknüpfungsfehler</string>
@@ -32,6 +33,7 @@
   <string name="calendar_accountsync_status_notsyncedyet">Noch nicht synchronisiert</string>
   <string name="calendar_accountsync_status_settingupyouraccount">Dein Konto wird eingerichtet...</string>
   <string name="calendar_accountsync_status_syncisoff">Synchronisierung deaktiviert</string>
+  <string name="common_all_error_h1_youreusingoffline">Modus Offline+ aktiv</string>
   <string name="common_button_disable">Deaktivieren</string>
   <string name="common_button_notnow">Nicht jetzt</string>
   <string name="common_button_ok">OK</string>

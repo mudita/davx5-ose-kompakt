@@ -17,7 +17,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
@@ -33,14 +32,16 @@ class KompaktSyncAttemptTest {
     private val calendarId: UUID = UUID.randomUUID()
     private val contactsId: UUID = UUID.randomUUID()
 
-    private val online = MutableStateFlow(true)
+    // Replay rather than a StateFlow: the attempt no longer dedupes, so a fake that did would hide
+    // whether a repeated cause is acted on twice.
+    private val offlineCause = MutableSharedFlow<KompaktOfflineCause?>(replay = 1)
     private val calendarWork = MutableSharedFlow<WorkInfo?>(replay = 1)
     private val contactsWork = MutableSharedFlow<WorkInfo?>(replay = 1)
 
     private lateinit var startSync: KompaktStartSyncUseCase
     private lateinit var outcomes: KompaktServiceSyncOutcome
     private lateinit var accountSettings: KompaktAccountSettings
-    private lateinit var network: KompaktNetworkAvailability
+    private lateinit var connectivity: KompaktConnectivity
     private lateinit var syncWork: KompaktSyncWork
     private lateinit var workManager: WorkManager
     private lateinit var attempt: KompaktSyncAttempt
@@ -54,8 +55,9 @@ class KompaktSyncAttemptTest {
         accountSettings = mockk(relaxed = true)
         every { accountSettings.getReauthNeeded(account) } returns false
 
-        network = mockk()
-        every { network.observe() } returns online
+        connectivity = mockk()
+        every { connectivity.observe() } returns offlineCause
+        offlineCause.tryEmit(null)
 
         syncWork = mockk(relaxed = true)
 
@@ -64,7 +66,7 @@ class KompaktSyncAttemptTest {
         every { workManager.getWorkInfoByIdFlow(contactsId) } returns contactsWork
 
         attempt = KompaktSyncAttempt(
-            startSync, outcomes, accountSettings, network, syncWork, workManager
+            startSync, outcomes, accountSettings, connectivity, syncWork, workManager
         )
     }
 
@@ -194,14 +196,72 @@ class KompaktSyncAttemptTest {
 
         val result = async { attempt.run(account, KompaktSyncService.entries) }
 
-        online.value = false
+        offlineCause.tryEmit(KompaktOfflineCause.NoNetwork)
         advanceTimeBy(KompaktSyncAttempt.OFFLINE_GRACE_MS + 1)
         calendarWork.emit(workInfo(calendarId, WorkInfo.State.CANCELLED))
         contactsWork.emit(workInfo(contactsId, WorkInfo.State.CANCELLED))
 
-        assertEquals(KompaktAttemptResult.Interrupted(KompaktInterruption.NoNetwork), result.await())
+        assertEquals(KompaktAttemptResult.Interrupted(KompaktOfflineCause.NoNetwork), result.await())
         coVerify { syncWork.cancel(account, KompaktSyncService.CALENDAR) }
         coVerify { syncWork.cancel(account, KompaktSyncService.CONTACTS) }
+    }
+
+    // No grace for Offline+: the user just moved the switch, so there is no blip to wait out. Asserted
+    // with the clock never advanced -- under the network's grace this would still be running.
+    @Test
+    fun `Offline plus interrupts at once rather than waiting out the grace period`() = runTest(UnconfinedTestDispatcher()) {
+        coEvery { startSync(account, any(), any()) } returns started(KompaktSyncService.CALENDAR to calendarId)
+        calendarWork.emit(workInfo(calendarId, WorkInfo.State.RUNNING))
+
+        val result = async { attempt.run(account, listOf(KompaktSyncService.CALENDAR)) }
+
+        offlineCause.tryEmit(KompaktOfflineCause.OfflinePlus)
+        calendarWork.emit(workInfo(calendarId, WorkInfo.State.CANCELLED))
+
+        assertEquals(KompaktAttemptResult.Interrupted(KompaktOfflineCause.OfflinePlus), result.await())
+        coVerify { syncWork.cancel(account, KompaktSyncService.CALENDAR) }
+    }
+
+    // The radios go a moment after Offline+ turns on, so the cause arrives first and the symptom
+    // follows. Reporting the symptom would tell the user to check a connection they turned off.
+    @Test
+    fun `the network dropping after Offline plus does not rename the interruption`() = runTest(UnconfinedTestDispatcher()) {
+        coEvery { startSync(account, any(), any()) } returns started(KompaktSyncService.CALENDAR to calendarId)
+        calendarWork.emit(workInfo(calendarId, WorkInfo.State.RUNNING))
+
+        val result = async { attempt.run(account, listOf(KompaktSyncService.CALENDAR)) }
+
+        offlineCause.tryEmit(KompaktOfflineCause.OfflinePlus)
+        offlineCause.tryEmit(KompaktOfflineCause.NoNetwork)
+        advanceTimeBy(KompaktSyncAttempt.OFFLINE_GRACE_MS + 1)
+        calendarWork.emit(workInfo(calendarId, WorkInfo.State.CANCELLED))
+
+        assertEquals(KompaktAttemptResult.Interrupted(KompaktOfflineCause.OfflinePlus), result.await())
+    }
+
+    // The other order, which is the one that can actually mislead: the radios are seen going first, the
+    // grace elapses on that, and only then does the switch broadcast arrive. Naming the connection would
+    // tell the user to check something they had just turned off themselves.
+    @Test
+    fun `Offline plus arriving after the grace has elapsed renames the interruption`() = runTest(UnconfinedTestDispatcher()) {
+        coEvery { startSync(account, any(), any()) } returns started(KompaktSyncService.CALENDAR to calendarId)
+        calendarWork.emit(workInfo(calendarId, WorkInfo.State.RUNNING))
+
+        val result = async { attempt.run(account, listOf(KompaktSyncService.CALENDAR)) }
+
+        offlineCause.tryEmit(KompaktOfflineCause.NoNetwork)
+        advanceTimeBy(KompaktSyncAttempt.OFFLINE_GRACE_MS + 1)
+        offlineCause.tryEmit(KompaktOfflineCause.OfflinePlus)
+        calendarWork.emit(workInfo(calendarId, WorkInfo.State.CANCELLED))
+
+        assertEquals(KompaktAttemptResult.Interrupted(KompaktOfflineCause.OfflinePlus), result.await())
+    }
+
+    @Test
+    fun `Offline plus is reported before anything is started`() = runTest {
+        coEvery { startSync(account, any(), any()) } returns KompaktSyncStartResult.OfflinePlus
+
+        assertEquals(KompaktAttemptResult.BlockedOfflinePlus, attempt.run(account, KompaktSyncService.entries))
     }
 
     // Leaving the screen cancels the drain mid-flight. What it took has to go back, because the verdict
@@ -239,9 +299,9 @@ class KompaktSyncAttemptTest {
 
         val result = async { attempt.run(account, listOf(KompaktSyncService.CALENDAR)) }
 
-        online.value = false
+        offlineCause.tryEmit(KompaktOfflineCause.NoNetwork)
         advanceTimeBy(KompaktSyncAttempt.OFFLINE_GRACE_MS / 2)
-        online.value = true
+        offlineCause.tryEmit(null)
         advanceTimeBy(KompaktSyncAttempt.OFFLINE_GRACE_MS)
         calendarWork.emit(workInfo(calendarId, WorkInfo.State.SUCCEEDED))
 
@@ -283,11 +343,11 @@ class KompaktSyncAttemptTest {
 
         val result = async { attempt.run(account, KompaktSyncService.entries) }
 
-        online.value = false
+        offlineCause.tryEmit(KompaktOfflineCause.NoNetwork)
         advanceTimeBy(KompaktSyncAttempt.OFFLINE_GRACE_MS + 1)
         contactsWork.emit(workInfo(contactsId, WorkInfo.State.CANCELLED))
 
-        assertEquals(KompaktAttemptResult.Interrupted(KompaktInterruption.NoNetwork), result.await())
+        assertEquals(KompaktAttemptResult.Interrupted(KompaktOfflineCause.NoNetwork), result.await())
     }
 
     private fun started(vararg runs: Pair<KompaktSyncService, UUID>) =
