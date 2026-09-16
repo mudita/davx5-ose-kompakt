@@ -20,19 +20,6 @@ import at.bitfire.davdroid.settings.Credentials
 import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.ui.composable.KompaktTheme
 
-/**
- * Kompakt re-authorization screen for an existing [account] whose token expired. A pure renderer of
- * [KompaktReauthModel.ReauthState]:
- *  - **Authenticating** → the Google OAuth step.
- *  - **SwitchingToNewAccount** → the user signed in with a different account; link it through the normal
- *    [KompaktLoginScreen] pipeline (seeded with the token already obtained, so it skips OAuth), then
- *    remove the old account once the new one is fully set up. [account] is never unlinked on the
- *    same-account path, nor if the user backs out before the new account is linked.
- *  - **RemovingOldAccount** → brief progress while the old account is deleted.
- *  - **Failed** → the re-authorization didn't grant the Calendar scope; show the "Couldn't set up your
- *    account" error with a "Try again" that restarts the OAuth step.
- *  - **Refreshed / Done** → finish.
- */
 /** How the re-authorization ended. */
 sealed interface KompaktReauthResult {
 
@@ -52,6 +39,19 @@ sealed interface KompaktReauthResult {
     data object Cancelled : KompaktReauthResult
 }
 
+/**
+ * Kompakt re-authorization screen for an existing [account] whose token expired. A pure renderer of
+ * [KompaktReauthModel.ReauthState]:
+ *  - **Authenticating** → the Google OAuth step.
+ *  - **SwitchingToNewAccount** → the user signed in with a different account; link it through the normal
+ *    [KompaktLoginScreen] pipeline (seeded with the token already obtained, so it skips OAuth), then
+ *    remove the old account once the new one is fully set up. [account] is never unlinked on the
+ *    same-account path, nor if the user backs out before the new account is linked.
+ *  - **RemovingOldAccount** → brief progress while the old account is deleted.
+ *  - **Failed** → the re-authorization didn't grant the Calendar scope; show the "Couldn't set up your
+ *    account" error with a "Try again" that restarts the OAuth step.
+ *  - **Refreshed / Done** → finish.
+ */
 @Composable
 fun KompaktReauthScreen(
     account: Account,

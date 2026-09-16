@@ -115,16 +115,22 @@ class KompaktReauthModel @Inject constructor(
                         val previouslyGranted =
                             KompaktGrantedServices.fromAuthState(kompaktAccountSettings.getAuthState(account))
                         kompaktAccountSettings.updateAuthState(account, authState)
-                        val diff =
-                            consentDiff(previouslyGranted, KompaktGrantedServices.fromAuthState(authState))
                         // Clearing the flag is what publishes the change, via KompaktAuthStateReplicator.
                         kompaktAccountSettings.setReauthNeeded(account, needed = false)
-                        startSyncUseCase(account)
-                        diff
+                        consentDiff(previouslyGranted, KompaktGrantedServices.fromAuthState(authState))
                     } catch (e: Exception) {
                         logger.log(Level.WARNING, "Couldn't store re-authorized credentials for $account", e)
                         null
                     }
+
+                    consent?.let {
+                        try {
+                            startSyncUseCase(account)
+                        } catch (e: Exception) {
+                            logger.log(Level.WARNING, "Couldn't start a sync after re-authorizing $account", e)
+                        }
+                    }
+
                     _state.value = ReauthState.Refreshed(consent)
                 }
             }
