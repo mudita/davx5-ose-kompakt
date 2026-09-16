@@ -1,0 +1,62 @@
+frontitude/src/main/res/values-de/strings.xml
+  3da9a1f4e40f4936 10,20,23
+frontitude/src/main/res/values-fr/strings.xml
+  3da9a1f4e40f4936 10,20,23
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktReauthModel.kt
+  3da9a1f4e40f4936 15,35-37,56-65,102,114-117,119-120,122-123,125,128,130
+frontitude/keys_to_filter.py
+  3da9a1f4e40f4936 26,36,39
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountState.kt
+  3da9a1f4e40f4936 49-50,67-70,81-84
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountScreen.kt
+  3da9a1f4e40f4936 73-74,103-112,162-163,366-380
+core/src/test/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountStateTest.kt
+  3da9a1f4e40f4936 75,139-156
+frontitude/src/main/res/values-es/strings.xml
+  3da9a1f4e40f4936 10,20,23
+frontitude/src/main/res/values-nl/strings.xml
+  3da9a1f4e40f4936 10,20,23
+frontitude/src/main/res/values-pt/strings.xml
+  3da9a1f4e40f4936 10,20,23
+frontitude/src/main/res/values-pl/strings.xml
+  3da9a1f4e40f4936 10,20,23
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountModel.kt
+  3da9a1f4e40f4936 25-26,173-191
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktLoginActivity.kt
+  3da9a1f4e40f4936 8,37-89,137-144
+frontitude/src/main/res/values-it/strings.xml
+  3da9a1f4e40f4936 10,20,23
+frontitude/src/main/res/values/strings.xml
+  3da9a1f4e40f4936 6,10,20,23-24
+core/src/test/kotlin/at/bitfire/davdroid/ui/setup/KompaktConsentChangeTest.kt
+  3da9a1f4e40f4936 1-92
+frontitude/src/main/res/values-cs/strings.xml
+  3da9a1f4e40f4936 10,20,23
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktConsentChange.kt
+  3da9a1f4e40f4936 1-45
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktReauthScreen.kt
+  3da9a1f4e40f4936 20,36-62,67,89,112-115,119-125
+core/src/test/kotlin/at/bitfire/davdroid/ui/setup/KompaktLoginActivityTest.kt
+  3da9a1f4e40f4936 1-98
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "2164ad77164759099105f9e7d4862e40dc068d40",
+  "prompts": {
+    "3da9a1f4e40f4936": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6df365e4-eeee-4a29-94ae-5a9a6b2de8c0",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 483,
+      "total_deletions": 28,
+      "accepted_lines": 2860,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/e7f165724585e779ca3a93de18672814239fe0de0466dde6ff9dda6010d884e4"
+    }
+  }
+}
