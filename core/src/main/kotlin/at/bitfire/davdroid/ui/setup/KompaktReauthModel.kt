@@ -12,6 +12,7 @@ import at.bitfire.davdroid.network.KompaktGrantedServices
 import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.settings.KompaktAccountSettings
 import at.bitfire.davdroid.sync.KompaktStartSyncUseCase
+import at.bitfire.davdroid.sync.KompaktSyncService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,7 +32,9 @@ import javax.inject.Inject
  *    [KompaktAccountSettings.updateAuthState]), preserving the account and its pending local changes, and a sync
  *    is enqueued → [ReauthState.Refreshed]. The account is never unlinked on this path. If the
  *    re-authorization granted neither the Calendar nor the Contacts scope, the token is **not** applied
- *    and the flow reports [ReauthState.Failed] instead.
+ *    and the flow reports [ReauthState.Failed] instead. What the authorization did to each service is
+ *    reported in [ReauthState.Refreshed] and travels out whole through the screen's result; deciding
+ *    what of it is worth saying belongs to the screen that raises the message, not to this one.
  *  - **Different account** — this model creates nothing; it moves to [ReauthState.SwitchingToNewAccount]
  *    so the screen can link the new account via the normal `KompaktLoginScreen` pipeline. Once that
  *    succeeds the screen calls [completeSwitch], which removes the old account
@@ -50,8 +53,16 @@ class KompaktReauthModel @Inject constructor(
         /** Running the Google OAuth flow — the initial state, before the result is known. */
         data object Authenticating : ReauthState
 
-        /** Same account re-authorized: token refreshed in place; the screen may close. */
-        data object Refreshed : ReauthState
+        /**
+         * Same account re-authorized: token refreshed in place; the screen may close.
+         *
+         * [consent] is what the authorization did to every service, or `null` when that could not be
+         * determined — no authorization came back, or storing it threw. "Nothing changed" is a map of
+         * [KompaktConsentState.KEPT], which is a different answer from not knowing.
+         */
+        data class Refreshed(
+            val consent: Map<KompaktSyncService, KompaktConsentState>?
+        ) : ReauthState
 
         /**
          * Re-authorization completed, but the granted authorization carries neither the Calendar nor the
@@ -88,7 +99,7 @@ class KompaktReauthModel @Inject constructor(
             when {
                 authState == null -> {
                     logger.warning("Re-auth produced no auth state; not applying")
-                    _state.value = ReauthState.Refreshed
+                    _state.value = ReauthState.Refreshed(consent = null)
                 }
 
                 email != null && !email.equals(account.name, ignoreCase = true) ->
@@ -100,15 +111,21 @@ class KompaktReauthModel @Inject constructor(
                 }
 
                 else -> {
-                    try {
+                    val consent = try {
+                        val previouslyGranted =
+                            KompaktGrantedServices.fromAuthState(kompaktAccountSettings.getAuthState(account))
                         kompaktAccountSettings.updateAuthState(account, authState)
+                        val diff =
+                            consentDiff(previouslyGranted, KompaktGrantedServices.fromAuthState(authState))
                         // Clearing the flag is what publishes the change, via KompaktAuthStateReplicator.
-                        kompaktAccountSettings.setReauthNeeded(account, false)
+                        kompaktAccountSettings.setReauthNeeded(account, needed = false)
                         startSyncUseCase(account)
+                        diff
                     } catch (e: Exception) {
                         logger.log(Level.WARNING, "Couldn't store re-authorized credentials for $account", e)
+                        null
                     }
-                    _state.value = ReauthState.Refreshed
+                    _state.value = ReauthState.Refreshed(consent)
                 }
             }
         }

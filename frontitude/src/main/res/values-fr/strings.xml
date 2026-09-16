@@ -9,6 +9,7 @@
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">Vous ne verrez plus les données de votre compte Google</string>
   <string name="calendar_accountsync_dialog_button_enablecalendarsync">Activer la synchronisation du calendrier</string>
   <string name="calendar_accountsync_dialog_button_enablecontactsync">Activer la synchronisation des contacts</string>
+  <string name="calendar_accountsync_dialog_button_enablesync">Activer la synchronisation</string>
   <string name="calendar_accountsync_dialog_button_importnow">Importer maintenant</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Lier le compte</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Compte lié</string>
@@ -17,8 +18,10 @@
   <string name="calendar_accountsync_dialog_h1_enablecalendarsync">Activer la synchronisation du calendrier \?</string>
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Activer la synchronisation des contacts \?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Lier un compte Google</string>
+  <string name="calendar_accountsync_dialog_h1_permissionchanged">Autorisation modifiée</string>
   <string name="calendar_accountsync_dialog_h1_permissionsgranted">Autorisations accordées</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Supprimer le compte \?</string>
+  <string name="calendar_accountsync_error_dialog_body_disablingpermissionswillremove">Désactiver les autorisations supprimera de votre appareil certaines données du compte Google</string>
   <string name="calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization">Activez la synchronisation de l\'agenda et des contacts pour synchroniser vos données</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Reliez votre compte à nouveau pour continuer à synchroniser avec Google</string>
   <string name="calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountlinking">Utiliser le bouton de gauche pour autoriser la liaison du compte</string>

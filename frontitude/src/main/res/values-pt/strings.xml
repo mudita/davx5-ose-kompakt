@@ -9,6 +9,7 @@
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">Deixará de ver os dados da sua conta Google</string>
   <string name="calendar_accountsync_dialog_button_enablecalendarsync">Ativar sincronização do calendário</string>
   <string name="calendar_accountsync_dialog_button_enablecontactsync">Ativar sincronização de contactos</string>
+  <string name="calendar_accountsync_dialog_button_enablesync">Ativar sincronização</string>
   <string name="calendar_accountsync_dialog_button_importnow">Importar agora</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Vincular conta</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Conta vinculada</string>
@@ -17,8 +18,10 @@
   <string name="calendar_accountsync_dialog_h1_enablecalendarsync">Ativar sincronização do calendário\?</string>
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Ativar sincronização de contactos\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Vincular uma conta Google</string>
+  <string name="calendar_accountsync_dialog_h1_permissionchanged">Permissão alterada</string>
   <string name="calendar_accountsync_dialog_h1_permissionsgranted">Permissões concedidas</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Remover conta\?</string>
+  <string name="calendar_accountsync_error_dialog_body_disablingpermissionswillremove">Desativar as permissões removerá do seu dispositivo alguns dados da conta Google</string>
   <string name="calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization">Ative a sincronização do calendário e dos contactos para sincronizar os dados</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Vincule a sua conta novamente para continuar a sincronizar com o Google</string>
   <string name="calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountlinking">Utilize o botão do lado esquerdo para permitir a vinculação da conta</string>

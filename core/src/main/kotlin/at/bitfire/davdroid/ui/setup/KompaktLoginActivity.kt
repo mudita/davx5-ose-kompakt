@@ -5,6 +5,7 @@
 package at.bitfire.davdroid.ui.setup
 
 import android.accounts.Account
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -32,6 +33,59 @@ class KompaktLoginActivity @Inject constructor() : AppCompatActivity() {
          * (refreshes the OAuth token, keeping all local data) instead of linking a new account.
          */
         const val EXTRA_REAUTH_ACCOUNT_NAME = "reauthAccountName"
+
+        /**
+         * Result extra: what the re-authorization did to each service's Google consent, as a [Bundle]
+         * of [KompaktSyncService] name to [KompaktConsentState] name. Absent when that could not be
+         * determined. Nothing stores it, so a caller that ignores the result data loses the only
+         * chance to act on the change.
+         *
+         * Read it with [consentChangeFrom] rather than by hand — this is the only place the encoding
+         * is written, and it should stay the only place it is read.
+         */
+        const val EXTRA_CONSENT_CHANGE = "consentChange"
+
+        private const val EXTRA_SWITCHED_FROM_ACCOUNT = "switchedFromAccount"
+
+        /**
+         * Encodes a re-authorization outcome for [android.app.Activity.setResult]. `null` whenever
+         * there is nothing for the caller to act on, which every outcome can be.
+         */
+        fun reauthResultIntent(result: KompaktReauthResult): Intent? = when (result) {
+            is KompaktReauthResult.Refreshed ->
+                result.consent?.let { Intent().putExtra(EXTRA_CONSENT_CHANGE, consentChangeBundle(it)) }
+
+            is KompaktReauthResult.Switched ->
+                result.removedAccount?.let { Intent().putExtra(EXTRA_SWITCHED_FROM_ACCOUNT, it) }
+
+            KompaktReauthResult.Cancelled -> null
+        }
+
+        /**
+         * The account a re-authorization switched away from, named only when it was actually removed.
+         * A caller waits for the named account to leave the accounts flow, and one that is still
+         * there never will.
+         */
+        fun switchedFromAccount(data: Intent?): String? =
+            data?.getStringExtra(EXTRA_SWITCHED_FROM_ACCOUNT)
+
+        /** The consent change a re-authorization carried, or `null` if it carried none. */
+        fun consentChangeFrom(data: Intent?): Map<KompaktSyncService, KompaktConsentState>? {
+            val bundle = data?.getBundleExtra(EXTRA_CONSENT_CHANGE) ?: return null
+            return bundle.keySet().mapNotNull { key ->
+                val service = KompaktSyncService.entries.find { it.name == key }
+                val state = KompaktConsentState.entries.find { it.name == bundle.getString(key) }
+                // A name this build doesn't know is dropped rather than failing the whole result: the
+                // sender may be a newer version that learned another service or another state.
+                if (service != null && state != null) service to state else null
+            }.toMap()
+        }
+
+        private fun consentChangeBundle(consent: Map<KompaktSyncService, KompaktConsentState>) =
+            Bundle().apply {
+                for ((service, state) in consent)
+                    putString(service.name, state.name)
+            }
 
         /**
          * If set alongside [EXTRA_ADD_CONSENT_SERVICE_TYPE], the activity applies [EXTRA_ADD_CONSENT_SERVICE_TYPE]'s
@@ -80,11 +134,11 @@ class KompaktLoginActivity @Inject constructor() : AppCompatActivity() {
                     KompaktReauthScreen(
                         account = account,
                         onNavUp = { onBackPressedDispatcher.onBackPressed() },
-                        onFinish = { switched ->
-                            // RESULT_OK only when a new account was linked (the switch), mirroring the
-                            // normal login flow; a same-account refresh leaves the default RESULT_CANCELED
-                            if (switched)
-                                setResult(RESULT_OK)
+                        onFinish = { result ->
+                            setResult(
+                                if (result == KompaktReauthResult.Cancelled) RESULT_CANCELED else RESULT_OK,
+                                reauthResultIntent(result)
+                            )
                             finish()
                         }
                     )

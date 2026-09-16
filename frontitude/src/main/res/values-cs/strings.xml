@@ -9,6 +9,7 @@
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">Data z vašeho účtu Google již neuvidíte</string>
   <string name="calendar_accountsync_dialog_button_enablecalendarsync">Povolit synchronizaci kalendáře</string>
   <string name="calendar_accountsync_dialog_button_enablecontactsync">Povolit synchronizaci kontaktů</string>
+  <string name="calendar_accountsync_dialog_button_enablesync">Povolit synchronizaci</string>
   <string name="calendar_accountsync_dialog_button_importnow">Importovat nyní</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Propojit účet</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Účet propojen</string>
@@ -17,8 +18,10 @@
   <string name="calendar_accountsync_dialog_h1_enablecalendarsync">Povolit synchronizaci kalendáře\?</string>
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Povolit synchronizaci kontaktů\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Propojit účet Google</string>
+  <string name="calendar_accountsync_dialog_h1_permissionchanged">Oprávnění změněno</string>
   <string name="calendar_accountsync_dialog_h1_permissionsgranted">Oprávnění udělena</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Odebrat účet\?</string>
+  <string name="calendar_accountsync_error_dialog_body_disablingpermissionswillremove">Zakázáním oprávnění odstraníte z vašeho zařízení některá data účtu Google</string>
   <string name="calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization">Chcete-li synchronizovat data, povolte synchronizaci kalendáře a kontaktů</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Znovu propojte svůj účet pro pokračování v synchronizaci s Google</string>
   <string name="calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountlinking">Použijte přepínač na levé straně k povolení propojení účtu</string>

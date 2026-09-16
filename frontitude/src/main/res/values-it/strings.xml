@@ -9,6 +9,7 @@
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">Non vedrai più i dati del tuo account Google</string>
   <string name="calendar_accountsync_dialog_button_enablecalendarsync">Attiva la sincronizzazione del calendario</string>
   <string name="calendar_accountsync_dialog_button_enablecontactsync">Attiva la sincronizzazione dei contatti</string>
+  <string name="calendar_accountsync_dialog_button_enablesync">Attiva la sincronizzazione</string>
   <string name="calendar_accountsync_dialog_button_importnow">Importa ora</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Collega account</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Account collegato</string>
@@ -17,8 +18,10 @@
   <string name="calendar_accountsync_dialog_h1_enablecalendarsync">Attivare la sincronizzazione del calendario\?</string>
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Attivare la sincronizzazione dei contatti\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Collega un account Google</string>
+  <string name="calendar_accountsync_dialog_h1_permissionchanged">Autorizzazione modificata</string>
   <string name="calendar_accountsync_dialog_h1_permissionsgranted">Autorizzazioni concesse</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Rimuovere l’account\?</string>
+  <string name="calendar_accountsync_error_dialog_body_disablingpermissionswillremove">Disattivare le autorizzazioni rimuoverà alcuni dati dell\'account Google dal tuo dispositivo</string>
   <string name="calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization">Attiva la sincronizzazione di calendario e contatti per sincronizzare i dati</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Collega nuovamente il tuo account per continuare a sincronizzare con Google</string>
   <string name="calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountlinking">Usa l’interruttore sul lato sinistro per consentire il collegamento dell’account</string>
