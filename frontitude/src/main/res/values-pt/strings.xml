@@ -8,6 +8,7 @@
   <string name="calendar_accountsync_dialog_body_youcannowimportselectedgoogle">Já pode importar os dados Google selecionados</string>
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">Deixará de ver os dados da sua conta Google</string>
   <string name="calendar_accountsync_dialog_button_enablecalendarsync">Ativar sincronização do calendário</string>
+  <string name="calendar_accountsync_dialog_button_enablecontactsync">Ativar sincronização de contactos</string>
   <string name="calendar_accountsync_dialog_button_importnow">Importar agora</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Vincular conta</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Conta vinculada</string>

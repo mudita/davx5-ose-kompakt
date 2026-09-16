@@ -8,6 +8,7 @@
   <string name="calendar_accountsync_dialog_body_youcannowimportselectedgoogle">Nyní můžete importovat vybraná data Google</string>
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">Data z vašeho účtu Google již neuvidíte</string>
   <string name="calendar_accountsync_dialog_button_enablecalendarsync">Povolit synchronizaci kalendáře</string>
+  <string name="calendar_accountsync_dialog_button_enablecontactsync">Povolit synchronizaci kontaktů</string>
   <string name="calendar_accountsync_dialog_button_importnow">Importovat nyní</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Propojit účet</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Účet propojen</string>

@@ -438,7 +438,7 @@ private fun ConsentDialog(
         icon = painterResource(R.drawable.ic_google_g),
         confirmLabel = stringResource(
             if (isCalendar) RFrontitude.string.calendar_accountsync_dialog_button_enablecalendarsync
-            else RFrontitude.string.calendar_accountsync_dialog_h1_enablecontactsync
+            else RFrontitude.string.calendar_accountsync_dialog_button_enablecontactsync
         ),
         onConfirm = {
             onDismiss()

@@ -24,6 +24,7 @@ filter_keys = [
     'calendar_accountsync_dialog_body_youcannowimportselectedgoogle',
     'calendar_accountsync_dialog_body_youwontseedatafromyourgoogle',
     'calendar_accountsync_dialog_button_enablecalendarsync',
+    'calendar_accountsync_dialog_button_enablecontactsync',
     'calendar_accountsync_dialog_button_importnow',
     'calendar_accountsync_dialog_button_linkaccount',
     'calendar_accountsync_dialog_h1_accountlinked',

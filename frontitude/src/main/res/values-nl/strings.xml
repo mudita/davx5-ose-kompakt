@@ -8,6 +8,7 @@
   <string name="calendar_accountsync_dialog_body_youcannowimportselectedgoogle">Je kunt nu geselecteerde Google-gegevens importeren</string>
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">Je ziet geen gegevens uit je Google-account meer</string>
   <string name="calendar_accountsync_dialog_button_enablecalendarsync">Synchronisatie van agenda inschakelen</string>
+  <string name="calendar_accountsync_dialog_button_enablecontactsync">Synchronisatie van contacten inschakelen</string>
   <string name="calendar_accountsync_dialog_button_importnow">Nu importeren</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Account koppelen</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Account gekoppeld</string>

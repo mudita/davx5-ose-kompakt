@@ -8,6 +8,7 @@
   <string name="calendar_accountsync_dialog_body_youcannowimportselectedgoogle">You can now import selected Google data</string>
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">You won’t see data from your Google account any more</string>
   <string name="calendar_accountsync_dialog_button_enablecalendarsync">Enable calendar sync</string>
+  <string name="calendar_accountsync_dialog_button_enablecontactsync">Enable contact sync</string>
   <string name="calendar_accountsync_dialog_button_importnow">Import now</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Link account</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Account linked</string>
