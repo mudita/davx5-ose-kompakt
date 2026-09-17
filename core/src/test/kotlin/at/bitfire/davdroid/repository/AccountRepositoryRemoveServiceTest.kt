@@ -26,6 +26,8 @@ import io.mockk.mockk
 import io.mockk.spyk
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -115,7 +117,7 @@ class AccountRepositoryRemoveServiceTest {
         serviceRow(Service.TYPE_CALDAV)
         every { localCalendarStore.acquireContentProvider(throwOnMissingPermissions = false) } returns null
 
-        accountRepository.removeService(ACCOUNT_NAME, KompaktSyncService.CALENDAR)
+        assertFalse(accountRepository.removeService(ACCOUNT_NAME, KompaktSyncService.CALENDAR))
 
         coVerify(exactly = 0) { localCalendarStore.delete(any()) }
         coVerify(exactly = 0) { serviceRepository.deleteById(any()) }
@@ -125,7 +127,7 @@ class AccountRepositoryRemoveServiceTest {
     fun `a service with no row is a no-op`() = runTest {
         coEvery { serviceRepository.getByAccountAndType(ACCOUNT_NAME, Service.TYPE_CARDDAV) } returns null
 
-        accountRepository.removeService(ACCOUNT_NAME, KompaktSyncService.CONTACTS)
+        assertTrue(accountRepository.removeService(ACCOUNT_NAME, KompaktSyncService.CONTACTS))
 
         coVerify(exactly = 0) { localAddressBookStore.deleteByAccount(any()) }
         coVerify(exactly = 0) { serviceRepository.deleteById(any()) }

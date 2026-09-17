@@ -11,11 +11,14 @@ import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.servicedetection.DavResourceFinder
 import at.bitfire.davdroid.settings.KompaktAccountSettings
 import dagger.Lazy
+import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
+import org.junit.Before
 import org.junit.Test
+import java.util.logging.Logger
 
 /**
  * [KompaktServiceProvisioning.clearProvisioning] — the order it undoes things in is the contract, because
@@ -37,8 +40,14 @@ class KompaktServiceProvisioningTest {
         resourceFinderFactory = mockk<DavResourceFinder.Factory>(),
         oAuthGoogle = mockk<KompaktOAuthGoogle>(),
         syncWork = syncWork,
-        automaticSyncManager = Lazy { automaticSyncManager }
+        automaticSyncManager = Lazy { automaticSyncManager },
+        logger = mockk<Logger>(relaxed = true)
     )
+
+    @Before
+    fun setUp() {
+        coEvery { accountRepository.removeService(any(), any()) } returns true
+    }
 
     // Otherwise a run already in flight recreates what the removal just took.
     @Test
@@ -68,6 +77,21 @@ class KompaktServiceProvisioningTest {
 
         coVerifyOrder {
             accountRepository.removeService(account.name, KompaktSyncService.CALENDAR)
+            automaticSyncManager.updateAutomaticSync(account, SyncDataType.EVENTS, any())
+        }
+    }
+
+    // A half-cleared service is worse than an untouched one: with the row still there, a forgotten
+    // interval makes updateAutomaticSync fall back to the default and arm the periodic worker.
+    @Test
+    fun `a removal that gives up clears nothing else`() = runTest {
+        coEvery { accountRepository.removeService(account.name, KompaktSyncService.CALENDAR) } returns false
+
+        provisioning.clearProvisioning(account, KompaktSyncService.CALENDAR)
+
+        coVerify(exactly = 0) {
+            accountSettings.clearSyncInterval(account, SyncDataType.EVENTS)
+            accountSettings.clearDefaultsApplied(account, KompaktSyncService.CALENDAR)
             automaticSyncManager.updateAutomaticSync(account, SyncDataType.EVENTS, any())
         }
     }

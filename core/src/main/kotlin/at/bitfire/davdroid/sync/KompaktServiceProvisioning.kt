@@ -13,6 +13,7 @@ import at.bitfire.davdroid.settings.Credentials
 import at.bitfire.davdroid.settings.KompaktAccountSettings
 import dagger.Lazy
 import kotlinx.coroutines.runInterruptible
+import java.util.logging.Logger
 import javax.inject.Inject
 
 /**
@@ -30,7 +31,8 @@ class KompaktServiceProvisioning @Inject constructor(
     private val resourceFinderFactory: DavResourceFinder.Factory,
     private val oAuthGoogle: KompaktOAuthGoogle,
     private val syncWork: KompaktSyncWork,
-    private val automaticSyncManager: Lazy<AutomaticSyncManager>
+    private val automaticSyncManager: Lazy<AutomaticSyncManager>,
+    private val logger: Logger
 ) {
 
     /**
@@ -66,13 +68,22 @@ class KompaktServiceProvisioning @Inject constructor(
      *
      * A later [ensureProvisioned] therefore takes the first-grant path — discovery, then [KompaktInitDefaults]
      * writing the selection and the interval — rather than needing anything remembered.
+     *
+     * Leaves everything in place when the synced copies could not be removed, so the service is either
+     * fully cleared or untouched.
      */
     suspend fun clearProvisioning(account: Account, service: KompaktSyncService) {
         // Cancelled here rather than through the interval, which would re-arm the periodic worker for as
         // long as the row is still there.
         syncWork.cancel(account, service)
 
-        accountRepository.removeService(account.name, service)
+        // Clearing the interval while the row survives is worse than clearing nothing: updateAutomaticSync
+        // would then find a service to schedule for and no stored interval, and fall back to the four-hour
+        // default — arming the periodic worker for the service the user just revoked.
+        if (!accountRepository.removeService(account.name, service)) {
+            logger.warning("Couldn't remove $service for $account; leaving it provisioned")
+            return
+        }
 
         accountSettings.clearSyncInterval(account, service.dataType)
         accountSettings.clearDefaultsApplied(account, service)

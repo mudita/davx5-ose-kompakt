@@ -154,12 +154,14 @@ class AccountRepository @Inject constructor(
      * The synced copies have to go explicitly. Neither route that removes them on unlink applies while
      * the account survives: the calendar provider only drops calendars whose owner account is gone, and
      * [AccountsCleanupWorker] only drops address books whose owner account is gone.
+     *
+     * `false` when the copies could not be reached and nothing was removed.
      */
-    suspend fun removeService(accountName: String, service: KompaktSyncService): Unit =
+    suspend fun removeService(accountName: String, service: KompaktSyncService): Boolean =
         withContext(defaultDispatcher) {
             val account = fromName(accountName)
             val serviceRow = serviceRepository.getByAccountAndType(accountName, service.serviceType)
-                ?: return@withContext
+                ?: return@withContext true
 
             // Before the row, which cascades the collections the copies are found by.
             when (service) {
@@ -171,11 +173,12 @@ class AccountRepository @Inject constructor(
                 KompaktSyncService.CALENDAR ->
                     if (!removeCalendars(account, serviceRow.id)) {
                         logger.warning("Couldn't reach ${account.name}'s calendars; keeping the $service row")
-                        return@withContext
+                        return@withContext false
                     }
             }
 
             serviceRepository.deleteById(serviceRow.id)
+            true
         }
 
     /** `false` if the calendar provider could not be acquired, so nothing was removed. */
