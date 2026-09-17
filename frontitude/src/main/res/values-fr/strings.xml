@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+  <string name="calendar_accountsync_button_synchronizenow">Synchroniser maintenant</string>
   <string name="calendar_accountsync_dialog_body_nothingwillsynchronizewithyour">Rien ne se synchronisera avec votre compte Google</string>
   <string name="calendar_accountsync_dialog_body_sharecalendarandeventsbetween">Partagez votre calendrier et vos événements entre votre compte Google lié et Kompakt</string>
   <string name="calendar_accountsync_dialog_body_sharecontactsbetweenyourlinked">Partagez vos contacts entre votre compte Google lié et Kompakt</string>
@@ -7,9 +8,9 @@
   <string name="calendar_accountsync_dialog_body_youcannowimportselectedgoogle">Vous pouvez maintenant importer les données Google sélectionnées</string>
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">Vous ne verrez plus les données de votre compte Google</string>
   <string name="calendar_accountsync_dialog_button_enablecalendarsync">Activer la synchronisation du calendrier</string>
+  <string name="calendar_accountsync_dialog_button_enablecontactsync">Activer la synchronisation des contacts</string>
   <string name="calendar_accountsync_dialog_button_importnow">Importer maintenant</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Lier le compte</string>
-  <string name="calendar_accountsync_dialog_button_syncnow">Synchroniser maintenant</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Compte lié</string>
   <string name="calendar_accountsync_dialog_h1_disablecalendarsync">Désactiver la synchronisation du calendrier \?</string>
   <string name="calendar_accountsync_dialog_h1_disablecontactsync">Désactiver la synchronisation des contacts \?</string>
@@ -20,6 +21,7 @@
   <string name="calendar_accountsync_dialog_h1_removeaccount">Supprimer le compte \?</string>
   <string name="calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization">Activez la synchronisation de l\'agenda et des contacts pour synchroniser vos données</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Reliez votre compte à nouveau pour continuer à synchroniser avec Google</string>
+  <string name="calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountlinking">Utiliser le bouton de gauche pour autoriser la liaison du compte</string>
   <string name="calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountsyncronization">Utiliser le bouton de gauche pour autoriser la synchronisation du compte</string>
   <string name="calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour">Nous n\'avons pas pu synchroniser avec votre compte Google, veuillez réessayer</string>
   <string name="calendar_accountsync_error_dialog_button_removeaccount">Supprimer le compte</string>
@@ -44,7 +46,7 @@
   <string name="common_dialog_button_later">Plus tard</string>
   <string name="common_dialog_button_tryagain">Réessayer</string>
   <string name="common_error_body_opensettingstocheck">Ouvrez les paramètres pour vérifier l’activation des données et du Wi-Fi</string>
-  <string name="common_error_dialog_body_changestorage">Modifiez l\'emplacement de stockage ou libérez de l\'espace, puis réessayez</string>
+  <string name="common_error_dialog_body_freesomespaceinyourphone">Libérez de l’espace dans le stockage de votre téléphone, puis réessayez</string>
   <string name="common_error_dialog_h1_storageisfull">Votre espace de stockage est plein</string>
   <string name="common_label_calendar">Agenda</string>
   <string name="common_label_contacts">Contacts</string>

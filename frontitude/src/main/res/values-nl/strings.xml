@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+  <string name="calendar_accountsync_button_synchronizenow">Nu synchroniseren</string>
   <string name="calendar_accountsync_dialog_body_nothingwillsynchronizewithyour">Niets synchroniseert met je Google-account</string>
   <string name="calendar_accountsync_dialog_body_sharecalendarandeventsbetween">Deel agenda en afspraken tussen je gekoppelde Google-account en Kompakt</string>
   <string name="calendar_accountsync_dialog_body_sharecontactsbetweenyourlinked">Deel contacten tussen je gekoppelde Google-account en Kompakt</string>
@@ -7,9 +8,9 @@
   <string name="calendar_accountsync_dialog_body_youcannowimportselectedgoogle">Je kunt nu geselecteerde Google-gegevens importeren</string>
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">Je ziet geen gegevens uit je Google-account meer</string>
   <string name="calendar_accountsync_dialog_button_enablecalendarsync">Synchronisatie van agenda inschakelen</string>
+  <string name="calendar_accountsync_dialog_button_enablecontactsync">Synchronisatie van contacten inschakelen</string>
   <string name="calendar_accountsync_dialog_button_importnow">Nu importeren</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Account koppelen</string>
-  <string name="calendar_accountsync_dialog_button_syncnow">Nu synchroniseren</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Account gekoppeld</string>
   <string name="calendar_accountsync_dialog_h1_disablecalendarsync">Synchronisatie van agenda uitschakelen\?</string>
   <string name="calendar_accountsync_dialog_h1_disablecontactsync">Synchronisatie van contacten uitschakelen\?</string>
@@ -20,6 +21,7 @@
   <string name="calendar_accountsync_dialog_h1_removeaccount">Account verwijderen\?</string>
   <string name="calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization">Schakel kalender- en contactensynchronisatie in om gegevens te synchroniseren</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Koppel je account opnieuw om door te gaan met synchroniseren met Google</string>
+  <string name="calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountlinking">Gebruik de linkerschakelaar om accountkoppeling toe te staan</string>
   <string name="calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountsyncronization">Gebruik de linkerschakelaar om accountsynchronisatie toe te staan</string>
   <string name="calendar_accountsync_error_dialog_body_wecouldntsyncronizewithyyour">We konden niet synchroniseren met je Google-account, probeer het opnieuw</string>
   <string name="calendar_accountsync_error_dialog_button_removeaccount">Account verwijderen</string>
@@ -44,7 +46,7 @@
   <string name="common_dialog_button_later">Later</string>
   <string name="common_dialog_button_tryagain">Opnieuw proberen</string>
   <string name="common_error_body_opensettingstocheck">Open de instellingen om te controleren of data en Wi-Fi zijn ingeschakeld</string>
-  <string name="common_error_dialog_body_changestorage">Wijzig de opslaglocatie of maak wat ruimte vrij en probeer het opnieuw</string>
+  <string name="common_error_dialog_body_freesomespaceinyourphone">Maak ruimte vrij in de opslag van uw telefoon en probeer het opnieuw</string>
   <string name="common_error_dialog_h1_storageisfull">Uw opslag is vol</string>
   <string name="common_label_calendar">Kalender</string>
   <string name="common_label_contacts">Contacten</string>

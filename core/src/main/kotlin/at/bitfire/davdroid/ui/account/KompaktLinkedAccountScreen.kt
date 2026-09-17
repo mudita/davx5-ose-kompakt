@@ -49,7 +49,7 @@ import at.bitfire.davdroid.ui.composable.KompaktFramedIcon
 import at.bitfire.davdroid.ui.composable.KompaktMessageSheet
 import at.bitfire.davdroid.ui.composable.KompaktModalSheet
 import at.bitfire.davdroid.ui.composable.KompaktNoInternetSheet
-import at.bitfire.davdroid.ui.composable.KompaktOfflinePlusSheet
+import at.bitfire.davdroid.ui.composable.KompaktOfflinePlusSyncSheet
 import at.bitfire.davdroid.ui.composable.KompaktTheme
 import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
 import at.bitfire.davdroid.ui.setup.KompaktLoginActivity
@@ -264,7 +264,7 @@ fun KompaktLinkedAccountContent(
             title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_accountlinked),
             text = stringResource(RFrontitude.string.calendar_accountsync_dialog_body_synchronizenowtoimportyourselected),
             icon = painterResource(R.drawable.ic_kompakt_success),
-            confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_syncnow),
+            confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_button_synchronizenow),
             onConfirm = {
                 actions.onAccountLinkedDialogDismiss()
                 actions.onSyncNow()
@@ -304,13 +304,13 @@ fun KompaktLinkedAccountContent(
             KompaktMessageSheet(
                 onDismissRequest = actions.onDismissDialog,
                 title = stringResource(RFrontitude.string.common_error_dialog_h1_storageisfull),
-                text = stringResource(RFrontitude.string.common_error_dialog_body_changestorage),
+                text = stringResource(RFrontitude.string.common_error_dialog_body_freesomespaceinyourphone),
                 icon = painterResource(R.drawable.ic_kompakt_alert),
                 buttonLabel = stringResource(RFrontitude.string.common_dialog_button_cancel)
             )
 
         KompaktLinkedAccountDialog.OfflinePlus ->
-            KompaktOfflinePlusSheet(onDismissRequest = actions.onDismissDialog)
+            KompaktOfflinePlusSyncSheet(onDismissRequest = actions.onDismissDialog)
 
         KompaktLinkedAccountDialog.NoInternet ->
             KompaktNoInternetSheet(onDismissRequest = actions.onDismissDialog)
@@ -438,7 +438,7 @@ private fun ConsentDialog(
         icon = painterResource(R.drawable.ic_google_g),
         confirmLabel = stringResource(
             if (isCalendar) RFrontitude.string.calendar_accountsync_dialog_button_enablecalendarsync
-            else RFrontitude.string.calendar_accountsync_dialog_h1_enablecontactsync
+            else RFrontitude.string.calendar_accountsync_dialog_button_enablecontactsync
         ),
         onConfirm = {
             onDismiss()
