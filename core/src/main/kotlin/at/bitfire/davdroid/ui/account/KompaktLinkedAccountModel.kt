@@ -231,7 +231,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             // A plain re-auth grants every scope, so consent can exist with no row behind it — the switch
             // reads Off rather than ConsentMissing for exactly that state. The row must exist first:
             // AutomaticSyncManager.updateAutomaticSync arms the worker only for a service that has one.
-            if (enabled && !provisioning.ensureProvisioned(account, service)) {
+            if (enabled && !provisioning.ensureRow(account, service)) {
                 logger.warning("Couldn't find a $service for $account; leaving the switch off")
                 return@launch
             }

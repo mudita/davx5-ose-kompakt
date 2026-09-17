@@ -35,13 +35,8 @@ class KompaktServiceProvisioning @Inject constructor(
     private val logger: Logger
 ) {
 
-    /**
-     * Gives the service everything it needs to be synced, discovering it first if it has no
-     * [at.bitfire.davdroid.db.Service] row yet. Idempotent.
-     *
-     * `false` if the row is absent and could not be discovered, so the caller must leave it alone.
-     */
-    suspend fun ensureProvisioned(account: Account, service: KompaktSyncService): Boolean {
+    /** `false` if the row is absent and could not be discovered, so the caller must leave it alone. */
+    suspend fun ensureRow(account: Account, service: KompaktSyncService): Boolean {
         if (serviceRepository.getByAccountAndType(account.name, service.serviceType) != null)
             return true
 
@@ -62,11 +57,11 @@ class KompaktServiceProvisioning @Inject constructor(
     }
 
     /**
-     * Undoes [ensureProvisioned] and everything the first sync built on it, so the account is left exactly as it
+     * Undoes [ensureRow] and everything the first sync built on it, so the account is left exactly as it
      * was before this service was ever consented: no row, no collections, no stored interval, no
      * applied-defaults marker, and no synced copies on the device.
      *
-     * A later [ensureProvisioned] therefore takes the first-grant path — discovery, then [KompaktInitDefaults]
+     * A later [ensureRow] therefore takes the first-grant path — discovery, then [KompaktInitDefaults]
      * writing the selection and the interval — rather than needing anything remembered.
      *
      * Leaves everything in place when the synced copies could not be removed, so the service is either
