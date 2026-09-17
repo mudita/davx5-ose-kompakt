@@ -11,6 +11,7 @@ import at.bitfire.davdroid.di.qualifier.IoDispatcher
 import at.bitfire.davdroid.network.KompaktGrantedServices
 import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.settings.KompaktAccountSettings
+import at.bitfire.davdroid.sync.KompaktServiceProvisioning
 import at.bitfire.davdroid.sync.KompaktStartSyncUseCase
 import at.bitfire.davdroid.sync.KompaktSyncService
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -45,6 +46,7 @@ class KompaktReauthModel @Inject constructor(
     private val kompaktAccountSettings: KompaktAccountSettings,
     private val startSyncUseCase: KompaktStartSyncUseCase,
     private val accountRepository: AccountRepository,
+    private val provisioning: KompaktServiceProvisioning,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     private val logger: Logger
 ) : ViewModel() {
@@ -124,6 +126,7 @@ class KompaktReauthModel @Inject constructor(
                     }
 
                     consent?.let {
+                        clearRevokedServices(account, it)
                         try {
                             startSyncUseCase(account)
                         } catch (e: Exception) {
@@ -135,6 +138,24 @@ class KompaktReauthModel @Inject constructor(
                 }
             }
         }
+    }
+
+    /**
+     * Takes every revoked service back to the state it was in before it was ever consented. The user
+     * revoked it, so nothing about it is kept: not the row, not the interval, not the synced copies the
+     * message tells them are gone.
+     */
+    private suspend fun clearRevokedServices(
+        account: Account,
+        consent: Map<KompaktSyncService, KompaktConsentState>
+    ) {
+        for ((service, state) in consent)
+            if (state == KompaktConsentState.REVOKED)
+                try {
+                    provisioning.clearProvisioning(account, service)
+                } catch (e: Exception) {
+                    logger.log(Level.WARNING, "Couldn't clear the revoked $service for $account", e)
+                }
     }
 
     /**

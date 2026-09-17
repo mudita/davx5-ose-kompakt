@@ -56,7 +56,7 @@ class KompaktStartSyncUseCaseTest {
         switchOn(KompaktSyncService.CALENDAR, KompaktSyncService.CONTACTS)
 
         provisioning = mockk()
-        coEvery { provisioning.ensureRow(any(), any()) } answers {
+        coEvery { provisioning.ensureProvisioned(any(), any()) } answers {
             calls += "row:${secondArg<KompaktSyncService>()}"
             true
         }
@@ -140,7 +140,7 @@ class KompaktStartSyncUseCaseTest {
         val start = startSync(account, services = listOf(KompaktSyncService.CALENDAR))
 
         assertEquals(KompaktSyncStartResult.Started(mapOf(KompaktSyncService.CALENDAR to calendarRun)), start)
-        coVerify(exactly = 0) { provisioning.ensureRow(any(), KompaktSyncService.CONTACTS) }
+        coVerify(exactly = 0) { provisioning.ensureProvisioned(any(), KompaktSyncService.CONTACTS) }
         coVerify(exactly = 0) { syncWork.enqueue(any(), KompaktSyncService.CONTACTS, any()) }
     }
 
@@ -163,7 +163,7 @@ class KompaktStartSyncUseCaseTest {
         every { network.isAvailable(account) } returns false
 
         assertEquals(KompaktSyncStartResult.NoneEligible, startSync(account))
-        coVerify(exactly = 0) { provisioning.ensureRow(any(), any()) }
+        coVerify(exactly = 0) { provisioning.ensureProvisioned(any(), any()) }
         assertTrue(calls.none { it.startsWith("enqueue") })
     }
 
@@ -254,7 +254,7 @@ class KompaktStartSyncUseCaseTest {
 
     @Test
     fun aServiceWithNoRowAndNoneDiscoverableIsLeftAlone() = runTest {
-        coEvery { provisioning.ensureRow(account, KompaktSyncService.CONTACTS) } returns false
+        coEvery { provisioning.ensureProvisioned(account, KompaktSyncService.CONTACTS) } returns false
 
         val start = startSync(account)
 
@@ -265,7 +265,7 @@ class KompaktStartSyncUseCaseTest {
 
     @Test
     fun aServiceThatCannotBeConfiguredAtAllIsLeftAlone() = runTest {
-        coEvery { provisioning.ensureRow(account, KompaktSyncService.CONTACTS) } throws RuntimeException("no")
+        coEvery { provisioning.ensureProvisioned(account, KompaktSyncService.CONTACTS) } throws RuntimeException("no")
 
         assertEquals(
             KompaktSyncStartResult.Started(mapOf(KompaktSyncService.CALENDAR to calendarRun)),

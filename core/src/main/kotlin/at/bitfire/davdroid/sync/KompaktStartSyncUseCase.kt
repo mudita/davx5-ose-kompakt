@@ -105,7 +105,7 @@ class KompaktStartSyncUseCase @Inject constructor(
         awaitDiscovery: Boolean
     ): Boolean =
         try {
-            provisioning.ensureRow(account, service).also { ready ->
+            provisioning.ensureProvisioned(account, service).also { ready ->
                 if (ready)
                     initDefaults.ensureApplied(account, service, awaitDiscovery)
                 else

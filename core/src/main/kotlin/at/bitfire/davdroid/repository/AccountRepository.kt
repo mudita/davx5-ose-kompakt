@@ -146,6 +146,68 @@ class AccountRepository @Inject constructor(
         return id
     }
 
+    /**
+     * The counterpart to [addServiceBlocking]: removes one service's [Service] row — and with it, by
+     * cascade, its home sets and collections — together with the copies already synced to the device.
+     * No-op if the account has no row of this service's type.
+     *
+     * The synced copies have to go explicitly. Neither route that removes them on unlink applies while
+     * the account survives: the calendar provider only drops calendars whose owner account is gone, and
+     * [AccountsCleanupWorker] only drops address books whose owner account is gone.
+     */
+    suspend fun removeService(accountName: String, service: KompaktSyncService): Unit =
+        withContext(defaultDispatcher) {
+            val account = fromName(accountName)
+            val serviceRow = serviceRepository.getByAccountAndType(accountName, service.serviceType)
+                ?: return@withContext
+
+            // Before the row, which cascades the collections the copies are found by.
+            when (service) {
+                KompaktSyncService.CONTACTS ->
+                    removeAddressBooks(account, serviceRow.id)
+
+                // Keeping the row is the lesser failure: deleting it would cascade the only records that
+                // still map those calendars, leaving them on the device with nothing able to find them.
+                KompaktSyncService.CALENDAR ->
+                    if (!removeCalendars(account, serviceRow.id)) {
+                        logger.warning("Couldn't reach ${account.name}'s calendars; keeping the $service row")
+                        return@withContext
+                    }
+            }
+
+            serviceRepository.deleteById(serviceRow.id)
+        }
+
+    /** `false` if the calendar provider could not be acquired, so nothing was removed. */
+    private suspend fun removeCalendars(account: Account, calDavServiceId: Long): Boolean {
+        val store = localCalendarStore.get()
+        val client = store.acquireContentProvider(throwOnMissingPermissions = false) ?: return false
+        try {
+            for (collection in collectionRepository.getByService(calDavServiceId))
+                store.getByDbCollectionId(account, client, collection.id)?.let(store::delete)
+        } finally {
+            @Suppress("DEPRECATION") client.release()
+        }
+        return true
+    }
+
+    /**
+     * Removes an account's address books by both lookups, because neither covers the other: by owner
+     * account misses one whose owner-account record is stale, which a half-finished rename leaves, and
+     * by collection id misses one whose collection row is stale, duplicated or gone.
+     *
+     * [cardDavServiceId] may be `null`, in which case only the owner-account lookup runs — an account
+     * with no CardDAV row can still own address books.
+     */
+    private suspend fun removeAddressBooks(account: Account, cardDavServiceId: Long?) {
+        val store = localAddressBookStore.get()
+        store.deleteByAccount(account)
+        if (cardDavServiceId == null)
+            return
+        for (collection in collectionRepository.getByService(cardDavServiceId))
+            store.deleteByCollectionId(collection.id)
+    }
+
     suspend fun delete(accountName: String): Boolean = withContext(defaultDispatcher) {
         val account = fromName(accountName)
         try {
@@ -165,15 +227,8 @@ class AccountRepository @Inject constructor(
             // the account itself is already gone, so a failure here must not skip the database cleanup
             // below and report the whole unlink as failed.
             try {
-                // by owner account first: an address book whose collection row is stale, duplicated or
-                // already gone is invisible to the per-collection lookup, and used to survive the
-                // unlink with all of its contacts
-                localAddressBookStore.get().deleteByAccount(account)
-                serviceRepository.getByAccountAndType(accountName, Service.TYPE_CARDDAV)?.let { service ->
-                    collectionRepository.getByService(service.id).forEach { collection ->
-                        localAddressBookStore.get().deleteByCollectionId(collection.id)
-                    }
-                }
+                val cardDavServiceId = serviceRepository.getByAccountAndType(accountName, Service.TYPE_CARDDAV)?.id
+                removeAddressBooks(account, cardDavServiceId)
             } catch (e: Exception) {
                 logger.log(Level.WARNING, "Couldn't purge address books of $accountName, removing account anyway", e)
             }

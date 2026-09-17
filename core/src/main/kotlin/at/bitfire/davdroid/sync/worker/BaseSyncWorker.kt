@@ -33,6 +33,7 @@ import at.bitfire.davdroid.sync.SyncResult
 import at.bitfire.davdroid.sync.TaskSyncer
 import at.bitfire.davdroid.sync.TasksAppManager
 import at.bitfire.davdroid.sync.account.InvalidAccountException
+import at.bitfire.davdroid.sync.isConsented
 import at.bitfire.davdroid.sync.worker.BaseSyncWorker.Companion.NO_RESYNC
 import at.bitfire.davdroid.sync.worker.BaseSyncWorker.Companion.RESYNC_ENTRIES
 import at.bitfire.davdroid.sync.worker.BaseSyncWorker.Companion.RESYNC_LIST
@@ -124,6 +125,18 @@ abstract class BaseSyncWorker(
                 workManager.cancelWorkById(workId)
 
                 return Result.failure()
+            }
+
+            // Kompakt: a service whose consent was withdrawn must not reach the network. clearProvisioning
+            // normally removes it long before a run gets here, so this catches what that cannot: an
+            // account left with an armed worker from before it existed, and entry points that skip
+            // KompaktStartSyncUseCase's consent check, such as the Android sync framework.
+            // A null auth state is left alone: that is an account not using OAuth, not a withdrawn scope.
+            val kompaktService = KompaktSyncService.fromDataType(dataType)
+            val authState = kompaktAccountSettings.getAuthState(account)
+            if (kompaktService != null && authState != null && !kompaktService.isConsented(authState)) {
+                logger.info("No Google consent for $kompaktService on $account; not syncing it")
+                return Result.success()
             }
 
             if (inputData.getBoolean(INPUT_MANUAL, false))
