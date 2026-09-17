@@ -5,6 +5,7 @@
 package at.bitfire.davdroid.ui.setup
 
 import android.accounts.Account
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -48,17 +49,21 @@ class KompaktLoginActivity @Inject constructor() : AppCompatActivity() {
         private const val EXTRA_SWITCHED_FROM_ACCOUNT = "switchedFromAccount"
 
         /**
-         * Encodes a re-authorization outcome for [android.app.Activity.setResult]. `null` whenever
-         * there is nothing for the caller to act on, which every outcome can be.
+         * The whole [Activity.setResult] answer for a re-authorization outcome. The code and the data
+         * are decided in one place because reading one tells a caller nothing about the other: only a
+         * cancellation is [Activity.RESULT_CANCELED], and every other outcome can still carry no data.
          */
-        fun reauthResultIntent(result: KompaktReauthResult): Intent? = when (result) {
+        fun reauthActivityResult(result: KompaktReauthResult): Pair<Int, Intent?> = when (result) {
             is KompaktReauthResult.Refreshed ->
-                result.consent?.let { Intent().putExtra(EXTRA_CONSENT_CHANGE, consentChangeBundle(it)) }
+                RESULT_OK to
+                    result.consent?.let { Intent().putExtra(EXTRA_CONSENT_CHANGE, consentChangeBundle(it)) }
 
             is KompaktReauthResult.Switched ->
-                result.removedAccount?.let { Intent().putExtra(EXTRA_SWITCHED_FROM_ACCOUNT, it) }
+                RESULT_OK to
+                    result.removedAccount?.let { Intent().putExtra(EXTRA_SWITCHED_FROM_ACCOUNT, it) }
 
-            KompaktReauthResult.Cancelled -> null
+            KompaktReauthResult.Cancelled ->
+                RESULT_CANCELED to null
         }
 
         /**
@@ -135,10 +140,8 @@ class KompaktLoginActivity @Inject constructor() : AppCompatActivity() {
                         account = account,
                         onNavUp = { onBackPressedDispatcher.onBackPressed() },
                         onFinish = { result ->
-                            setResult(
-                                if (result == KompaktReauthResult.Cancelled) RESULT_CANCELED else RESULT_OK,
-                                reauthResultIntent(result)
-                            )
+                            val (code, data) = reauthActivityResult(result)
+                            setResult(code, data)
                             finish()
                         }
                     )

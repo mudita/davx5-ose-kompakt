@@ -4,6 +4,7 @@
 
 package at.bitfire.davdroid.ui.setup
 
+import android.app.Activity
 import android.content.Intent
 import at.bitfire.davdroid.sync.KompaktSyncService
 import org.junit.Assert.assertEquals
@@ -19,7 +20,18 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class KompaktLoginActivityTest {
 
-    private fun encode(result: KompaktReauthResult) = KompaktLoginActivity.reauthResultIntent(result)
+    private fun encode(result: KompaktReauthResult) = KompaktLoginActivity.reauthActivityResult(result).second
+
+    private fun code(result: KompaktReauthResult) = KompaktLoginActivity.reauthActivityResult(result).first
+
+    // A caller that reads the code as "something came back" would act on a refresh that determined
+    // nothing and on a switch that removed nothing, both of which carry no data at all.
+    @Test
+    fun `only a cancellation is not RESULT_OK`() {
+        assertEquals(Activity.RESULT_CANCELED, code(KompaktReauthResult.Cancelled))
+        assertEquals(Activity.RESULT_OK, code(KompaktReauthResult.Refreshed(consent = null)))
+        assertEquals(Activity.RESULT_OK, code(KompaktReauthResult.Switched(removedAccount = null)))
+    }
 
     @Test
     fun `every consent state survives the round trip`() {
