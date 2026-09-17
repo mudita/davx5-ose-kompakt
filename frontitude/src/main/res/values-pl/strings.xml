@@ -46,7 +46,7 @@
   <string name="common_dialog_button_later">Później</string>
   <string name="common_dialog_button_tryagain">Spróbuj ponownie</string>
   <string name="common_error_body_opensettingstocheck">Otwórz ustawienia, aby sprawdzić, czy Wi-Fi i komórkowa transmisja danych są włączone</string>
-  <string name="common_error_dialog_body_changestorage">Zmień lokalizację przechowywania lub zwolnij trochę pamięci i spróbuj ponownie</string>
+  <string name="common_error_dialog_body_freesomespaceinyourphone">Zwolnij trochę miejsca w pamięci telefonu i spróbuj ponownie</string>
   <string name="common_error_dialog_h1_storageisfull">Pamięć jest pełna</string>
   <string name="common_label_calendar">Kalendarz</string>
   <string name="common_label_contacts">Kontakty</string>

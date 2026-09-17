@@ -46,7 +46,7 @@
   <string name="common_dialog_button_later">Plus tard</string>
   <string name="common_dialog_button_tryagain">Réessayer</string>
   <string name="common_error_body_opensettingstocheck">Ouvrez les paramètres pour vérifier l’activation des données et du Wi-Fi</string>
-  <string name="common_error_dialog_body_changestorage">Modifiez l\'emplacement de stockage ou libérez de l\'espace, puis réessayez</string>
+  <string name="common_error_dialog_body_freesomespaceinyourphone">Libérez de l’espace dans le stockage de votre téléphone, puis réessayez</string>
   <string name="common_error_dialog_h1_storageisfull">Votre espace de stockage est plein</string>
   <string name="common_label_calendar">Agenda</string>
   <string name="common_label_contacts">Contacts</string>

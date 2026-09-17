@@ -46,7 +46,7 @@
   <string name="common_dialog_button_later">Más tarde</string>
   <string name="common_dialog_button_tryagain">Reintentar</string>
   <string name="common_error_body_opensettingstocheck">Abre los ajustes para comprobar que los datos y la Wi-Fi estén activados</string>
-  <string name="common_error_dialog_body_changestorage">Escoge otra ubicación de almacenamiento o libera espacio e inténtalo de nuevo</string>
+  <string name="common_error_dialog_body_freesomespaceinyourphone">Libera espacio en el almacenamiento de tu teléfono e inténtalo de nuevo</string>
   <string name="common_error_dialog_h1_storageisfull">El almacenamiento está lleno</string>
   <string name="common_label_calendar">Calendario</string>
   <string name="common_label_contacts">Contactos</string>

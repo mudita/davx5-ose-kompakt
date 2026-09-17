@@ -46,7 +46,7 @@
   <string name="common_dialog_button_later">Později</string>
   <string name="common_dialog_button_tryagain">Zkuste to znovu</string>
   <string name="common_error_body_opensettingstocheck">Otevřete nastavení a zkontrolujte, zda jsou data a Wi-Fi zapnuté</string>
-  <string name="common_error_dialog_body_changestorage">Změňte umístění úložiště nebo uvolněte místo a zkuste to znovu</string>
+  <string name="common_error_dialog_body_freesomespaceinyourphone">Uvolněte místo v úložišti telefonu a zkuste to znovu</string>
   <string name="common_error_dialog_h1_storageisfull">Úložiště je plné</string>
   <string name="common_label_calendar">Kalendář</string>
   <string name="common_label_contacts">Kontakty</string>

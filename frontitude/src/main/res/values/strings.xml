@@ -46,7 +46,7 @@
   <string name="common_dialog_button_later">Later</string>
   <string name="common_dialog_button_tryagain">Try again</string>
   <string name="common_error_body_opensettingstocheck">Open settings to check data and Wi-Fi are switched on</string>
-  <string name="common_error_dialog_body_changestorage">Change storage location or free some space then try again</string>
+  <string name="common_error_dialog_body_freesomespaceinyourphone">Free some space in your phone storage then try again</string>
   <string name="common_error_dialog_h1_storageisfull">Your storage is full</string>
   <string name="common_label_calendar">Calendar</string>
   <string name="common_label_contacts">Contacts</string>

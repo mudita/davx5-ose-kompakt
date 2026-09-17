@@ -62,7 +62,7 @@ filter_keys = [
     'common_dialog_button_later',
     'common_dialog_button_tryagain',
     'common_error_body_opensettingstocheck',
-    'common_error_dialog_body_changestorage',
+    'common_error_dialog_body_freesomespaceinyourphone',
     'common_error_dialog_h1_storageisfull',
     'common_label_calendar',
     'common_label_contacts',

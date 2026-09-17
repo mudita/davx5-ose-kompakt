@@ -46,7 +46,7 @@
   <string name="common_dialog_button_later">Later</string>
   <string name="common_dialog_button_tryagain">Opnieuw proberen</string>
   <string name="common_error_body_opensettingstocheck">Open de instellingen om te controleren of data en Wi-Fi zijn ingeschakeld</string>
-  <string name="common_error_dialog_body_changestorage">Wijzig de opslaglocatie of maak wat ruimte vrij en probeer het opnieuw</string>
+  <string name="common_error_dialog_body_freesomespaceinyourphone">Maak ruimte vrij in de opslag van uw telefoon en probeer het opnieuw</string>
   <string name="common_error_dialog_h1_storageisfull">Uw opslag is vol</string>
   <string name="common_label_calendar">Kalender</string>
   <string name="common_label_contacts">Contacten</string>

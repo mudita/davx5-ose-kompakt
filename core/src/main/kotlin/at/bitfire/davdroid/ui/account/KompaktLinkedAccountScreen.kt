@@ -304,7 +304,7 @@ fun KompaktLinkedAccountContent(
             KompaktMessageSheet(
                 onDismissRequest = actions.onDismissDialog,
                 title = stringResource(RFrontitude.string.common_error_dialog_h1_storageisfull),
-                text = stringResource(RFrontitude.string.common_error_dialog_body_changestorage),
+                text = stringResource(RFrontitude.string.common_error_dialog_body_freesomespaceinyourphone),
                 icon = painterResource(R.drawable.ic_kompakt_alert),
                 buttonLabel = stringResource(RFrontitude.string.common_dialog_button_cancel)
             )
