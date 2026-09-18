@@ -1,0 +1,23 @@
+docs/superpowers/specs/2026-09-11-linked-account-dialog-management-design.md
+  c70ce7a3bfe71e05 1-574
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "c27c9722053c69215d818d9e66faa628e0fb1f18",
+  "prompts": {
+    "c70ce7a3bfe71e05": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2456d5ba-d56f-488b-810f-db6ddd0092f7",
+        "model": "claude-opus-5"
+      },
+      "human_author": null,
+      "messages": [],
+      "total_additions": 1540,
+      "total_deletions": 4,
+      "accepted_lines": 574,
+      "overriden_lines": 0
+    }
+  }
+}

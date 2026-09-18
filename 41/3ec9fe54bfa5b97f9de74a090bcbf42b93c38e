@@ -1,0 +1,26 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountScreen.kt
+  c70ce7a3bfe71e05 87,100,102-103
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountModel.kt
+  c70ce7a3bfe71e05 50,77-78,138,205-206,210-212,327,329-331
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "413ec9fe54bfa5b97f9de74a090bcbf42b93c38e",
+  "prompts": {
+    "c70ce7a3bfe71e05": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2456d5ba-d56f-488b-810f-db6ddd0092f7",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 42,
+      "total_deletions": 77,
+      "accepted_lines": 1424,
+      "overriden_lines": 13,
+      "messages_url": "https://gitai.miquido.dev/cas/0f13628c6e69fcf3041a0592571c6b2895f434bf6934688762dac7fc358f6a68"
+    }
+  }
+}

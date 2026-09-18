@@ -1,0 +1,42 @@
+frontitude/src/main/res/values-pt/strings.xml
+  b6aad515679eb905 23,36
+frontitude/keys_to_filter.py
+  b6aad515679eb905 39,52
+frontitude/src/main/res/values/strings.xml
+  b6aad515679eb905 23,36
+frontitude/src/main/res/values-cs/strings.xml
+  b6aad515679eb905 23,36
+frontitude/src/main/res/values-de/strings.xml
+  b6aad515679eb905 23,36
+frontitude/src/main/res/values-nl/strings.xml
+  b6aad515679eb905 23,36
+frontitude/src/main/res/values-es/strings.xml
+  b6aad515679eb905 23,36
+frontitude/src/main/res/values-it/strings.xml
+  b6aad515679eb905 23,36
+frontitude/src/main/res/values-pl/strings.xml
+  b6aad515679eb905 23,36
+frontitude/src/main/res/values-fr/strings.xml
+  b6aad515679eb905 23,36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "2da2bf115ec5fc9b06bc88bb50d4d9a11aec9d6c",
+  "prompts": {
+    "b6aad515679eb905": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9ff4c116-62ca-4958-80f3-4ec5f9c28ab7",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 3724,
+      "total_deletions": 63,
+      "accepted_lines": 3724,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/456be3f7a377d136e7acf49f6dec7bb0e63240a4958eb5bbdce18cc8a079a88d"
+    }
+  }
+}

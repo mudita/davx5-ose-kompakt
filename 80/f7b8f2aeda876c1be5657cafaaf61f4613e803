@@ -1,0 +1,24 @@
+docs/kompakt-testing.md
+  c70ce7a3bfe71e05 89-96,106-109,134-136
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "80f7b8f2aeda876c1be5657cafaaf61f4613e803",
+  "prompts": {
+    "c70ce7a3bfe71e05": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2456d5ba-d56f-488b-810f-db6ddd0092f7",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 31,
+      "accepted_lines": 1361,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/9068e1fa7f2f2f9336aa49a580a7b3eb0d6d43dc0be96dc92af6a1a421f28694"
+    }
+  }
+}

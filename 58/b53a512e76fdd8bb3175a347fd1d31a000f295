@@ -1,0 +1,44 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountScreen.kt
+  bc9dc68395f8ae4b 267,386
+frontitude/src/main/res/values-nl/strings.xml
+  bc9dc68395f8ae4b 3,8
+frontitude/src/main/res/values-it/strings.xml
+  bc9dc68395f8ae4b 3,8
+frontitude/src/main/res/values-fr/strings.xml
+  bc9dc68395f8ae4b 3,8
+frontitude/keys_to_filter.py
+  bc9dc68395f8ae4b 19,24
+frontitude/src/main/res/values-es/strings.xml
+  bc9dc68395f8ae4b 3,8
+frontitude/src/main/res/values/strings.xml
+  bc9dc68395f8ae4b 3,8
+frontitude/src/main/res/values-pl/strings.xml
+  bc9dc68395f8ae4b 3,8
+frontitude/src/main/res/values-de/strings.xml
+  bc9dc68395f8ae4b 3,8
+frontitude/src/main/res/values-pt/strings.xml
+  bc9dc68395f8ae4b 3,8
+frontitude/src/main/res/values-cs/strings.xml
+  bc9dc68395f8ae4b 3,8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "58b53a512e76fdd8bb3175a347fd1d31a000f295",
+  "prompts": {
+    "bc9dc68395f8ae4b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7315314e-5743-4c56-be48-5ce3d10229dc",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Roman Savka",
+      "messages": [],
+      "total_additions": 43958,
+      "total_deletions": 678,
+      "accepted_lines": 43380,
+      "overriden_lines": 2,
+      "messages_url": "https://gitai.miquido.dev/cas/4ec348bba1bc5901ca86679c5f392a73043f9495fcc02311c2da67d6c5c48976"
+    }
+  }
+}
