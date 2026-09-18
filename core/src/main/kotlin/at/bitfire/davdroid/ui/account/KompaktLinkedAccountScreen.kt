@@ -72,8 +72,7 @@ data class KompaktLinkedAccountActions(
     val onReauthorize: () -> Unit = {},
     val onGrantConsent: (serviceType: String) -> Unit = {},
     val onNewContactsConsentShown: () -> Unit = {},
-    val onImportServiceNow: (KompaktSyncService) -> Unit = {},
-    val onAcknowledgePermissionChange: (KompaktSyncService) -> Unit = {}
+    val onImportServiceNow: (KompaktSyncService) -> Unit = {}
 )
 
 /** Stateful half of the screen; [KompaktLinkedAccountContent] renders and is previewable. */
@@ -159,8 +158,7 @@ fun KompaktLinkedAccountScreen(
                 onReauthorize = onReauthorize,
                 onGrantConsent = onGrantConsent,
                 onNewContactsConsentShown = model::newContactsConsentShown,
-                onImportServiceNow = model::importServiceNow,
-                onAcknowledgePermissionChange = model::acknowledgePermissionChange
+                onImportServiceNow = model::importServiceNow
             ),
             showAccountLinkedDialog = showAccountLinkedDialog
         )
@@ -363,17 +361,17 @@ fun KompaktLinkedAccountContent(
 
         is KompaktLinkedAccountDialog.PermissionChanged ->
             KompaktModalSheet(
-                onDismissRequest = { actions.onAcknowledgePermissionChange(dialog.service) },
+                onDismissRequest = actions.onDismissDialog,
                 title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_permissionchanged),
                 text = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_body_disablingpermissionswillremove),
                 icon = painterResource(R.drawable.ic_kompakt_alert),
                 confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_enablesync),
                 onConfirm = {
-                    actions.onAcknowledgePermissionChange(dialog.service)
+                    actions.onDismissDialog()
                     actions.onGrantConsent(dialog.service.serviceType)
                 },
                 dismissLabel = stringResource(RFrontitude.string.common_button_ok),
-                onDismiss = { actions.onAcknowledgePermissionChange(dialog.service) }
+                onDismiss = actions.onDismissDialog
             )
 
         KompaktLinkedAccountDialog.NewContactsConsent ->

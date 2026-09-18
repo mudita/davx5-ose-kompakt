@@ -172,11 +172,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     fun consentChanged(consent: Map<KompaktSyncService, KompaktConsentState>) {
         val withdrawn = withdrawnService(consent) ?: return
-        dialogSlot.condition(KompaktLinkedAccountDialog.PermissionChanged(withdrawn), active = true)
-    }
-
-    fun acknowledgePermissionChange(service: KompaktSyncService) {
-        dialogSlot.condition(KompaktLinkedAccountDialog.PermissionChanged(service), active = false)
+        dialogSlot.raise(KompaktLinkedAccountDialog.PermissionChanged(withdrawn))
     }
 
     fun onReauthLaunchStarted() {
