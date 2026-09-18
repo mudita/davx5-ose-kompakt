@@ -1,0 +1,24 @@
+docs/app-integration.md
+  22095db8c84adf9e 286-289
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "1be8a74ab4b30da71f757ac8ce73ae86794ba4fa",
+  "prompts": {
+    "22095db8c84adf9e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "eee39407-3a33-4dd7-945c-b8f6a6f3ad18",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 44,
+      "total_deletions": 30,
+      "accepted_lines": 51,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/6fdc1297a612da29ceb78d63881e0b46c7c2a6ab33cb398a4c24f7b68490b443"
+    }
+  }
+}

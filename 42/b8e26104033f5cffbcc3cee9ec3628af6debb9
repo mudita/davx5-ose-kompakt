@@ -1,0 +1,28 @@
+core/src/test/kotlin/at/bitfire/davdroid/ui/setup/KompaktReauthModelTest.kt
+  22095db8c84adf9e 147-156
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktReauthModel.kt
+  22095db8c84adf9e 128-136
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountModel.kt
+  22095db8c84adf9e 179-182
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "42b8e26104033f5cffbcc3cee9ec3628af6debb9",
+  "prompts": {
+    "22095db8c84adf9e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "eee39407-3a33-4dd7-945c-b8f6a6f3ad18",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 3196,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/50053366e243ed713574bde85a8fb1fc4a0da793f6475356bb59c6dccfd1cfaa"
+    }
+  }
+}

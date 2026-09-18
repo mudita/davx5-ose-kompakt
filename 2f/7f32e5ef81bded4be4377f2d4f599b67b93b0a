@@ -1,0 +1,50 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "2f7f32e5ef81bded4be4377f2d4f599b67b93b0a",
+  "prompts": {
+    "3da9a1f4e40f4936": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6df365e4-eeee-4a29-94ae-5a9a6b2de8c0",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 436,
+      "total_deletions": 1,
+      "accepted_lines": 435,
+      "overriden_lines": 1,
+      "messages_url": "https://gitai.miquido.dev/cas/3fbb0d3324c90d653a66675291cd58a18e89501549e1534b707957fe082a5290"
+    },
+    "5d777df72100f82b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c0d01e2-3837-403b-97ec-12856704c903",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 408,
+      "total_deletions": 0,
+      "accepted_lines": 397,
+      "overriden_lines": 2,
+      "messages_url": "https://gitai.miquido.dev/cas/0bac07df6c796ad377fef92e63ae81f7e1dfc1fd26cf6dcfafbc490cf90f79e9"
+    },
+    "a1c108e868d7178d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "af068673-0b51-44dc-8318-10848d3bc6e4",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 308,
+      "total_deletions": 0,
+      "accepted_lines": 304,
+      "overriden_lines": 1,
+      "messages_url": "https://gitai.miquido.dev/cas/38b6922400f8e129b4f5babde5259e37a6c2195377b6ba8e14b63309593156b7"
+    }
+  }
+}
