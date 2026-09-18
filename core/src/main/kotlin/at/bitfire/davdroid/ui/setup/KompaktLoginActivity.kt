@@ -40,11 +40,8 @@ class KompaktLoginActivity @Inject constructor() : AppCompatActivity() {
          * of [KompaktSyncService] name to [KompaktConsentState] name. Absent when that could not be
          * determined. Nothing stores it, so a caller that ignores the result data loses the only
          * chance to act on the change.
-         *
-         * Read it with [consentChangeFrom] rather than by hand — this is the only place the encoding
-         * is written, and it should stay the only place it is read.
          */
-        const val EXTRA_CONSENT_CHANGE = "consentChange"
+        private const val EXTRA_CONSENT_CHANGE = "consentChange"
 
         private const val EXTRA_SWITCHED_FROM_ACCOUNT = "switchedFromAccount"
 
