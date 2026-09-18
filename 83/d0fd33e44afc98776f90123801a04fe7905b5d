@@ -1,0 +1,24 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktLoginActivity.kt
+  22095db8c84adf9e 44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "83d0fd33e44afc98776f90123801a04fe7905b5d",
+  "prompts": {
+    "22095db8c84adf9e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "eee39407-3a33-4dd7-945c-b8f6a6f3ad18",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Agnieszka Adamczyk",
+      "messages": [],
+      "total_additions": 3203,
+      "total_deletions": 11,
+      "accepted_lines": 3191,
+      "overriden_lines": 6,
+      "messages_url": "https://gitai.miquido.dev/cas/50053366e243ed713574bde85a8fb1fc4a0da793f6475356bb59c6dccfd1cfaa"
+    }
+  }
+}
