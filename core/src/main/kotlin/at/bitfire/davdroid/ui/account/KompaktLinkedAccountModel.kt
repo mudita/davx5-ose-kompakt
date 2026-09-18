@@ -176,14 +176,11 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     }
 
     fun acknowledgePermissionChange(service: KompaktSyncService) {
-        // The offer is retired first and directly. A withdrawn Contacts consent satisfies it too, so it
-        // is already waiting one rank below; retiring only the message would let it take the slot until
-        // the flag write lands, surfacing the permission the user just declined. The flag still follows,
-        // because it is what keeps the offer retired on the next entry.
-        if (service == KompaktSyncService.CONTACTS) {
+        // A withdrawn Contacts consent satisfies the offer too, so it is already waiting one rank below.
+        // Retiring only the message would let it take the slot for as long as the flag KompaktReauthModel
+        // wrote takes to reach this collector, surfacing the permission the user just declined.
+        if (service == KompaktSyncService.CONTACTS)
             dialogSlot.condition(KompaktLinkedAccountDialog.NewContactsConsent, active = false)
-            newContactsConsentShown()
-        }
         dialogSlot.condition(KompaktLinkedAccountDialog.PermissionChanged(service), active = false)
     }
 

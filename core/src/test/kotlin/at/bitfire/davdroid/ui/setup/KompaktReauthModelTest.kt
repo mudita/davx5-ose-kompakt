@@ -144,4 +144,14 @@ class KompaktReauthModelTest {
         )
     }
 
+    // Contacts never granted, and refused again on the combined screen: no consent changed, so nothing
+    // else here reacts — yet the offer to grant it would otherwise follow the refusal straight away.
+    @Test
+    fun `refusing Contacts again retires the offer to grant it`() = runTest {
+        held(calendarScope)
+        model().apply(account, reauthGranting(calendarScope))
+
+        coVerify { kompaktAccountSettings.setNewContactsConsentShown(account) }
+    }
+
 }

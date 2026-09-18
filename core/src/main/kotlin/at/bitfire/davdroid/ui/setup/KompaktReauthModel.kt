@@ -125,6 +125,15 @@ class KompaktReauthModel @Inject constructor(
                         null
                     }
 
+                    // The combined consent screen just asked for Contacts, so whatever came back is a
+                    // deliberate answer. The "you can also sync Contacts" offer is for accounts linked
+                    // before that screen could ask at all, and must not follow a fresh refusal.
+                    try {
+                        kompaktAccountSettings.setNewContactsConsentShown(account)
+                    } catch (e: Exception) {
+                        logger.log(Level.WARNING, "Couldn't retire the new Contacts consent offer for $account", e)
+                    }
+
                     consent?.let {
                         clearRevokedServices(account, it)
                         try {
