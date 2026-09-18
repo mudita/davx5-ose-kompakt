@@ -9,6 +9,7 @@
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">Je ziet geen gegevens uit je Google-account meer</string>
   <string name="calendar_accountsync_dialog_button_enablecalendarsync">Synchronisatie van agenda inschakelen</string>
   <string name="calendar_accountsync_dialog_button_enablecontactsync">Synchronisatie van contacten inschakelen</string>
+  <string name="calendar_accountsync_dialog_button_enablesync">Synchronisatie inschakelen</string>
   <string name="calendar_accountsync_dialog_button_importnow">Nu importeren</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Account koppelen</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Account gekoppeld</string>
@@ -17,8 +18,10 @@
   <string name="calendar_accountsync_dialog_h1_enablecalendarsync">Synchronisatie van agenda inschakelen\?</string>
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Synchronisatie van contacten inschakelen\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Google-account koppelen</string>
+  <string name="calendar_accountsync_dialog_h1_permissionchanged">Machtiging gewijzigd</string>
   <string name="calendar_accountsync_dialog_h1_permissionsgranted">Machtigingen verleend</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Account verwijderen\?</string>
+  <string name="calendar_accountsync_error_dialog_body_disablingpermissionswillremove">Machtigingen uitschakelen verwijdert sommige Google-accountgegevens van je apparaat</string>
   <string name="calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization">Schakel kalender- en contactensynchronisatie in om gegevens te synchroniseren</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Koppel je account opnieuw om door te gaan met synchroniseren met Google</string>
   <string name="calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountlinking">Gebruik de linkerschakelaar om accountkoppeling toe te staan</string>

@@ -9,6 +9,7 @@
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">Ya no verás los datos de tu cuenta de Google</string>
   <string name="calendar_accountsync_dialog_button_enablecalendarsync">Activar la sincronización del calendario</string>
   <string name="calendar_accountsync_dialog_button_enablecontactsync">Activar la sincronización de contactos</string>
+  <string name="calendar_accountsync_dialog_button_enablesync">Activar la sincronización</string>
   <string name="calendar_accountsync_dialog_button_importnow">Importar ahora</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Vincular cuenta</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Cuenta vinculada</string>
@@ -17,8 +18,10 @@
   <string name="calendar_accountsync_dialog_h1_enablecalendarsync">¿Activar la sincronización del calendario\?</string>
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">¿Activar la sincronización de contactos\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Vincular una cuenta de Google</string>
+  <string name="calendar_accountsync_dialog_h1_permissionchanged">Permiso modificado</string>
   <string name="calendar_accountsync_dialog_h1_permissionsgranted">Permisos concedidos</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">¿Eliminar cuenta\?</string>
+  <string name="calendar_accountsync_error_dialog_body_disablingpermissionswillremove">Desactivar los permisos eliminará de tu dispositivo algunos datos de la cuenta de Google</string>
   <string name="calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization">Activa la sincronización del calendario y de los contactos para sincronizar los datos</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Vincula tu cuenta nuevamente para continuar sincronizando con Google</string>
   <string name="calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountlinking">Usa el interruptor de la izquierda para permitir la vinculación de la cuenta</string>

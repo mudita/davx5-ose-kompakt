@@ -11,7 +11,9 @@ import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.servicedetection.DavResourceFinder
 import at.bitfire.davdroid.settings.Credentials
 import at.bitfire.davdroid.settings.KompaktAccountSettings
+import dagger.Lazy
 import kotlinx.coroutines.runInterruptible
+import java.util.logging.Logger
 import javax.inject.Inject
 
 /**
@@ -27,7 +29,10 @@ class KompaktServiceProvisioning @Inject constructor(
     private val accountRepository: AccountRepository,
     private val serviceRepository: DavServiceRepository,
     private val resourceFinderFactory: DavResourceFinder.Factory,
-    private val oAuthGoogle: KompaktOAuthGoogle
+    private val oAuthGoogle: KompaktOAuthGoogle,
+    private val syncWork: KompaktSyncWork,
+    private val automaticSyncManager: Lazy<AutomaticSyncManager>,
+    private val logger: Logger
 ) {
 
     /** `false` if the row is absent and could not be discovered, so the caller must leave it alone. */
@@ -49,6 +54,38 @@ class KompaktServiceProvisioning @Inject constructor(
 
         accountRepository.addServiceBlocking(account.name, service, discovered)
         return true
+    }
+
+    /**
+     * Undoes [ensureRow] and everything the first sync built on it, so the account is left exactly as it
+     * was before this service was ever consented: no row, no collections, no stored interval, no
+     * applied-defaults marker, and no synced copies on the device.
+     *
+     * A later [ensureRow] therefore takes the first-grant path — discovery, then [KompaktInitDefaults]
+     * writing the selection and the interval — rather than needing anything remembered.
+     *
+     * Leaves everything in place when the synced copies could not be removed, so the service is either
+     * fully cleared or untouched.
+     */
+    suspend fun clearProvisioning(account: Account, service: KompaktSyncService) {
+        // Cancelled here rather than through the interval, which would re-arm the periodic worker for as
+        // long as the row is still there.
+        syncWork.cancel(account, service)
+
+        // Clearing the interval while the row survives is worse than clearing nothing: updateAutomaticSync
+        // would then find a service to schedule for and no stored interval, and fall back to the four-hour
+        // default — arming the periodic worker for the service the user just revoked.
+        if (!accountRepository.removeService(account.name, service)) {
+            logger.warning("Couldn't remove $service for $account; leaving it provisioned")
+            return
+        }
+
+        accountSettings.clearSyncInterval(account, service.dataType)
+        accountSettings.clearDefaultsApplied(account, service)
+
+        // With the row gone this takes the no-service branch, which is what disables the periodic worker
+        // and the content trigger.
+        automaticSyncManager.get().updateAutomaticSync(account, service.dataType)
     }
 
 }

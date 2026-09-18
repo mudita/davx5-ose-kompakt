@@ -48,6 +48,7 @@ sealed interface KompaktLinkedAccountDialog {
     ) : KompaktLinkedAccountDialog
     /** Carries the service, so confirming imports the one the sheet named. */
     data class ImportServiceNow(val service: KompaktSyncService) : KompaktLinkedAccountDialog
+    data class PermissionChanged(val service: KompaktSyncService) : KompaktLinkedAccountDialog
     data object NewContactsConsent : KompaktLinkedAccountDialog
     data class RequestConsent(val service: KompaktSyncService) : KompaktLinkedAccountDialog
     /** Carries the service so the sheet can name it, rather than the screen remembering which was tapped. */
@@ -75,9 +76,10 @@ internal fun rank(dialog: KompaktLinkedAccountDialog): Int = when (dialog) {
     is KompaktLinkedAccountDialog.ExplainSyncFailure -> 6
     is KompaktLinkedAccountDialog.ImportServiceNow -> 7
     is KompaktLinkedAccountDialog.RequestConsent -> 8
-    KompaktLinkedAccountDialog.NewContactsConsent -> 9
-    is KompaktLinkedAccountDialog.ConfirmDisable -> 10
-    KompaktLinkedAccountDialog.ConfirmUnlink -> 11
+    is KompaktLinkedAccountDialog.PermissionChanged -> 9
+    KompaktLinkedAccountDialog.NewContactsConsent -> 10
+    is KompaktLinkedAccountDialog.ConfirmDisable -> 11
+    KompaktLinkedAccountDialog.ConfirmUnlink -> 12
 }
 
 internal fun newContactsConsentVisible(

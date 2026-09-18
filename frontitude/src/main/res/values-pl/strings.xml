@@ -9,6 +9,7 @@
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">Nie będziesz już widzieć danych ze swojego konta Google</string>
   <string name="calendar_accountsync_dialog_button_enablecalendarsync">Włącz synchronizację kalendarza</string>
   <string name="calendar_accountsync_dialog_button_enablecontactsync">Włącz synchronizację kontaktów</string>
+  <string name="calendar_accountsync_dialog_button_enablesync">Włącz synchronizację</string>
   <string name="calendar_accountsync_dialog_button_importnow">Importuj teraz</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Połącz konto</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Konto połączone</string>
@@ -17,8 +18,10 @@
   <string name="calendar_accountsync_dialog_h1_enablecalendarsync">Włączyć synchronizację kalendarza\?</string>
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Włączyć synchronizację kontaktów\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Połącz konto Google</string>
+  <string name="calendar_accountsync_dialog_h1_permissionchanged">Uprawnienie zmienione</string>
   <string name="calendar_accountsync_dialog_h1_permissionsgranted">Uprawnienia przyznane</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Usunąć konto\?</string>
+  <string name="calendar_accountsync_error_dialog_body_disablingpermissionswillremove">Wyłączenie uprawnień usunie z Twojego urządzenia niektóre dane konta Google</string>
   <string name="calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization">Włącz synchronizację kalendarza i kontaktów, aby synchronizować dane</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Ponownie połącz swoje konto, aby kontynuować synchronizację z Google</string>
   <string name="calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountlinking">Użyj przełącznika po lewej stronie, aby włączyć łączenie konta</string>

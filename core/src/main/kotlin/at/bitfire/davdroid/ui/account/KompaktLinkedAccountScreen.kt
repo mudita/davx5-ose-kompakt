@@ -101,10 +101,14 @@ fun KompaktLinkedAccountScreen(
     ) { result ->
         // Release the blank screen whatever the outcome; the flag itself is observed, not read here.
         model.onReauthResult()
-        // RESULT_OK means a different account was linked — a switch, which gets the same "Account
-        // linked" dialog. Pass the old account explicitly: the accounts flow may already report the new.
-        if (result.resultCode == Activity.RESULT_OK)
-            onAccountSwitched(account.name)
+        if (result.resultCode == Activity.RESULT_OK) {
+            // A switch and a refresh are alternatives, so the result carries at most one of these.
+            val switchedFrom = KompaktLoginActivity.switchedFromAccount(result.data)
+            if (switchedFrom != null)
+                onAccountSwitched(switchedFrom)
+            else
+                KompaktLoginActivity.consentChangeFrom(result.data)?.let(model::consentChanged)
+        }
     }
     val onReauthorize = {
         reauthLauncher.launch(
@@ -353,6 +357,21 @@ fun KompaktLinkedAccountContent(
                 service = state.dialog.service,
                 onDismiss = actions.onDismissDialog,
                 onGrantConsent = actions.onGrantConsent
+            )
+
+        is KompaktLinkedAccountDialog.PermissionChanged ->
+            KompaktModalSheet(
+                onDismissRequest = actions.onDismissDialog,
+                title = stringResource(RFrontitude.string.calendar_accountsync_dialog_h1_permissionchanged),
+                text = stringResource(RFrontitude.string.calendar_accountsync_error_dialog_body_disablingpermissionswillremove),
+                icon = painterResource(R.drawable.ic_kompakt_alert),
+                confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_enablesync),
+                onConfirm = {
+                    actions.onDismissDialog()
+                    actions.onGrantConsent(dialog.service.serviceType)
+                },
+                dismissLabel = stringResource(RFrontitude.string.common_button_ok),
+                onDismiss = actions.onDismissDialog
             )
 
         KompaktLinkedAccountDialog.NewContactsConsent ->

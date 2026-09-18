@@ -22,6 +22,8 @@ import at.bitfire.davdroid.sync.KompaktServiceProvisioning
 import at.bitfire.davdroid.sync.KompaktServiceSyncOutcome
 import at.bitfire.davdroid.sync.KompaktSyncAttempt
 import at.bitfire.davdroid.sync.KompaktSyncService
+import at.bitfire.davdroid.ui.setup.KompaktConsentState
+import at.bitfire.davdroid.ui.setup.withdrawnService
 import at.bitfire.davdroid.sync.isConsented
 import at.bitfire.davdroid.util.dateformat.KompaktLastSyncFormatSource
 import dagger.assisted.Assisted
@@ -166,6 +168,11 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
                 logger.log(Level.WARNING, "Couldn't mark the new Contacts consent shown for $account", e)
             }
         }
+    }
+
+    fun consentChanged(consent: Map<KompaktSyncService, KompaktConsentState>) {
+        val withdrawn = withdrawnService(consent) ?: return
+        dialogSlot.raise(KompaktLinkedAccountDialog.PermissionChanged(withdrawn))
     }
 
     fun onReauthLaunchStarted() {

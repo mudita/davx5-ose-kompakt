@@ -37,6 +37,9 @@ interface ServiceDao {
     @Query("DELETE FROM service")
     fun deleteAll()
 
+    @Query("DELETE FROM service WHERE id=:id")
+    suspend fun deleteById(id: Long)
+
     @Query("DELETE FROM service WHERE accountName=:accountName")
     suspend fun deleteByAccount(accountName: String)
 

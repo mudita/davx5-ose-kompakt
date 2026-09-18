@@ -55,6 +55,9 @@ interface KompaktAccountSettings {
 
     suspend fun setDefaultsApplied(account: Account, service: KompaktSyncService, version: Int)
 
+    /** Forgets the marker, so the service reads as one whose defaults have never been applied. */
+    suspend fun clearDefaultsApplied(account: Account, service: KompaktSyncService)
+
     /** The marker written before it was split per service, which meant "calendar defaults applied". */
     fun getLegacyDefaultsAppliedVersion(account: Account): Int?
 
@@ -88,6 +91,12 @@ interface KompaktAccountSettings {
     fun observeSyncInterval(account: Account, dataType: SyncDataType, emitInitial: Boolean = true): Flow<Long?>
 
     suspend fun setSyncInterval(account: Account, dataType: SyncDataType, seconds: Long?)
+
+    /**
+     * Removes the stored interval entirely, which is not what `setSyncInterval(null)` does -- that
+     * writes the manual sentinel, the record of a user switching the service off.
+     */
+    suspend fun clearSyncInterval(account: Account, dataType: SyncDataType)
 
     /** The stored OAuth authorization, or `null` when none is stored. */
     fun getAuthState(account: Account): AuthState?
@@ -144,6 +153,9 @@ class KompaktAccountSettingsImpl @Inject constructor(
     override suspend fun setDefaultsApplied(account: Account, service: KompaktSyncService, version: Int) =
         putRaw(account, defaultsAppliedKey(service), version.toString())
 
+    override suspend fun clearDefaultsApplied(account: Account, service: KompaktSyncService) =
+        putRaw(account, defaultsAppliedKey(service), null)
+
     override fun getLegacyDefaultsAppliedVersion(account: Account) =
         get(account, KEY_DEFAULTS_APPLIED)?.toIntOrNull()
 
@@ -172,6 +184,9 @@ class KompaktAccountSettingsImpl @Inject constructor(
             accountSettingsFactory.create(account)
                 .setSyncInterval(dataType, seconds, delayFirstRun = true)
         }
+
+    override suspend fun clearSyncInterval(account: Account, dataType: SyncDataType) =
+        putRaw(account, intervalKey(dataType), null)
 
     override fun getAuthState(account: Account) =
         authStateOf(get(account, AccountSettings.KEY_AUTH_STATE))
