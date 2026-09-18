@@ -12,12 +12,14 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.ConscryptMode
 
 /**
  * A re-authorization outcome crosses an activity boundary as names, so nothing but this encoder and
  * these two readers knows the encoding — and a rename on either enum has to keep surviving the trip.
  */
 @RunWith(RobolectricTestRunner::class)
+@ConscryptMode(ConscryptMode.Mode.OFF)      // required because main project uses Conscrypt, but unit tests do not
 class KompaktLoginActivityTest {
 
     private fun encode(result: KompaktReauthResult) = KompaktLoginActivity.reauthActivityResult(result).second
