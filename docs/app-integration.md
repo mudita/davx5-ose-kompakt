@@ -285,6 +285,10 @@ Alternatively, a **runtime‑registered** `BroadcastReceiver` on `at.bitfire.dav
 
 ### Notes / limitations
 
+- `needs_reauth = 0` means the token is valid, **not** that every service syncs. The user can
+  withdraw the Calendar or Contacts consent during re-authorization; that service's data is then
+  removed from the device while the account stays linked and its token stays valid. The calendars
+  are deleted **through the provider**, so a `ContentObserver` on `CalendarContract` is notified.
 - The provider is **read‑only**; other apps cannot mutate the auth state.
 - The broadcast fires only on **transitions** (valid→invalid and invalid→valid), not on every failed
   sync. For the absolute current state, always query the provider.

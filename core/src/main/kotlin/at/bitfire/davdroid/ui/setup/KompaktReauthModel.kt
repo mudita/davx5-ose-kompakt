@@ -11,7 +11,9 @@ import at.bitfire.davdroid.di.qualifier.IoDispatcher
 import at.bitfire.davdroid.network.KompaktGrantedServices
 import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.settings.KompaktAccountSettings
+import at.bitfire.davdroid.sync.KompaktServiceProvisioning
 import at.bitfire.davdroid.sync.KompaktStartSyncUseCase
+import at.bitfire.davdroid.sync.KompaktSyncService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,9 +31,11 @@ import javax.inject.Inject
  * After OAuth completes ([apply]):
  *  - **Same account** — the fresh OAuth [net.openid.appauth.AuthState] is applied **in place** (via
  *    [KompaktAccountSettings.updateAuthState]), preserving the account and its pending local changes, and a sync
- *    is enqueued → [ReauthState.Refreshed]. The account is never unlinked on this path. If the
- *    re-authorization granted neither the Calendar nor the Contacts scope, the token is **not** applied
- *    and the flow reports [ReauthState.Failed] instead.
+ *    is enqueued → [ReauthState.Refreshed]. The account is never unlinked on this path. Anything short
+ *    of that whole sequence reports [ReauthState.Failed] rather than a refresh. What the authorization
+ *    did to each service is reported in [ReauthState.Refreshed] and travels out whole through the
+ *    screen's result; deciding what of it is worth saying belongs to the screen that raises the
+ *    message, not to this one.
  *  - **Different account** — this model creates nothing; it moves to [ReauthState.SwitchingToNewAccount]
  *    so the screen can link the new account via the normal `KompaktLoginScreen` pipeline. Once that
  *    succeeds the screen calls [completeSwitch], which removes the old account
@@ -42,6 +46,7 @@ class KompaktReauthModel @Inject constructor(
     private val kompaktAccountSettings: KompaktAccountSettings,
     private val startSyncUseCase: KompaktStartSyncUseCase,
     private val accountRepository: AccountRepository,
+    private val provisioning: KompaktServiceProvisioning,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     private val logger: Logger
 ) : ViewModel() {
@@ -50,12 +55,21 @@ class KompaktReauthModel @Inject constructor(
         /** Running the Google OAuth flow — the initial state, before the result is known. */
         data object Authenticating : ReauthState
 
-        /** Same account re-authorized: token refreshed in place; the screen may close. */
-        data object Refreshed : ReauthState
+        /**
+         * Same account re-authorized: token refreshed in place; the screen may close.
+         *
+         * [consent] is what the authorization did to every service, or `null` when no authorization came
+         * back at all, leaving nothing to compare. "Nothing changed" is a map of
+         * [KompaktConsentState.KEPT], which is a different answer from not knowing.
+         */
+        data class Refreshed(
+            val consent: Map<KompaktSyncService, KompaktConsentState>?
+        ) : ReauthState
 
         /**
-         * Re-authorization completed, but the granted authorization carries neither the Calendar nor the
-         * Contacts scope (the user continued without granting either), so the account still can't sync.
+         * Re-authorization completed but did not land, so the whole thing is the user's to retry: it
+         * granted neither the Calendar nor the Contacts scope, a service it changed could not be brought
+         * in line with it, or a write threw. Retrying is safe from any of them.
          */
         data object Failed : ReauthState
 
@@ -88,7 +102,7 @@ class KompaktReauthModel @Inject constructor(
             when {
                 authState == null -> {
                     logger.warning("Re-auth produced no auth state; not applying")
-                    _state.value = ReauthState.Refreshed
+                    _state.value = ReauthState.Refreshed(consent = null)
                 }
 
                 email != null && !email.equals(account.name, ignoreCase = true) ->
@@ -101,14 +115,38 @@ class KompaktReauthModel @Inject constructor(
 
                 else -> {
                     try {
+                        val consent = consentDiff(
+                            KompaktGrantedServices.fromAuthState(kompaktAccountSettings.getAuthState(account)),
+                            KompaktGrantedServices.fromAuthState(authState)
+                        )
+
+                        // Before any write, so a change that cannot be applied leaves the account as the
+                        // user already knows it and the whole authorization can be retried.
+                        if (!provisioning.applyConsentChange(account, consent, authState)) {
+                            _state.value = ReauthState.Failed
+                            return@launch
+                        }
+
                         kompaktAccountSettings.updateAuthState(account, authState)
                         // Clearing the flag is what publishes the change, via KompaktAuthStateReplicator.
-                        kompaktAccountSettings.setReauthNeeded(account, false)
-                        startSyncUseCase(account)
+                        kompaktAccountSettings.setReauthNeeded(account, needed = false)
+                        // The combined consent screen just asked for Contacts, so whatever came back is a
+                        // deliberate answer. The "you can also sync Contacts" offer is for accounts linked
+                        // before that screen could ask at all, and must not follow a fresh refusal.
+                        kompaktAccountSettings.setNewContactsConsentShown(account)
+
+                        // The authorization has landed by now, so a sync that won't start doesn't undo it.
+                        try {
+                            startSyncUseCase(account)
+                        } catch (e: Exception) {
+                            logger.log(Level.WARNING, "Couldn't start a sync after re-authorizing $account", e)
+                        }
+
+                        _state.value = ReauthState.Refreshed(consent)
                     } catch (e: Exception) {
-                        logger.log(Level.WARNING, "Couldn't store re-authorized credentials for $account", e)
+                        logger.log(Level.WARNING, "Couldn't apply the re-authorization for $account", e)
+                        _state.value = ReauthState.Failed
                     }
-                    _state.value = ReauthState.Refreshed
                 }
             }
         }

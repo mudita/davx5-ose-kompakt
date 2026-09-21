@@ -17,7 +17,27 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.settings.Credentials
+import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.ui.composable.KompaktTheme
+
+/** How the re-authorization ended. */
+sealed interface KompaktReauthResult {
+
+    /** The same account was re-authorized in place; [consent] is `null` when nothing determined it. */
+    data class Refreshed(
+        val consent: Map<KompaktSyncService, KompaktConsentState>?
+    ) : KompaktReauthResult
+
+    /**
+     * A different account was linked. [removedAccount] names the account the switch replaced, and is
+     * `null` when that account survived the switch — the caller waits for the account it is given to
+     * leave the accounts flow, and one that is still there never will.
+     */
+    data class Switched(val removedAccount: String?) : KompaktReauthResult
+
+    /** The user left before anything was applied; the linked account is unchanged. */
+    data object Cancelled : KompaktReauthResult
+}
 
 /**
  * Kompakt re-authorization screen for an existing [account] whose token expired. A pure renderer of
@@ -36,7 +56,7 @@ import at.bitfire.davdroid.ui.composable.KompaktTheme
 fun KompaktReauthScreen(
     account: Account,
     onNavUp: () -> Unit,
-    onFinish: (switched: Boolean) -> Unit,
+    onFinish: (KompaktReauthResult) -> Unit,
     model: KompaktReauthModel = hiltViewModel()
 ) {
     when (val state = model.state.collectAsStateWithLifecycle().value) {
@@ -58,7 +78,7 @@ fun KompaktReauthScreen(
                     if (newAccount != null)
                         model.completeSwitch(account)   // new account linked → remove the old one
                     else
-                        onFinish(false)                 // backed out before linking → keep the old account
+                        onFinish(KompaktReauthResult.Cancelled)   // backed out before linking → keep the old account
                 }
             )
 
@@ -81,12 +101,18 @@ fun KompaktReauthScreen(
                 }
             }
 
-        KompaktReauthModel.ReauthState.Refreshed ->
-            LaunchedEffect(Unit) { onFinish(false) }    // same account refreshed in place — nothing linked
+        is KompaktReauthModel.ReauthState.Refreshed ->
+            LaunchedEffect(Unit) { onFinish(KompaktReauthResult.Refreshed(state.consent)) }
 
         is KompaktReauthModel.ReauthState.Done ->
             // switched only if the old account was actually removed; otherwise finish without success
-            LaunchedEffect(Unit) { onFinish(state.switched) }
+            LaunchedEffect(Unit) {
+                onFinish(
+                    KompaktReauthResult.Switched(
+                        removedAccount = if (state.switched) account.name else null
+                    )
+                )
+            }
     }
 }
 

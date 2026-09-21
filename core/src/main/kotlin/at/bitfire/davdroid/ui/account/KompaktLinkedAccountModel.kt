@@ -22,6 +22,8 @@ import at.bitfire.davdroid.sync.KompaktServiceProvisioning
 import at.bitfire.davdroid.sync.KompaktServiceSyncOutcome
 import at.bitfire.davdroid.sync.KompaktSyncAttempt
 import at.bitfire.davdroid.sync.KompaktSyncService
+import at.bitfire.davdroid.ui.setup.KompaktConsentState
+import at.bitfire.davdroid.ui.setup.withdrawnService
 import at.bitfire.davdroid.sync.isConsented
 import at.bitfire.davdroid.util.dateformat.KompaktLastSyncFormatSource
 import dagger.assisted.Assisted
@@ -168,6 +170,11 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         }
     }
 
+    fun consentChanged(consent: Map<KompaktSyncService, KompaktConsentState>) {
+        val withdrawn = withdrawnService(consent) ?: return
+        dialogSlot.raise(KompaktLinkedAccountDialog.PermissionChanged(withdrawn))
+    }
+
     fun onReauthLaunchStarted() {
         if (_reauthPhase.value == ReauthPhase.PENDING_LAUNCH) {
             _reauthPhase.value = ReauthPhase.AWAITING_RESULT
@@ -209,9 +216,9 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
             if (enabled && readSwitch(service) == KompaktSyncSwitch.ConsentMissing)
                 return@launch
 
-            // A plain re-auth grants every scope, so consent can exist with no row behind it — the switch
-            // reads Off rather than ConsentMissing for exactly that state. The row must exist first:
-            // AutomaticSyncManager.updateAutomaticSync arms the worker only for a service that has one.
+            // The row has to exist before the interval is written: that write is what arms the periodic
+            // worker, and it arms nothing for a service without a row. Leaving the row to the sync below
+            // is too late and hides itself — the manual run succeeds while automatic sync never starts.
             if (enabled && !provisioning.ensureRow(account, service)) {
                 logger.warning("Couldn't find a $service for $account; leaving the switch off")
                 return@launch

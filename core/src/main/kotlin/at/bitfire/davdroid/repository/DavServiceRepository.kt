@@ -49,6 +49,9 @@ class DavServiceRepository @Inject constructor(
 
     fun deleteAllBlocking() = dao.deleteAll()
 
+    suspend fun deleteById(id: Long) =
+        dao.deleteById(id)
+
     suspend fun deleteByAccount(accountName: String) =
         dao.deleteByAccount(accountName)
 

@@ -9,6 +9,7 @@
   <string name="calendar_accountsync_dialog_body_youwontseedatafromyourgoogle">Sie sehen keine Daten aus Ihrem Google-Konto mehr</string>
   <string name="calendar_accountsync_dialog_button_enablecalendarsync">Kalendersynchronisierung aktivieren</string>
   <string name="calendar_accountsync_dialog_button_enablecontactsync">Kontaktsynchronisierung aktivieren</string>
+  <string name="calendar_accountsync_dialog_button_enablesync">Synchronisierung aktivieren</string>
   <string name="calendar_accountsync_dialog_button_importnow">Jetzt importieren</string>
   <string name="calendar_accountsync_dialog_button_linkaccount">Konto verknüpfen</string>
   <string name="calendar_accountsync_dialog_h1_accountlinked">Konto verknüpft</string>
@@ -17,8 +18,10 @@
   <string name="calendar_accountsync_dialog_h1_enablecalendarsync">Kalendersynchronisierung aktivieren\?</string>
   <string name="calendar_accountsync_dialog_h1_enablecontactsync">Kontaktsynchronisierung aktivieren\?</string>
   <string name="calendar_accountsync_dialog_h1_linkagoogleaccount">Google-Konto verknüpfen</string>
+  <string name="calendar_accountsync_dialog_h1_permissionchanged">Berechtigung geändert</string>
   <string name="calendar_accountsync_dialog_h1_permissionsgranted">Berechtigungen erteilt</string>
   <string name="calendar_accountsync_dialog_h1_removeaccount">Konto entfernen\?</string>
+  <string name="calendar_accountsync_error_dialog_body_disablingpermissionswillremove">Das Deaktivieren von Berechtigungen entfernt einige Google-Kontodaten von Ihrem Gerät</string>
   <string name="calendar_accountsync_error_dialog_body_enablecalendarandcontactsynchronization">Aktivieren Sie die Kalender- und Kontaktsynchronisierung, um Daten zu synchronisieren</string>
   <string name="calendar_accountsync_error_dialog_body_linkyouraccountagain">Verknüpfen Sie Ihr Konto erneut, um weiterhin mit Google zu synchronisieren</string>
   <string name="calendar_accountsync_error_dialog_body_usetheleftsideswitchtoallowaccountlinking">Benutze den Schalter auf der linken Seite, um die Kontoverknüpfung zu erlauben</string>

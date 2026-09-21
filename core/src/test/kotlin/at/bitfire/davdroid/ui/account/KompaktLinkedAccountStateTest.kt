@@ -73,6 +73,7 @@ class KompaktLinkedAccountStateTest {
         ),
         KompaktLinkedAccountDialog.ImportServiceNow(KompaktSyncService.CALENDAR),
         KompaktLinkedAccountDialog.RequestConsent(KompaktSyncService.CONTACTS),
+        KompaktLinkedAccountDialog.PermissionChanged(KompaktSyncService.CALENDAR),
         KompaktLinkedAccountDialog.NewContactsConsent,
         KompaktLinkedAccountDialog.ConfirmDisable(KompaktSyncService.CONTACTS),
         KompaktLinkedAccountDialog.ConfirmUnlink
@@ -140,6 +141,28 @@ class KompaktLinkedAccountStateTest {
             outranks(
                 KompaktLinkedAccountDialog.RequestConsent(KompaktSyncService.CALENDAR),
                 KompaktLinkedAccountDialog.NewContactsConsent
+            )
+        )
+    }
+
+    @Test
+    fun `a withdrawn permission outranks the unprompted offer`() {
+        // A re-authorization that drops Contacts satisfies both, and the offer would present the
+        // permission just withdrawn as a feature the user has not tried yet.
+        assertTrue(
+            outranks(
+                KompaktLinkedAccountDialog.PermissionChanged(KompaktSyncService.CONTACTS),
+                KompaktLinkedAccountDialog.NewContactsConsent
+            )
+        )
+    }
+
+    @Test
+    fun `a consent the user asked for outranks a withdrawn permission`() {
+        assertTrue(
+            outranks(
+                KompaktLinkedAccountDialog.RequestConsent(KompaktSyncService.CALENDAR),
+                KompaktLinkedAccountDialog.PermissionChanged(KompaktSyncService.CONTACTS)
             )
         )
     }

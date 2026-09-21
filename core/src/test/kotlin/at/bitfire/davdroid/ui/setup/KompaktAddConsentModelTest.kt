@@ -14,7 +14,11 @@ import at.bitfire.davdroid.repository.AccountRepository
 import at.bitfire.davdroid.repository.DavServiceRepository
 import at.bitfire.davdroid.servicedetection.DavResourceFinder
 import at.bitfire.davdroid.settings.KompaktAccountSettings
+import at.bitfire.davdroid.sync.AutomaticSyncManager
+import at.bitfire.davdroid.sync.KompaktServiceProvisioning
 import at.bitfire.davdroid.sync.KompaktSyncService
+import at.bitfire.davdroid.sync.KompaktSyncWork
+import dagger.Lazy
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -59,17 +63,28 @@ class KompaktAddConsentModelTest {
     private val resourceFinderFactory = mockk<DavResourceFinder.Factory>()
     private val serviceRepository = mockk<DavServiceRepository>()
 
+    // Real, so the discovery and insert this flow delegates are still the ones under test; only the
+    // collaborators it reaches through are mocked, exactly as before they moved behind it.
+    private val provisioning = KompaktServiceProvisioning(
+        accountSettings = kompaktAccountSettings,
+        accountRepository = accountRepository,
+        serviceRepository = serviceRepository,
+        resourceFinderFactory = resourceFinderFactory,
+        oAuthGoogle = oAuthGoogle,
+        syncWork = mockk<KompaktSyncWork>(relaxed = true),
+        automaticSyncManager = Lazy { mockk<AutomaticSyncManager>(relaxed = true) },
+        logger = logger
+    )
+
     private fun model(service: KompaktSyncService) =
         KompaktAddConsentModel(
             account = account,
             service = service,
-            accountRepository = accountRepository,
             authService = authService,
             kompaktAccountSettings = kompaktAccountSettings,
             oAuthGoogle = oAuthGoogle,
             oAuthIntegration = oAuthIntegration,
-            resourceFinderFactory = resourceFinderFactory,
-            serviceRepository = serviceRepository,
+            provisioning = provisioning,
             ioDispatcher = UnconfinedTestDispatcher(),
             logger = logger
         )
