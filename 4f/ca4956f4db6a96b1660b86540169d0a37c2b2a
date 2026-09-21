@@ -1,0 +1,23 @@
+docs/kompakt-testing.md
+  3ad0cf975db49bc2 91,93-94,96-108,111-123,125-147,149,153,157,160-163,165-225
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "4fca4956f4db6a96b1660b86540169d0a37c2b2a",
+  "prompts": {
+    "3ad0cf975db49bc2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "257a214f-f2a1-4c65-b83a-322f74235113",
+        "model": "claude-opus-5"
+      },
+      "human_author": null,
+      "messages": [],
+      "total_additions": 85213,
+      "total_deletions": 2949,
+      "accepted_lines": 43499,
+      "overriden_lines": 0
+    }
+  }
+}
