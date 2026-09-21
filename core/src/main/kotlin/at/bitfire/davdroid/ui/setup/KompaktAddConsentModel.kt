@@ -11,11 +11,8 @@ import at.bitfire.davdroid.di.qualifier.IoDispatcher
 import at.bitfire.davdroid.network.KompaktGrantedServices
 import at.bitfire.davdroid.network.KompaktOAuthGoogle
 import at.bitfire.davdroid.network.OAuthIntegration
-import at.bitfire.davdroid.repository.AccountRepository
-import at.bitfire.davdroid.repository.DavServiceRepository
-import at.bitfire.davdroid.servicedetection.DavResourceFinder
-import at.bitfire.davdroid.settings.Credentials
 import at.bitfire.davdroid.settings.KompaktAccountSettings
+import at.bitfire.davdroid.sync.KompaktServiceProvisioning
 import at.bitfire.davdroid.sync.KompaktSyncService
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -26,7 +23,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runInterruptible
 import net.openid.appauth.AuthState
 import net.openid.appauth.AuthorizationRequest
 import net.openid.appauth.AuthorizationResponse
@@ -36,9 +32,9 @@ import java.util.logging.Logger
 
 /**
  * Drives the Kompakt "add a missing Calendar/Contacts consent" flow for an already-linked [account]:
- * re-runs Google authorization, applies the grant **in place** on success, and creates the one
- * [at.bitfire.davdroid.db.Service] row [service] was missing. Every scope is requested, not just the
- * missing one — see [KompaktOAuthGoogle.signIn].
+ * re-runs Google authorization, creates the one [at.bitfire.davdroid.db.Service] row [service] was
+ * missing, and applies the grant **in place** once that succeeded. Every scope is requested, not just
+ * the missing one — see [KompaktOAuthGoogle.signIn].
  *
  * Unlike [KompaktReauthModel], a different Google account authorizing here is never a switch — see
  * [classifyAddConsentResult] — and unlike a first-time link, discovery for the newly-granted service
@@ -48,13 +44,11 @@ import java.util.logging.Logger
 class KompaktAddConsentModel @AssistedInject constructor(
     @Assisted private val account: Account,
     @Assisted private val service: KompaktSyncService,
-    private val accountRepository: AccountRepository,
     private val authService: AuthorizationService,
     private val kompaktAccountSettings: KompaktAccountSettings,
     private val oAuthGoogle: KompaktOAuthGoogle,
     private val oAuthIntegration: OAuthIntegration,
-    private val resourceFinderFactory: DavResourceFinder.Factory,
-    private val serviceRepository: DavServiceRepository,
+    private val provisioning: KompaktServiceProvisioning,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     private val logger: Logger
 ) : ViewModel() {
@@ -134,14 +128,10 @@ class KompaktAddConsentModel @AssistedInject constructor(
     }
 
     private suspend fun apply(authState: AuthState) {
-        if (serviceRepository.getByAccountAndType(account.name, service.serviceType) == null) {
-            val discovered = discoverService(authState)
-            if (discovered == null) {
-                logger.warning("Discovery found no $service for $account; leaving the grant unrecorded so it can be retried")
-                _state.value = AddConsentState.Failed
-                return
-            }
-            accountRepository.addServiceBlocking(account.name, service, discovered)
+        if (!provisioning.provision(account, service, authState)) {
+            logger.warning("Discovery found no $service for $account; leaving the grant unrecorded so it can be retried")
+            _state.value = AddConsentState.Failed
+            return
         }
 
         // Through KompaktAccountSettings rather than AccountSettings directly: its change signal is what
@@ -153,21 +143,6 @@ class KompaktAddConsentModel @AssistedInject constructor(
         kompaktAccountSettings.setReauthNeeded(account, false)
 
         _state.value = AddConsentState.Granted
-    }
-
-    private suspend fun discoverService(authState: AuthState): DavResourceFinder.Configuration.ServiceInfo? {
-        val credentials = Credentials(authState = authState)
-        // Thread interruption is how DavResourceFinder notices cancellation; without runInterruptible,
-        // cancelling this coroutine leaves the OkHttp calls running to their own timeouts.
-        val config = runInterruptible {
-            resourceFinderFactory
-                .create(oAuthGoogle.baseUri(account.name), credentials)
-                .findInitialConfiguration()
-        }
-        return when (service) {
-            KompaktSyncService.CALENDAR -> config.calDAV
-            KompaktSyncService.CONTACTS -> config.cardDAV
-        }
     }
 
     private fun readCurrentGrantedServices(): Set<String> =

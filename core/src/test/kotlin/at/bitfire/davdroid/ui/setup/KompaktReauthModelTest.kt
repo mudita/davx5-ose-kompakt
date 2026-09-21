@@ -14,6 +14,7 @@ import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.sync.KompaktServiceProvisioning
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.slot
 import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
@@ -21,6 +22,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -28,8 +30,10 @@ import org.robolectric.annotation.ConscryptMode
 import java.util.logging.Logger
 
 /**
- * The refresh-in-place branch: what a re-authorization does to the services it no longer covers, and
- * what must survive a step of it failing.
+ * The refresh-in-place branch: the change this model reads out of an authorization, that it hands the
+ * whole change to provisioning before storing anything, and that a change which cannot be applied
+ * leaves the account untouched. Which service the change means what for is
+ * [at.bitfire.davdroid.sync.KompaktServiceProvisioningTest]'s.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -56,6 +60,11 @@ class KompaktReauthModelTest {
         logger = logger
     )
 
+    @Before
+    fun setUp() {
+        coEvery { provisioning.applyConsentChange(any(), any(), any()) } returns true
+    }
+
     /** What the account held before the re-authorization. */
     private fun held(vararg scopes: String) {
         every { kompaktAccountSettings.getAuthState(account) } returns mockAuthState(*scopes)
@@ -67,69 +76,135 @@ class KompaktReauthModelTest {
         suggestedAccountName = account.name
     )
 
-    // a withdrawn consent is taken back to never-consented
+    // the change the authorization made is what provisioning is handed
 
     @Test
-    fun `the service that lost its scope is removed`() = runTest {
-        held(calendarScope, contactsScope)
-        model().apply(account, reauthGranting(calendarScope))
+    fun `the change read out of the authorization is the one applied`() = runTest {
+        held(calendarScope)
+        val consent = slot<Map<KompaktSyncService, KompaktConsentState>>()
+        coEvery { provisioning.applyConsentChange(account, capture(consent), any()) } returns true
 
-        coVerify { provisioning.clearProvisioning(account, KompaktSyncService.CONTACTS) }
+        model().apply(account, reauthGranting(contactsScope))
+
+        assertEquals(KompaktConsentState.GRANTED, consent.captured[KompaktSyncService.CONTACTS])
+        assertEquals(KompaktConsentState.REVOKED, consent.captured[KompaktSyncService.CALENDAR])
     }
 
     @Test
-    fun `the service that kept its scope is left alone`() = runTest {
+    fun `a re-authorization that changed nothing still applies the change it read`() = runTest {
         held(calendarScope, contactsScope)
-        model().apply(account, reauthGranting(calendarScope))
+        val consent = slot<Map<KompaktSyncService, KompaktConsentState>>()
+        coEvery { provisioning.applyConsentChange(account, capture(consent), any()) } returns true
 
-        coVerify(exactly = 0) { provisioning.clearProvisioning(account, KompaktSyncService.CALENDAR) }
-    }
-
-    @Test
-    fun `a re-authorization that changed nothing removes nothing`() = runTest {
-        held(calendarScope, contactsScope)
         model().apply(account, reauthGranting(calendarScope, contactsScope))
 
-        coVerify(exactly = 0) { provisioning.clearProvisioning(any(), any()) }
+        assertEquals(KompaktConsentState.KEPT, consent.captured[KompaktSyncService.CALENDAR])
+        assertEquals(KompaktConsentState.KEPT, consent.captured[KompaktSyncService.CONTACTS])
     }
 
+    // The account does not hold the granting token yet, so provisioning has to be handed it rather than
+    // read it back from the account.
     @Test
-    fun `a scope gained is not a scope lost`() = runTest {
+    fun `the change is applied before the token is stored`() = runTest {
         held(calendarScope)
         model().apply(account, reauthGranting(calendarScope, contactsScope))
 
-        coVerify(exactly = 0) { provisioning.clearProvisioning(any(), any()) }
+        coVerifyOrder {
+            provisioning.applyConsentChange(account, any(), any())
+            kompaktAccountSettings.updateAuthState(account, any())
+        }
     }
 
-    // The sync would otherwise be enqueued while the withdrawn service still had its row and interval.
+    // The sync decides what to enqueue from the rows that exist, so a row written after it is a row the
+    // enqueue could not see.
     @Test
-    fun `the service is removed before the sync is enqueued`() = runTest {
-        held(calendarScope, contactsScope)
-        model().apply(account, reauthGranting(calendarScope))
+    fun `the change is applied before the sync is enqueued`() = runTest {
+        held(calendarScope)
+        model().apply(account, reauthGranting(calendarScope, contactsScope))
 
         coVerifyOrder {
-            provisioning.clearProvisioning(account, KompaktSyncService.CONTACTS)
+            provisioning.applyConsentChange(account, any(), any())
             startSyncUseCase(any(), any(), any())
         }
     }
 
 
-    // neither later step may cost the user the explanation of what changed
+    // a change that cannot be applied applies nothing at all, so the whole authorization is retryable
 
     @Test
-    fun `a removal that fails still reports the change`() = runTest {
-        held(calendarScope, contactsScope)
-        coEvery { provisioning.clearProvisioning(any(), any()) } throws IllegalStateException("no")
+    fun `a change that cannot be applied fails the re-authorization`() = runTest {
+        held(calendarScope)
+        coEvery { provisioning.applyConsentChange(any(), any(), any()) } returns false
 
         val model = model()
-        model.apply(account, reauthGranting(calendarScope))
+        model.apply(account, reauthGranting(calendarScope, contactsScope))
 
-        val state = model.state.value as KompaktReauthModel.ReauthState.Refreshed
+        assertEquals(KompaktReauthModel.ReauthState.Failed, model.state.value)
+    }
+
+    @Test
+    fun `a change that throws fails the re-authorization`() = runTest {
+        held(calendarScope)
+        coEvery { provisioning.applyConsentChange(any(), any(), any()) } throws IllegalStateException("no")
+
+        val model = model()
+        model.apply(account, reauthGranting(calendarScope, contactsScope))
+
+        assertEquals(KompaktReauthModel.ReauthState.Failed, model.state.value)
+    }
+
+    @Test
+    fun `a change that cannot be applied leaves the token unstored`() = runTest {
+        held(calendarScope)
+        coEvery { provisioning.applyConsentChange(any(), any(), any()) } returns false
+
+        model().apply(account, reauthGranting(calendarScope, contactsScope))
+
+        coVerify(exactly = 0) { kompaktAccountSettings.updateAuthState(any(), any()) }
+    }
+
+    @Test
+    fun `a change that cannot be applied enqueues no sync`() = runTest {
+        held(calendarScope)
+        coEvery { provisioning.applyConsentChange(any(), any(), any()) } returns false
+
+        model().apply(account, reauthGranting(calendarScope, contactsScope))
+
+        coVerify(exactly = 0) { startSyncUseCase(any(), any(), any()) }
+    }
+
+
+    @Test
+    fun `a token that cannot be stored fails the re-authorization`() = runTest {
+        held(calendarScope)
+        coEvery { kompaktAccountSettings.updateAuthState(any(), any()) } throws IllegalStateException("no")
+
+        val model = model()
+        model.apply(account, reauthGranting(calendarScope, contactsScope))
+
+        assertEquals(KompaktReauthModel.ReauthState.Failed, model.state.value)
+    }
+
+    // The change is already applied by then, so the retry has to be able to walk over it. Both halves
+    // of it answer the second call without doing anything, which is what makes that safe.
+    @Test
+    fun `a re-authorization retried after a failed write goes through`() = runTest {
+        held(calendarScope)
+        coEvery { kompaktAccountSettings.updateAuthState(any(), any()) } throws IllegalStateException("no")
+
+        val model = model()
+        model.apply(account, reauthGranting(calendarScope, contactsScope))
+        coEvery { kompaktAccountSettings.updateAuthState(any(), any()) } returns Unit
+        model.apply(account, reauthGranting(calendarScope, contactsScope))
+
         assertEquals(
-            KompaktConsentState.REVOKED,
-            state.consent?.get(KompaktSyncService.CONTACTS)
+            KompaktConsentState.GRANTED,
+            (model.state.value as KompaktReauthModel.ReauthState.Refreshed)
+                .consent?.get(KompaktSyncService.CONTACTS)
         )
     }
+
+    // a later step failing may not cost the user the explanation of what changed
 
     @Test
     fun `a sync that cannot be enqueued still reports the change`() = runTest {
