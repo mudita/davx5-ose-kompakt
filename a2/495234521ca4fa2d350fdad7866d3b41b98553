@@ -1,0 +1,21 @@
+docs/app-integration.md
+  s_5349587e3d859f::t_b318303451804a 342
+core/src/main/kotlin/at/bitfire/davdroid/ui/KompaktAccountsScreen.kt
+  s_5349587e3d859f::t_b318303451804a 90-91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "a2495234521ca4fa2d350fdad7866d3b41b98553",
+  "prompts": {},
+  "sessions": {
+    "s_5349587e3d859f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "57092ed9-b7a1-401a-b39f-d7b8f25ad891",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
