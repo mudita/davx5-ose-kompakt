@@ -44,7 +44,8 @@ import at.bitfire.davdroid.R
 import at.bitfire.davdroid.sync.KompaktSyncFailure
 import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.ui.KompaktTypography900
-import at.bitfire.davdroid.ui.account.KompaktLinkedAccountModel.ReauthPhase
+import at.bitfire.davdroid.ui.account.KompaktLinkedAccountModel.EntryFlow
+import at.bitfire.davdroid.ui.account.KompaktLinkedAccountModel.EntryPhase
 import at.bitfire.davdroid.ui.composable.KompaktFramedIcon
 import at.bitfire.davdroid.ui.composable.KompaktMessageSheet
 import at.bitfire.davdroid.ui.composable.KompaktModalSheet
@@ -83,13 +84,14 @@ fun KompaktLinkedAccountScreen(
     showAccountLinkedDialog: Boolean = false,
     onAccountLinkedDialogDismiss: () -> Unit = {},
     onAccountSwitched: (oldAccountName: String) -> Unit = {},
-    initialReauth: Boolean = false,
+    entryFlow: EntryFlow? = null,
+    onEntryAbandoned: () -> Unit = {},
     model: KompaktLinkedAccountModel = hiltViewModel(
         // Key by account so switching the linked account (unlink A → link B) builds a fresh
         // ViewModel instead of reusing the cached one for the previous account.
         key = account.name,
         creationCallback = { factory: KompaktLinkedAccountModel.Factory ->
-            factory.create(account, initialReauth)
+            factory.create(account, entryFlow)
         }
     )
 ) {
@@ -133,14 +135,22 @@ fun KompaktLinkedAccountScreen(
         )
     }
 
-    LaunchedEffect(state.reauthPhase) {
-        if (state.reauthPhase == ReauthPhase.PENDING_LAUNCH) {
-            model.onReauthLaunchStarted()
-            onReauthorize()
+    LaunchedEffect(state.entryPhase) {
+        when (state.entryPhase) {
+            EntryPhase.PENDING_LAUNCH -> {
+                model.onEntryLaunchStarted()
+                when (model.entryFlow) {
+                    EntryFlow.REAUTH -> onReauthorize()
+                    EntryFlow.ADD_CONTACTS_CONSENT -> onGrantConsent(KompaktSyncService.CONTACTS.serviceType)
+                    null -> Unit
+                }
+            }
+            EntryPhase.ABANDONED -> onEntryAbandoned()
+            EntryPhase.SHOW_CONTENT, EntryPhase.AWAITING_RESULT -> Unit
         }
     }
 
-    if (state.reauthPhase == ReauthPhase.SHOW_CONTENT) {
+    if (state.entryPhase == EntryPhase.SHOW_CONTENT) {
         KompaktLinkedAccountContent(
             state = state,
             actions = KompaktLinkedAccountActions(

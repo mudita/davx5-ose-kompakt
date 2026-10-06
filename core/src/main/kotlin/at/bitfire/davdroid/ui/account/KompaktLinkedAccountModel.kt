@@ -53,7 +53,7 @@ import java.util.logging.Logger
 @HiltViewModel(assistedFactory = KompaktLinkedAccountModel.Factory::class)
 class KompaktLinkedAccountModel @AssistedInject constructor(
     @Assisted val account: Account,
-    @Assisted private val initialReauth: Boolean,
+    @Assisted entry: EntryFlow?,
     @ApplicationContext private val context: Context,
     private val kompaktAccountSettings: KompaktAccountSettings,
     private val accountRepository: AccountRepository,
@@ -73,21 +73,32 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(account: Account, initialReauth: Boolean): KompaktLinkedAccountModel
+        fun create(account: Account, entry: EntryFlow?): KompaktLinkedAccountModel
     }
+
+    /** A flow another app asked this screen to start the moment it opens. */
+    enum class EntryFlow { REAUTH, ADD_CONTACTS_CONSENT }
 
     // Blanks the screen while the OAuth flow is launched, so neither it nor the auth sheet flashes on the
     // way in. Released by the launcher result rather than by the flag clearing, so a cancelled re-auth
-    // returns to content instead of a permanent blank.
-    enum class ReauthPhase { SHOW_CONTENT, PENDING_LAUNCH, AWAITING_RESULT }
+    // returns to content instead of a permanent blank. ABANDONED stays blank: the caller leaves instead.
+    enum class EntryPhase { SHOW_CONTENT, PENDING_LAUNCH, AWAITING_RESULT, ABANDONED }
 
 
     // state
 
     private val email: String = account.name
 
-    private val _reauthPhase = MutableStateFlow(
-        if (initialReauth && readNeedsReauth()) ReauthPhase.PENDING_LAUNCH else ReauthPhase.SHOW_CONTENT
+    /** [entry] when it still has something to do, so an already-satisfied request opens the plain screen. */
+    val entryFlow: EntryFlow? = entry?.takeIf { flow ->
+        when (flow) {
+            EntryFlow.REAUTH -> readNeedsReauth()
+            EntryFlow.ADD_CONTACTS_CONSENT -> readSwitch(KompaktSyncService.CONTACTS) == KompaktSyncSwitch.ConsentMissing
+        }
+    }
+
+    private val _entryPhase = MutableStateFlow(
+        if (entryFlow != null) EntryPhase.PENDING_LAUNCH else EntryPhase.SHOW_CONTENT
     )
 
     private val serviceStates: Map<KompaktSyncService, Flow<KompaktServiceSyncState>> =
@@ -105,19 +116,23 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         serviceStates.getValue(KompaktSyncService.CALENDAR),
         serviceStates.getValue(KompaktSyncService.CONTACTS),
         dialogSlot.dialog,
-        _reauthPhase
+        _entryPhase
     ) { calendar, contacts, dialog, phase ->
         KompaktLinkedAccountState(
             email = email,
             calendar = calendar,
             contacts = contacts,
             dialog = dialog,
-            reauthPhase = phase
+            entryPhase = phase
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialState())
 
 
     init {
+        // Asking from another app is that app showing the offer, so it counts as shown whatever the outcome.
+        if (entry == EntryFlow.ADD_CONTACTS_CONSENT)
+            newContactsConsentShown()
+
         // Apply each service's defaults (once, after discovery) so automatic sync triggers — e.g. the
         // calendar's REQUEST_SYNC on re-entry — actually sync instead of no-op'ing over an empty
         // selection. The first sync right after linking is intentionally left to the "Sync now / Later"
@@ -175,14 +190,14 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         dialogSlot.raise(KompaktLinkedAccountDialog.PermissionChanged(withdrawn))
     }
 
-    fun onReauthLaunchStarted() {
-        if (_reauthPhase.value == ReauthPhase.PENDING_LAUNCH) {
-            _reauthPhase.value = ReauthPhase.AWAITING_RESULT
+    fun onEntryLaunchStarted() {
+        if (_entryPhase.value == EntryPhase.PENDING_LAUNCH) {
+            _entryPhase.value = EntryPhase.AWAITING_RESULT
         }
     }
 
     fun onReauthResult() {
-        _reauthPhase.value = ReauthPhase.SHOW_CONTENT
+        _entryPhase.value = EntryPhase.SHOW_CONTENT
     }
 
     /**
@@ -266,8 +281,11 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
     fun onAddConsentReturned(service: KompaktSyncService?) {
         if (service == null) return
         viewModelScope.launch(ioDispatcher) {
-            if (service.isConsented(kompaktAccountSettings.getAuthState(account)))
+            val granted = service.isConsented(kompaktAccountSettings.getAuthState(account))
+            if (granted)
                 dialogSlot.raise(KompaktLinkedAccountDialog.ImportServiceNow(service))
+            if (_entryPhase.value == EntryPhase.AWAITING_RESULT)
+                _entryPhase.value = if (granted) EntryPhase.SHOW_CONTENT else EntryPhase.ABANDONED
         }
     }
 
@@ -343,7 +361,7 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         calendar = KompaktServiceSyncState(KompaktSyncSwitch.Resolving, KompaktSyncStatus.Resolving),
         contacts = KompaktServiceSyncState(KompaktSyncSwitch.Resolving, KompaktSyncStatus.Resolving),
         dialog = null,
-        reauthPhase = _reauthPhase.value
+        entryPhase = _entryPhase.value
     )
 
     // Consent-but-no-row is only reachable from a re-auth, never from this screen's own dialog --

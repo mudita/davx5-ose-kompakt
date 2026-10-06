@@ -312,10 +312,11 @@ failing — a service the user declined syncs nothing instead of erroring.
 ### From other apps — by design
 
 The deliberate entry points are `Kompakt`-prefixed and specified in
-[`docs/app-integration.md`](docs/app-integration.md): `KompaktAccountsActivity`'s `ACTION_ONBOARDING`
-and `ACTION_REAUTH`, `KompaktSyncRequestReceiver`, `KompaktLogoutRequestReceiver` and
-`KompaktAuthStateProvider`. Consumed by the calendar app, and covered by the public-API rule in
-*Won't do*.
+[`docs/app-integration.md`](docs/app-integration.md): `KompaktAccountsActivity`'s `ACTION_ONBOARDING`,
+`ACTION_REAUTH` and `ACTION_ADD_CONTACTS_CONSENT`, `KompaktSyncRequestReceiver`,
+`KompaktLogoutRequestReceiver`, `KompaktAccountStateProvider` and the deprecated
+`KompaktAuthStateProvider`. Consumed by the calendar and Phone apps, and covered by the public-API rule
+in *Won't do*.
 
 ### Upstream's UI has no user route on this device
 

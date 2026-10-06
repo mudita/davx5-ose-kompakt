@@ -23,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +44,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.bitfire.davdroid.R
 import com.mudita.frontitude.R as RFrontitude
 import at.bitfire.davdroid.sync.KompaktOfflineCause
+import at.bitfire.davdroid.ui.account.KompaktLinkedAccountModel.EntryFlow
 import at.bitfire.davdroid.ui.account.KompaktLinkedAccountScreen
 import at.bitfire.davdroid.ui.composable.KompaktFramedIcon
 import at.bitfire.davdroid.ui.composable.KompaktNoInternetSheet
@@ -62,7 +64,8 @@ import at.bitfire.davdroid.ui.composable.KompaktTopAppBar
  */
 @Composable
 fun KompaktAccountsScreen(
-    initialReauth: Boolean = false,
+    entryFlow: EntryFlow? = null,
+    onEntryAbandoned: () -> Unit = {},
     onBack: () -> Unit,
     onboarding: Boolean = false,
     onSkip: () -> Unit = onBack,
@@ -82,6 +85,14 @@ fun KompaktAccountsScreen(
     // once on top of the linked-account detail screen. Survives the recomposition that happens while
     // the accounts flow catches up with the newly created account.
     var justLinked by rememberSaveable { mutableStateOf(false) }
+
+    // An entry action is for the account that was linked when it arrived, never for one linked afterwards.
+    // Not saveable: a restore must not bring back the entry the activity deliberately withholds then.
+    var pendingEntryFlow by remember { mutableStateOf(entryFlow) }
+    LaunchedEffect(accounts) {
+        if (accounts?.isEmpty() == true)
+            pendingEntryFlow = null
+    }
 
     // The account we just switched away from during a re-auth. Its removal has already completed, but the
     // accounts flow can still report it for a frame or two; keep showing the loading state until it
@@ -139,7 +150,8 @@ fun KompaktAccountsScreen(
                 account = account,
                 onBack = onBack,
                 showAccountLinkedDialog = justLinked,
-                initialReauth = initialReauth,
+                entryFlow = pendingEntryFlow,
+                onEntryAbandoned = onEntryAbandoned,
                 onAccountLinkedDialogDismiss = {
                     justLinked = false
                     switchedFromAccount = null

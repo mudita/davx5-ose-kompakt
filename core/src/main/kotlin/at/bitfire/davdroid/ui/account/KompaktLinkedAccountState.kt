@@ -6,14 +6,14 @@ package at.bitfire.davdroid.ui.account
 
 import at.bitfire.davdroid.sync.KompaktSyncFailure
 import at.bitfire.davdroid.sync.KompaktSyncService
-import at.bitfire.davdroid.ui.account.KompaktLinkedAccountModel.ReauthPhase
+import at.bitfire.davdroid.ui.account.KompaktLinkedAccountModel.EntryPhase
 
 data class KompaktLinkedAccountState(
     val email: String,
     val calendar: KompaktServiceSyncState,
     val contacts: KompaktServiceSyncState,
     val dialog: KompaktLinkedAccountDialog? = null,
-    val reauthPhase: ReauthPhase = ReauthPhase.SHOW_CONTENT
+    val entryPhase: EntryPhase = EntryPhase.SHOW_CONTENT
 ) {
 
     val isLoading: Boolean

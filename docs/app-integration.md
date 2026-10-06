@@ -91,6 +91,55 @@ The re-auth target is the single linked account; the caller does not pass an acc
   return. Learn the outcome from the auth-state provider/broadcast below (the `needs_reauth` flag flips to
   `0` on success), not from a result.
 
+## Launching the Contacts consent flow for the linked account
+
+Another app on the device (e.g. the Mudita Phone app) can send the user **straight into granting the
+Contacts permission** for the already linked Google account — typically from its own one-time "Enable
+contact sync?" dialog, shown while the account-state provider (below) reports
+`new_contacts_consent_shown == 0`. This runs the same Google authorization the Contacts toggle on the
+account screen runs, without showing that screen first.
+
+### Contract
+
+- **Action:** `at.bitfire.davdroid.mudita.action.ADD_CONTACTS_CONSENT`
+  (`KompaktAccountsActivity.ACTION_ADD_CONTACTS_CONSENT`)
+- **Target:** `KompaktAccountsActivity` — launch **explicitly** by component/package. The activity is
+  already `exported`, so no extra intent-filter is required and no permission is needed (same as
+  `ONBOARDING` and `REAUTH`).
+
+### Caller — code
+
+```kotlin
+val intent = Intent("at.bitfire.davdroid.mudita.action.ADD_CONTACTS_CONSENT")
+    .setClassName("at.bitfire.davdroid.mudita", "at.bitfire.davdroid.ui.KompaktAccountsActivity")
+context.startActivity(intent)
+// or startActivityForResult(intent, REQUEST_CONTACTS_CONSENT) to receive RESULT_CANCELED (below)
+```
+
+The target is the single linked account; the caller does not pass an account name.
+
+### Behaviour & results
+
+- **The request itself marks the offer shown**: `new_contacts_consent_shown` becomes `1` whatever the
+  outcome, so neither the caller's dialog nor the account screen's own offer appears again.
+- **Account linked, Contacts not granted** → the Google authorization for Contacts starts straight away
+  (the account screen stays blank underneath).
+  - **Granted** → the account screen opens with the "Permissions granted" dialog (*Import now* /
+    *Not now*), and **stays in the foreground**; the user returns to your app by pressing **Back**.
+    Importing is the user's choice in that dialog — nothing is synced automatically on return.
+  - **Cancelled, denied or failed** → the activity **finishes with `RESULT_CANCELED`**, returning the
+    user to your app directly. The account screen is not shown.
+- **Contacts already granted** → the normal account screen is shown (nothing to grant).
+- **No account linked** → the request is ignored and the normal link screen is shown. An account
+  linked from there gets the normal "Account linked" dialog, not the Contacts authorization.
+
+### Notes / limitations
+
+- Like `REAUTH`, the flow is started **at most once per request** — only on the activity's genuine
+  first creation, so a configuration change or a process-death restore does not start it again.
+- A grant gives **no success result**: the user presses **Back** to return. Learn whether Contacts is
+  syncing from the Contacts provider, not from a result code.
+
 ## Requesting a sync from another app
 
 Another app on the device (e.g. the Mudita calendar app) can request a sync of the
@@ -224,7 +273,83 @@ worker with `CANCEL_AND_REENQUEUE`). A failed manual sync does not reschedule.
 - Testing from `adb` shell is **not** possible because of the signature permission (shell isn't
   same‑signed); it can only be exercised from a same‑signed app.
 
+## Reading and updating the account state from another app
+
+Another app on the device can read per-account state that DAVx⁵ Mudita owns, and update the part of it
+that the other app is allowed to change. This provider supersedes the auth-state provider below, which
+stays until its consumers have moved over.
+
+### Contract
+
+- **Provider:** `content://at.bitfire.davdroid.mudita.kompakt.accountstate/account_state`
+  (`KompaktAccountState.CONTENT_URI`). One row per linked account with columns:
+  - `_id` (Int) — row index
+  - `account_name` (String)
+  - `account_type` (String)
+  - `needs_reauth` (Int) — **1** if the token is invalid and needs re‑authorization, **0** otherwise
+    (the same value as the auth-state provider's column)
+  - `new_contacts_consent_shown` (Int) — **1** once the one-time "Enable contact sync?" offer has been
+    shown, **0** while it is still due (below)
+- **Read permission:** `at.bitfire.davdroid.mudita.permission.READ_ACCOUNT_STATE` — **`signature`**
+- **Write permission:** `at.bitfire.davdroid.mudita.permission.WRITE_ACCOUNT_STATE` — **`signature`**
+- **Change notification:** the URI is notified via `ContentResolver.notifyChange` whenever
+  `needs_reauth` or `new_contacts_consent_shown` changes for a linked account, by whichever app or
+  screen changed it. There is no broadcast; use a `ContentObserver`.
+
+### `new_contacts_consent_shown`
+
+The account screen offers Contacts sync once ("Enable contact sync?") to an account that was linked
+before Contacts could be granted at all. This flag records that the offer has been made, so it is made
+**once across both apps**: whichever of them shows it first marks it shown, and neither shows it again.
+
+- It is **0 only for such an account**. Linking, and any re-authorization, set it to 1, because the
+  consent screen there already asked about Contacts and whatever the user chose was deliberate. An
+  account whose flag is 0 therefore has no Contacts permission, so the flag alone decides whether to
+  offer — no separate consent column is needed.
+- DAVx⁵ Mudita sets it when its own dialog is answered either way, and when
+  `ADD_CONTACTS_CONSENT` is requested.
+- Another app sets it with an update (below) — e.g. when the user picks *Cancel* in its own dialog.
+  It can only be set, never cleared: the offer cannot be re‑armed.
+
+### Caller — manifest
+
+```xml
+<uses-permission android:name="at.bitfire.davdroid.mudita.permission.READ_ACCOUNT_STATE" />
+<!-- only to mark the Contacts offer shown -->
+<uses-permission android:name="at.bitfire.davdroid.mudita.permission.WRITE_ACCOUNT_STATE" />
+```
+
+### Caller — code
+
+```kotlin
+val uri = Uri.parse("content://at.bitfire.davdroid.mudita.kompakt.accountstate/account_state")
+
+// is shown?
+val offerContacts = context.contentResolver.query(uri, null, null, null, null)?.use { c ->
+    c.moveToFirst() && c.getInt(c.getColumnIndexOrThrow("new_contacts_consent_shown")) == 0
+} ?: false
+
+// make shown
+context.contentResolver.update(uri, ContentValues().apply { put("new_contacts_consent_shown", 1) }, null, null)
+```
+
+### Notes / limitations
+
+- The update accepts **exactly one value, `new_contacts_consent_shown = 1`**, applies it to the linked
+  account and returns the number of accounts updated. Anything else — another column, a `0`, extra
+  values — changes nothing and returns `0` (logged as `Ignoring account state update`). The selection
+  is ignored, since there is only ever one linked account.
+- The update **can block for 100 ms or more**, because DAVx⁵ Mudita verifies each write to
+  `AccountManager` — call it off the main thread.
+- `insert` and `delete` are not supported.
+- Same as the broadcasts: it **cannot** be exercised from `adb` shell because of the signature
+  permissions; use a same‑signed app.
+
 ## Reading the authentication (token) state from another app
+
+> **Deprecated for new callers** — read `needs_reauth` from the account-state provider above instead.
+> This provider and the `AUTH_STATE_CHANGED` broadcast keep working unchanged until the calendar app
+> has moved over.
 
 Another app on the device (e.g. the Mudita calendar app) can find out whether a linked account's OAuth
 token has **expired / needs re‑authorization**, so it can react in its own UI (e.g. prompt the user to
