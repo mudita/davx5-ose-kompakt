@@ -1,0 +1,37 @@
+core/src/main/kotlin/at/bitfire/davdroid/di/KompaktStartupPluginsModule.kt
+  s_5349587e3d859f::t_a9786a8dfe220a 22
+core/src/main/kotlin/at/bitfire/davdroid/ui/KompaktAuthState.kt
+  s_5349587e3d859f::t_a9786a8dfe220a 26
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktAddConsentModel.kt
+  s_5349587e3d859f::t_a9786a8dfe220a 141-142
+core/src/test/kotlin/at/bitfire/davdroid/settings/KompaktAccountSettingsTest.kt
+  s_5349587e3d859f::t_a9786a8dfe220a 97-98
+core/src/main/kotlin/at/bitfire/davdroid/startup/KompaktAuthStateReplicator.kt
+  s_5349587e3d859f::t_a9786a8dfe220a 33
+core/src/test/kotlin/at/bitfire/davdroid/startup/KompaktAuthStateReplicatorTest.kt
+  s_5349587e3d859f::t_a9786a8dfe220a 24
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktReauthModel.kt
+  s_5349587e3d859f::t_a9786a8dfe220a 131
+core/src/main/kotlin/at/bitfire/davdroid/settings/KompaktAccountSettings.kt
+  s_5349587e3d859f::t_a9786a8dfe220a 142
+core/src/main/kotlin/at/bitfire/davdroid/ui/KompaktAuthStateProvider.kt
+  s_5349587e3d859f::t_a9786a8dfe220a 26
+core/src/main/kotlin/at/bitfire/davdroid/ui/KompaktAuthStatePublisher.kt
+  s_5349587e3d859f::t_a9786a8dfe220a 25,32,54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "7acdccec2ba98fc590827977b0ba2d70fb7ca881",
+  "prompts": {},
+  "sessions": {
+    "s_5349587e3d859f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "57092ed9-b7a1-401a-b39f-d7b8f25ad891",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
