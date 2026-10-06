@@ -21,6 +21,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
+@Suppress("DEPRECATION")
 class KompaktAuthStateReplicatorTest {
 
     // Mocked Accounts because the unit-test android.jar leaves Account.equals throwing; MockK's

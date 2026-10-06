@@ -138,8 +138,8 @@ class KompaktAddConsentModel @AssistedInject constructor(
         // moves the linked-account switches, and a write around it leaves them showing the old consent.
         kompaktAccountSettings.updateAuthState(account, authState)
         // The token just obtained carries every scope, so an account parked in the auth-error state is
-        // usable again. This write is also what makes KompaktAuthStateReplicator announce the change to
-        // the other apps on the device.
+        // usable again. This write is also what makes KompaktAccountStateReplicator (and the deprecated
+        // KompaktAuthStateReplicator) announce the change to the other apps on the device.
         kompaktAccountSettings.setReauthNeeded(account, false)
 
         _state.value = AddConsentState.Granted

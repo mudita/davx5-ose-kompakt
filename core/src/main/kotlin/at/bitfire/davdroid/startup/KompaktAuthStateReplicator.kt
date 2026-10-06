@@ -30,6 +30,7 @@ import javax.inject.Inject
  * contract, which makes [at.bitfire.davdroid.ui.KompaktAuthStateProvider] the source of truth and
  * the broadcast a convenience, so a consumer that missed one still reads the state on its next query.
  */
+@Deprecated("Superseded by KompaktAccountState; remove once the calendar app reads account_state.")
 class KompaktAuthStateReplicator @Inject constructor(
     private val accountRepository: AccountRepository,
     private val kompaktAccountSettings: KompaktAccountSettings,

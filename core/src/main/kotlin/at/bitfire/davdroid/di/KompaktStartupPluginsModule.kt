@@ -19,6 +19,7 @@ import dagger.multibindings.IntoSet
 @InstallIn(SingletonComponent::class)
 interface KompaktStartupPluginsModule {
 
+    @Suppress("DEPRECATION")
     @Binds
     @IntoSet
     fun kompaktAuthStateReplicator(impl: KompaktAuthStateReplicator): StartupPlugin

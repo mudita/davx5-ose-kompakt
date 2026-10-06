@@ -94,8 +94,8 @@ class KompaktAccountSettingsTest {
         assertFalse(settings.getReauthNeeded(account))
     }
 
-    // KompaktAuthStateProvider publishes this key by testing it against "1", and the calendar app
-    // reads that, so the stored representation is part of the cross-app contract.
+    // KompaktAccountStateProvider publishes this key by testing it against "1", and other apps
+    // read that, so the stored representation is part of the cross-app contract.
     @Test
     fun reauthNeeded_storesFlagAndClearsToNull() = runTest(testDispatcher) {
         settings.setReauthNeeded(account, true)

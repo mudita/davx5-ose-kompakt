@@ -128,7 +128,7 @@ class KompaktReauthModel @Inject constructor(
                         }
 
                         kompaktAccountSettings.updateAuthState(account, authState)
-                        // Clearing the flag is what publishes the change, via KompaktAuthStateReplicator.
+                        // Clearing the flag is what publishes the change, via KompaktAccountStateReplicator.
                         kompaktAccountSettings.setReauthNeeded(account, needed = false)
                         // The combined consent screen just asked for Contacts, so whatever came back is a
                         // deliberate answer. The "you can also sync Contacts" offer is for accounts linked
