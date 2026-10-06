@@ -1,0 +1,27 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/KompaktAccountStateProvider.kt
+  s_5349587e3d859f::t_7da66bb03b697a 28-30
+core/src/main/kotlin/at/bitfire/davdroid/ui/KompaktAccountsScreen.kt
+  s_5349587e3d859f::t_8d8d9f8eada727 26,89-95,152
+core/src/main/kotlin/at/bitfire/davdroid/startup/KompaktAccountStateReplicator.kt
+  s_5349587e3d859f::t_7da66bb03b697a 26
+core/src/test/kotlin/at/bitfire/davdroid/ui/KompaktAccountStateProviderTest.kt
+  s_5349587e3d859f::t_7da66bb03b697a 93
+docs/app-integration.md
+  s_5349587e3d859f::t_7da66bb03b697a 133-134,342-343
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "a2d44b97c21868debc35a370309a8f8450701931",
+  "prompts": {},
+  "sessions": {
+    "s_5349587e3d859f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "57092ed9-b7a1-401a-b39f-d7b8f25ad891",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
