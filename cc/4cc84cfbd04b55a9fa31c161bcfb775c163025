@@ -1,0 +1,21 @@
+docs/superpowers/specs/2026-10-08-shp-1194-google-contact-create-design.md
+  s_b3abda0883f6a8::t_a16f3aae37e6be 18-19
+  s_b3abda0883f6a8::t_05291fd883a1d1 1-15,20-160
+  s_b3abda0883f6a8::t_d0555680d07094 16-17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "cc4cc84cfbd04b55a9fa31c161bcfb775c163025",
+  "prompts": {},
+  "sessions": {
+    "s_b3abda0883f6a8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "faf8dabf-cc04-47cb-b7ec-e535770f27f0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": null
+    }
+  }
+}
