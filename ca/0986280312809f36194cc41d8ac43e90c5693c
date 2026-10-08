@@ -1,0 +1,19 @@
+core/src/main/kotlin/at/bitfire/davdroid/sync/ContactsSyncManager.kt
+  s_b3abda0883f6a8::t_b666cfc50c6233 275-278,280-284,286-287,289-291,294-296
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "ca0986280312809f36194cc41d8ac43e90c5693c",
+  "prompts": {},
+  "sessions": {
+    "s_b3abda0883f6a8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "faf8dabf-cc04-47cb-b7ec-e535770f27f0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
