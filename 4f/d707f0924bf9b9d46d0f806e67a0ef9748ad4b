@@ -1,0 +1,19 @@
+docs/superpowers/specs/2026-10-08-shp-1194-google-contact-create-design.md
+  s_b3abda0883f6a8::t_fabe071486bb8d 1,3-4,10-12,22-30,39-46,48,53,55-59,61-63,65,67-70,72-74,76,78-79,81-83,85-86,88,90,92-99,101-103,105-108,110-111,113,115-119,123-128,130-131,137-141,146-147,149-151,155-156
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "4fd707f0924bf9b9d46d0f806e67a0ef9748ad4b",
+  "prompts": {},
+  "sessions": {
+    "s_b3abda0883f6a8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "faf8dabf-cc04-47cb-b7ec-e535770f27f0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
