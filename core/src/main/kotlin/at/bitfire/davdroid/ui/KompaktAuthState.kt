@@ -23,6 +23,7 @@ import androidx.core.net.toUri
  *
  * See `docs/app-integration.md` for the consumer-side contract.
  */
+@Deprecated("Superseded by KompaktAccountState; remove once the calendar app reads account_state.")
 object KompaktAuthState {
 
     /** Authority of [KompaktAuthStateProvider]. Must match the `<provider>` entry in the manifest. */

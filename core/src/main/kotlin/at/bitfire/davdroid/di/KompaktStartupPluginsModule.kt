@@ -4,6 +4,7 @@
 
 package at.bitfire.davdroid.di
 
+import at.bitfire.davdroid.startup.KompaktAccountStateReplicator
 import at.bitfire.davdroid.startup.KompaktAuthStateReplicator
 import at.bitfire.davdroid.startup.StartupPlugin
 import dagger.Binds
@@ -18,8 +19,13 @@ import dagger.multibindings.IntoSet
 @InstallIn(SingletonComponent::class)
 interface KompaktStartupPluginsModule {
 
+    @Suppress("DEPRECATION")
     @Binds
     @IntoSet
     fun kompaktAuthStateReplicator(impl: KompaktAuthStateReplicator): StartupPlugin
+
+    @Binds
+    @IntoSet
+    fun kompaktAccountStateReplicator(impl: KompaktAccountStateReplicator): StartupPlugin
 
 }

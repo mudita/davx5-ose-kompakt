@@ -22,12 +22,14 @@ import javax.inject.Inject
  * Separate from the collector that decides *when* to announce, so that decision can be exercised
  * without a broadcast, an [Intent] or a [android.net.Uri] — none of which work in a JVM unit test.
  */
+@Deprecated("Superseded by KompaktAccountState; remove once the calendar app reads account_state.")
 interface KompaktAuthStatePublisher {
 
     fun publish(account: Account, needsReauth: Boolean)
 
 }
 
+@Deprecated("Superseded by KompaktAccountState; remove once the calendar app reads account_state.")
 class KompaktAuthStateBroadcastPublisher @Inject constructor(
     @ApplicationContext private val context: Context
 ) : KompaktAuthStatePublisher {
@@ -49,6 +51,7 @@ class KompaktAuthStateBroadcastPublisher @Inject constructor(
 
 @Module
 @InstallIn(SingletonComponent::class)
+@Deprecated("Superseded by KompaktAccountState; remove once the calendar app reads account_state.")
 interface KompaktAuthStatePublisherModule {
 
     @Binds

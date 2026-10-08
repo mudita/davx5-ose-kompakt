@@ -23,6 +23,7 @@ import at.bitfire.davdroid.settings.AccountSettings
  * This provider is created before the [android.app.Application], so it intentionally avoids Hilt
  * and reads the state directly from [AccountManager].
  */
+@Deprecated("Superseded by KompaktAccountState; remove once the calendar app reads account_state.")
 class KompaktAuthStateProvider : ContentProvider() {
 
     override fun onCreate() = true

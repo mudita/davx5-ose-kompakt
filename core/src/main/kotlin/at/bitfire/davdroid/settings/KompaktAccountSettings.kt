@@ -139,7 +139,7 @@ class KompaktAccountSettingsImpl @Inject constructor(
     override fun getReauthNeeded(account: Account) =
         get(account, AccountSettings.KEY_NEEDS_REAUTH) == FLAG_SET
 
-    // Cleared to null rather than to "0", because KompaktAuthStateProvider publishes this key by
+    // Cleared to null rather than to "0", because KompaktAccountStateProvider publishes this key by
     // testing it against FLAG_SET, and other apps read that.
     override suspend fun setReauthNeeded(account: Account, needed: Boolean) =
         putRaw(account, AccountSettings.KEY_NEEDS_REAUTH, if (needed) FLAG_SET else null)

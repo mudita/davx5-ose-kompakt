@@ -15,6 +15,14 @@
         android:name="at.bitfire.davdroid.mudita.permission.READ_AUTH_STATE"
         android:protectionLevel="signature" />
 
+    <!-- Signature-level permissions required to read and to update the account state, see KompaktAccountState -->
+    <permission
+        android:name="at.bitfire.davdroid.mudita.permission.READ_ACCOUNT_STATE"
+        android:protectionLevel="signature" />
+    <permission
+        android:name="at.bitfire.davdroid.mudita.permission.WRITE_ACCOUNT_STATE"
+        android:protectionLevel="signature" />
+
     <!-- Signature-level permission required to request logout (account removal), see KompaktLogoutRequestReceiver -->
     <permission
         android:name="at.bitfire.davdroid.mudita.permission.LOGOUT"
@@ -109,6 +117,14 @@
             android:authorities="at.bitfire.davdroid.mudita.kompakt.authstate"
             android:exported="true"
             android:readPermission="at.bitfire.davdroid.mudita.permission.READ_AUTH_STATE" />
+
+        <!-- Exposes per-account state to same-signed apps, see KompaktAccountState -->
+        <provider
+            android:name="at.bitfire.davdroid.ui.KompaktAccountStateProvider"
+            android:authorities="at.bitfire.davdroid.mudita.kompakt.accountstate"
+            android:exported="true"
+            android:readPermission="at.bitfire.davdroid.mudita.permission.READ_ACCOUNT_STATE"
+            android:writePermission="at.bitfire.davdroid.mudita.permission.WRITE_ACCOUNT_STATE" />
 
         <!-- provider to share debug info/logs -->
         <provider
