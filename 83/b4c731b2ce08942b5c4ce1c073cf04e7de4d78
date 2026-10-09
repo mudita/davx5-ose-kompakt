@@ -1,0 +1,21 @@
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktInitDefaults.kt
+  s_c27a34fdfb5f58::t_b51e47801cd6de 15,41,162,179-201
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktInitDefaultsTest.kt
+  s_c27a34fdfb5f58::t_b51e47801cd6de 65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "83b4c731b2ce08942b5c4ce1c073cf04e7de4d78",
+  "prompts": {},
+  "sessions": {
+    "s_c27a34fdfb5f58": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ed19842e-23f3-4ecc-a86c-c62c085db415",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
