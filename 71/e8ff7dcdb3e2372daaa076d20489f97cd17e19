@@ -1,0 +1,29 @@
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktGoogleContactName.kt
+  s_b3abda0883f6a8::t_0c17dbdfe0d476 1-22,25-117
+  s_b3abda0883f6a8::t_d5f4e6fc7bd5d5 23-24
+core/src/main/kotlin/at/bitfire/davdroid/sync/ContactsSyncManager.kt
+  s_b3abda0883f6a8::t_08a228ca779b1b 266-268
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktGoogleContactNameTest.kt
+  s_b3abda0883f6a8::t_491d1f8975cc33 52
+  s_b3abda0883f6a8::t_06533eba4e9a05 1-51,53-227
+docs/upstream-maintenance.md
+  s_b3abda0883f6a8::t_9ba6845faf6df8 77-84
+docs/kompakt-testing.md
+  s_b3abda0883f6a8::t_5dca374c8e3ea6 223-245
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "71e8ff7dcdb3e2372daaa076d20489f97cd17e19",
+  "prompts": {},
+  "sessions": {
+    "s_b3abda0883f6a8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "faf8dabf-cc04-47cb-b7ec-e535770f27f0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
