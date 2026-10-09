@@ -74,6 +74,14 @@ Pick `<NEW-tag>` from upstream's release tags (`v4.5.16-ose`, …), not from `up
 base. Note the base tag is not in a fresh clone either: `git fetch upstream --tags` above is what
 brings it in.
 
+## Known rebase hazards
+
+- **`ContactsSyncManager.uploadDirty()`** wraps `super.uploadDirty()` in
+  `KompaktGoogleContactName.keepNamesAround`, which stops Google's rename of new contacts from replacing them
+  ([design](superpowers/specs/2026-10-08-shp-1194-google-contact-create-design.md)). From `v4.5.20-ose` the
+  method is `uploadDirty(capabilities)` (still `open`) and the HTTP client is ktor: keep the wrapper around the
+  new `super` call and port `lookUpServerName` to dav4jvm's ktor `DavResource.get`.
+
 ## Rules
 
 - **Never `git merge upstream` into `kompakt`.** It would end the linear history that makes the next

@@ -263,7 +263,9 @@ class ContactsSyncManager @AssistedInject constructor(
             groupStrategy.beforeUploadDirty()
 
         // generate UID/file name for newly created contacts
-        val superModified = super.uploadDirty()
+        val superModified = KompaktGoogleContactName.keepNamesAround(httpClient, collection.url, localCollection, logger) {
+            super.uploadDirty()
+        }
 
         // return true when any operation returned true
         return modified or superModified
