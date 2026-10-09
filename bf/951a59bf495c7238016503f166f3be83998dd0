@@ -1,0 +1,23 @@
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktGoogleContactName.kt
+  s_b3abda0883f6a8::t_d5f4e6fc7bd5d5 29-30
+  s_b3abda0883f6a8::t_0c17dbdfe0d476 1-28,32-154
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktGoogleContactNameTest.kt
+  s_b3abda0883f6a8::t_491d1f8975cc33 62
+  s_b3abda0883f6a8::t_06533eba4e9a05 1-61,63-363
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "bf951a59bf495c7238016503f166f3be83998dd0",
+  "prompts": {},
+  "sessions": {
+    "s_b3abda0883f6a8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "faf8dabf-cc04-47cb-b7ec-e535770f27f0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
