@@ -1,0 +1,36 @@
+docs/superpowers/specs/2026-10-09-shp-1194-default-number-findings.md
+  s_d5a51b41e3862f::t_060861f53f2bb8 139
+  s_d5a51b41e3862f::t_f1f01ed8300647 179-180
+  s_d5a51b41e3862f::t_2d4155da61131c 170-178,181-197,199-200,202-204
+  s_d5a51b41e3862f::t_4ecfe8bdbd8b32 101-106
+  s_d5a51b41e3862f::t_241dcdeccd488c 94-95
+  s_d5a51b41e3862f::t_851d4fa7e4761a 56
+  s_b3abda0883f6a8::t_be28c6b1440a75 1-2,7-55,57-93,96-100,107-122,165-169,198,201
+  s_d5a51b41e3862f::t_5067b979d0153d 3-6
+  s_d5a51b41e3862f::t_4eee6804a8e2dd 126-138,140-164
+  s_d5a51b41e3862f::t_cefd976d4828c3 123-125
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "047e9615e2b21d55fe2efab81bd69fcfdf9e2fc5",
+  "prompts": {},
+  "sessions": {
+    "s_b3abda0883f6a8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "faf8dabf-cc04-47cb-b7ec-e535770f27f0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    },
+    "s_d5a51b41e3862f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "89f35bd0-161d-4e8b-95cc-b195af66c71d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
