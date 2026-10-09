@@ -1,0 +1,15 @@
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktGoogleContactName.kt
+  ai_agent 1-154
+core/src/main/kotlin/at/bitfire/davdroid/sync/ContactsSyncManager.kt
+  ai_agent 266-268
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktGoogleContactNameTest.kt
+  ai_agent 1-363
+docs/upstream-maintenance.md
+  ai_agent 77-84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "77e3a2caa3d47e3d60b021de166a9939932d19cc",
+  "prompts": {}
+}
