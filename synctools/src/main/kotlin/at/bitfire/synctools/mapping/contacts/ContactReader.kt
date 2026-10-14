@@ -16,6 +16,7 @@ import at.bitfire.synctools.vcard.property.XPhoneticMiddleName
 import at.bitfire.synctools.vcard.property.XSip
 import ezvcard.Ezvcard
 import ezvcard.VCard
+import ezvcard.parameter.ImppType
 import ezvcard.parameter.RelatedType
 import ezvcard.property.Address
 import ezvcard.property.Anniversary
@@ -45,6 +46,7 @@ import ezvcard.property.Telephone
 import ezvcard.property.Title
 import ezvcard.property.Uid
 import ezvcard.property.Url
+import ezvcard.property.VCardProperty
 import ezvcard.util.PartialDate
 import java.net.URI
 import java.net.URISyntaxException
@@ -68,6 +70,8 @@ class ContactReader internal constructor(val vCard: VCard, val downloader: Conta
 
     companion object {
         
+        const val X_ABADR = "X-ABADR"  // Kompakt
+
         private val logger
             get() = Logger.getLogger(ContactReader::class.java.name)
 
@@ -197,19 +201,25 @@ class ContactReader internal constructor(val vCard: VCard, val downloader: Conta
                     c.jobDescription = prop.value?.trimToNull()
 
                 is Telephone ->
-                    c.phoneNumbers += LabeledProperty(prop, findAndRemoveLabel(prop.group))
+                    c.phoneNumbers += LabeledProperty(prop, findAndRemoveLabel(prop.group, keepEmpty = prop.isUntyped()))
                 is Email ->
-                    c.emails += LabeledProperty(prop, findAndRemoveLabel(prop.group))
+                    c.emails += LabeledProperty(prop, findAndRemoveLabel(prop.group, keepEmpty = prop.isUntyped()))
                 is Impp ->
                     c.impps += LabeledProperty(prop, findAndRemoveLabel(prop.group))
-                is XSip ->
+                is XSip ->  // Kompakt: keeps TYPE and label
                     // special case: treat  X-SIP:address  as  IMPP:sip:address
-                    c.impps += LabeledProperty(Impp.sip(prop.value))
+                    c.impps += LabeledProperty(
+                        Impp.sip(prop.value).apply {
+                            for (type in prop.parameters.types)
+                                types += ImppType.get(type)
+                        },
+                        findAndRemoveLabel(prop.group)
+                    )
                 is Url ->
-                    c.urls += LabeledProperty(prop, findAndRemoveLabel(prop.group))
+                    c.urls += LabeledProperty(prop, findAndRemoveLabel(prop.group, keepEmpty = prop.isUntyped()))
 
                 is Address ->
-                    c.addresses += LabeledProperty(prop, findAndRemoveLabel(prop.group))
+                    c.addresses += LabeledProperty(prop, findAndRemoveLabel(prop.group, keepEmpty = prop.isUntyped()))
                 is Label -> { /* drop vCard3 formatted address because it can't be associated to a specific address */ }
 
                 is Anniversary -> {
@@ -334,6 +344,8 @@ class ContactReader internal constructor(val vCard: VCard, val downloader: Conta
         arrayOf("ANNIVERSARY", "BDAY", "KIND", "FN", "N", "PRODID", "REV", "UID").forEach {
             vCard.removeExtendedProperty(it)
         }
+        // Kompakt: ContactWriter writes X-ABADR next to every labelled address, so don't retain a served one too
+        vCard.removeExtendedProperty(X_ABADR)
 
         if (vCard.properties.isNotEmpty() || vCard.extendedProperties.isNotEmpty())
             try {
@@ -353,14 +365,18 @@ class ContactReader internal constructor(val vCard: VCard, val downloader: Conta
 
     // helpers
 
-    fun findAndRemoveLabel(group: String?): String? {
+    // Kompakt: keepEmpty tells an empty label ("no type") apart from no label ("other"); a typed value keeps its
+    // type instead, because the builders store any non-null label as TYPE_CUSTOM
+    private fun VCardProperty.isUntyped() = parameters.types.all { it.equals("PREF", ignoreCase = true) }
+
+    fun findAndRemoveLabel(group: String?, keepEmpty: Boolean = false): String? {
         if (group == null)
             return null
 
         for (label in vCard.getProperties(XAbLabel::class.java)) {
             if (label.group.equals(group, true)) {
                 vCard.removeProperty(label)
-                return label.value.trimToNull()
+                return if (keepEmpty) label.value?.trim().orEmpty() else label.value.trimToNull()
             }
         }
 

@@ -30,10 +30,9 @@ object EmailHandler: DataRowHandler() {
                 email.types += EmailType.WORK
             Email.TYPE_MOBILE ->
                 email.types += CustomType.Email.MOBILE
-            Email.TYPE_CUSTOM ->
-                values.getAsString(Email.LABEL)?.let {
-                    labeledEmail.label = it
-                }
+            // Kompakt: an empty label keeps "no type" apart from "other" (written as itemN.X-ABLabel:)
+            Email.TYPE_CUSTOM, null ->
+                labeledEmail.label = values.getAsString(Email.LABEL) ?: ""
         }
         if (values.getAsInteger(Email.IS_PRIMARY) != 0)
             email.pref = 1

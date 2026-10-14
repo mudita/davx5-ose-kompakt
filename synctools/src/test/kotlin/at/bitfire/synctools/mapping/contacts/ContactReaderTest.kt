@@ -18,8 +18,10 @@ import at.bitfire.synctools.vcard.property.XSip
 import ezvcard.VCard
 import ezvcard.VCardVersion
 import ezvcard.parameter.ImageType
+import ezvcard.parameter.ImppType
 import ezvcard.parameter.RelatedType
 import ezvcard.parameter.SoundType
+import ezvcard.parameter.TelephoneType
 import ezvcard.property.Address
 import ezvcard.property.Anniversary
 import ezvcard.property.Birthday
@@ -193,6 +195,17 @@ class ContactReaderTest {
             addProperty(XSip("test@example.com"))
         })
         assertEquals(URI("sip:test@example.com"), c.impps.first.property.uri)
+    }
+
+    @Test
+    fun testImpp_XSip_TypeAndLabel() = runTest {
+        val c = ContactReader.fromVCard(VCard().apply {
+            addProperty(XSip("work@example.com").apply { parameters.addType("WORK") })
+            addProperty(XSip("office@example.com").apply { group = "item1" })
+            addProperty(XAbLabel("Office").apply { group = "item1" })
+        })
+        assertEquals(listOf(ImppType.WORK), c.impps[0].property.types)
+        assertEquals("Office", c.impps[1].label)
     }
 
 
@@ -679,6 +692,58 @@ class ContactReaderTest {
         assertEquals("", vCard.getProperty(XAbLabel::class.java).value)
         assertNull(c.findAndRemoveLabel("item1"))
         assertNull(vCard.getProperty(XAbLabel::class.java))
+    }
+
+    @Test
+    fun testFindAndRemoveLabel_Label_Empty_KeepEmpty() {
+        val vCard = VCard().apply {
+            addProperty(XAbLabel("").apply { group = "item1" })
+        }
+        assertEquals("", ContactReader(vCard).findAndRemoveLabel("item1", keepEmpty = true))
+    }
+
+    @Test
+    fun testEmptyLabel_PhoneEmailAddressUrl() = runTest {
+        val c = ContactReader.fromVCard(VCard().apply {
+            addTelephoneNumber(Telephone("+1 555 0100").apply { group = "item1" })
+            addProperty(XAbLabel("").apply { group = "item1" })
+            addEmail(ezvcard.property.Email("test@example.com").apply { group = "item2" })
+            addProperty(XAbLabel("").apply { group = "item2" })
+            addAddress(Address().apply { streetAddress = "Street 1"; group = "item3" })
+            addProperty(XAbLabel("").apply { group = "item3" })
+            addUrl(Url("https://example.com").apply { group = "item4" })
+            addProperty(XAbLabel("").apply { group = "item4" })
+        })
+        assertEquals("", c.phoneNumbers.first.label)
+        assertEquals("", c.emails.first.label)
+        assertEquals("", c.addresses.first.label)
+        assertEquals("", c.urls.first.label)
+    }
+
+    @Test
+    fun testEmptyLabel_TypedValueKeepsType() = runTest {
+        val c = ContactReader.fromVCard(VCard().apply {
+            addTelephoneNumber(Telephone("+1 555 0100").apply { types += TelephoneType.CELL; group = "item1" })
+            addProperty(XAbLabel("").apply { group = "item1" })
+            addTelephoneNumber(Telephone("+1 555 0101").apply { types += TelephoneType.PREF; group = "item2" })
+            addProperty(XAbLabel("").apply { group = "item2" })
+            addTelephoneNumber(Telephone("+1 555 0102").apply { pref = 1; group = "item3" })
+            addProperty(XAbLabel("").apply { group = "item3" })
+        })
+        assertNull(c.phoneNumbers[0].label)
+        assertEquals("", c.phoneNumbers[1].label)
+        assertEquals("", c.phoneNumbers[2].label)
+    }
+
+    @Test
+    fun testXAbAdr_NotRetained() = runTest {
+        val c = ContactReader.fromVCard(VCard().apply {
+            addAddress(Address().apply { streetAddress = "Street 1"; group = "item1" })
+            addExtendedProperty("X-ABADR", "us").group = "item1"
+            addExtendedProperty("X-UNKNOWN", "kept")
+        })
+        assertFalse(c.unknownProperties!!.contains("X-ABADR"))
+        assertTrue(c.unknownProperties!!.contains("X-UNKNOWN"))
     }
 
     @Test
