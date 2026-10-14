@@ -90,6 +90,12 @@ brings it in.
   and label. Each edit carries a `Kompakt:` comment and is covered by the module's tests;
   `EmailHandlerTest.testTypeCustom_NoLabel` was changed to expect `""`
   ([design](superpowers/specs/2026-10-14-shp-1198-preserve-google-fields-design.md)).
+- **`ContactsSyncManager.processCard()` and `generateUpload()`** wrap `ContactReader.fromVCard` and
+  `ContactWriter` in `KompaktGoogleVCard.read` / `write`, which apply Google-only vCard forms (yearless
+  custom dates, SIP as `X-SIP`). Keep both wraps around whatever replaces those calls. `write` edits
+  `ContactWriter.vCard` after construction, so it relies on `ContactWriter` building the vCard in its
+  constructor and `writeVCard` not rebuilding it; if that changes, the Google forms silently stop being
+  applied (`KompaktGoogleVCardTest` fails). Same design.
 
 ## Rules
 
