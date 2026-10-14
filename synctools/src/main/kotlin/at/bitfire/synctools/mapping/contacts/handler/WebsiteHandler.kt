@@ -34,10 +34,9 @@ object WebsiteHandler: DataRowHandler() {
                 url.type = CustomType.WORK
             Website.TYPE_FTP ->
                 url.type = CustomType.Url.TYPE_FTP
-            Website.TYPE_CUSTOM ->
-                values.getAsString(Website.LABEL)?.let {
-                    labeledUrl.label = it
-                }
+            // Kompakt: an empty label keeps "no type" apart from "other" (written as itemN.X-ABLabel:)
+            Website.TYPE_CUSTOM, null ->
+                labeledUrl.label = values.getAsString(Website.LABEL) ?: ""
         }
         contact.urls += labeledUrl
     }

@@ -22,6 +22,7 @@ import ezvcard.VCard
 import ezvcard.VCardVersion
 import ezvcard.parameter.ImageType
 import ezvcard.parameter.RelatedType
+import ezvcard.property.Address
 import ezvcard.property.Categories
 import ezvcard.property.DateOrTimeProperty
 import ezvcard.property.Kind
@@ -295,6 +296,10 @@ class ContactWriter(
             val label = XAbLabel(labeledProperty.label)
             label.group = itemId
             vCard.addProperty(label)
+
+            // Kompakt: Apple's companion of a labelled address; without it Google drops the label of an ADR
+            if (property is Address)
+                vCard.addExtendedProperty(ContactReader.X_ABADR, "").group = itemId
         }
 
         vCard.addProperty(property)

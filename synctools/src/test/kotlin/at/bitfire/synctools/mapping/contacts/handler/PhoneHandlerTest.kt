@@ -21,6 +21,37 @@ import org.robolectric.RobolectricTestRunner
 class PhoneHandlerTest {
 
     @Test
+    fun testType_CustomNoLabel() {
+        val contact = Contact()
+        PhoneHandler.handle(ContentValues().apply {
+            put(Phone.NUMBER, "+1 555 12345")
+            put(Phone.TYPE, Phone.TYPE_CUSTOM)
+            put(Phone.LABEL, "")
+        }, contact)
+        assertTrue(contact.phoneNumbers[0].property.types.isEmpty())
+        assertEquals("", contact.phoneNumbers[0].label)
+    }
+
+    @Test
+    fun testType_None() {
+        val contact = Contact()
+        PhoneHandler.handle(ContentValues().apply {
+            put(Phone.NUMBER, "+1 555 12345")
+        }, contact)
+        assertEquals("", contact.phoneNumbers[0].label)
+    }
+
+    @Test
+    fun testType_Other_NoLabel() {
+        val contact = Contact()
+        PhoneHandler.handle(ContentValues().apply {
+            put(Phone.NUMBER, "+1 555 12345")
+            put(Phone.TYPE, Phone.TYPE_OTHER)
+        }, contact)
+        assertNull(contact.phoneNumbers[0].label)
+    }
+
+    @Test
     fun testIsPrimary_False() {
         val contact = Contact()
         PhoneHandler.handle(ContentValues().apply {

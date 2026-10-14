@@ -515,6 +515,31 @@ class ContactWriterTest {
     }
 
     @Test
+    fun testAddLabeledProperty_EmptyLabel() {
+        val vCard = generate {
+            phoneNumbers += LabeledProperty(Telephone("+1 555 12345"), "")
+        }
+        assertEquals("item1", vCard.telephoneNumbers.first().group)
+        vCard.getProperty(XAbLabel::class.java).apply {
+            assertEquals("", value)
+            assertEquals("item1", group)
+        }
+    }
+
+    @Test
+    fun testAddLabeledProperty_Address_XAbAdr() {
+        val vCard = generate {
+            addresses += LabeledProperty(Address().apply { streetAddress = "Street 1" }, "Summer")
+            addresses += LabeledProperty(Address().apply { streetAddress = "Street 2" })
+            phoneNumbers += LabeledProperty(Telephone("+1 555 12345"), "Kit")
+        }
+        val xAbAdr = vCard.getExtendedProperties("X-ABADR")
+        assertEquals(1, xAbAdr.size)
+        assertEquals("", xAbAdr.first().value)
+        assertEquals(vCard.addresses.first { it.streetAddress == "Street 1" }.group, xAbAdr.first().group)
+    }
+
+    @Test
     fun testAddLabeledProperty_Label_CollisionWithUnknownProperty() {
         val vCard = generate {
             unknownProperties = "BEGIN:VCARD\n" +

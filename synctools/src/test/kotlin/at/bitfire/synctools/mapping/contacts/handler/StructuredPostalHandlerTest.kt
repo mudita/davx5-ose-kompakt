@@ -63,6 +63,16 @@ class StructuredPostalHandlerTest {
             put(StructuredPostal.TYPE, StructuredPostal.TYPE_CUSTOM)
         }, contact)
         assertTrue(contact.addresses[0].property.types.isEmpty())
+        assertEquals("", contact.addresses[0].label)
+    }
+
+    @Test
+    fun testType_None() {
+        val contact = Contact()
+        StructuredPostalHandler.handle(ContentValues().apply {
+            put(StructuredPostal.STREET, "Street")
+        }, contact)
+        assertEquals("", contact.addresses[0].label)
     }
 
     @Test

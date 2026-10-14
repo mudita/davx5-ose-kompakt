@@ -67,6 +67,16 @@ class WebsiteHandlerTest {
             put(Website.TYPE, Website.TYPE_CUSTOM)
         }, contact)
         assertNull(contact.urls[0].property.type)
+        assertEquals("", contact.urls[0].label)
+    }
+
+    @Test
+    fun testType_None() {
+        val contact = Contact()
+        WebsiteHandler.handle(ContentValues().apply {
+            put(Website.URL, "https://example.com")
+        }, contact)
+        assertEquals("", contact.urls[0].label)
     }
 
     @Test

@@ -7,6 +7,7 @@ package at.bitfire.synctools.mapping.contacts.builder
 import android.net.Uri
 import android.provider.ContactsContract.CommonDataKinds.Im
 import at.bitfire.synctools.mapping.contacts.Contact
+import at.bitfire.synctools.mapping.contacts.handler.ImHandler
 import at.bitfire.synctools.storage.BatchOperation
 import ezvcard.parameter.ImppType
 import java.util.LinkedList
@@ -43,13 +44,18 @@ class ImBuilder(dataRowUri: Uri, rawContactId: Long?, contact: Contact, readOnly
                     }
             }
 
+            // Kompakt: the service type names the protocol; the URI scheme is ambiguous (Google serves ICQ as aim:)
+            // a comma in an unquoted parameter value splits it ("Foo, Bar" arrives as "Foo" and " Bar")
+            val serviceType = impp.parameters.get(ImHandler.SERVICE_TYPE).joinToString(",")
+                .takeUnless { it.isBlank() || it.equals(ImHandler.SERVICE_TYPE_OTHER, ignoreCase = true) }
+
             // save as IM address
             result += newDataRow()
                 .withValue(Im.DATA, impp.handle)
                 .withValue(Im.TYPE, typeCode)
                 .withValue(Im.LABEL, typeLabel)
                 .withValue(Im.PROTOCOL, Im.PROTOCOL_CUSTOM)
-                .withValue(Im.CUSTOM_PROTOCOL, protocol)
+                .withValue(Im.CUSTOM_PROTOCOL, serviceType ?: protocol)
         }
         return result
     }

@@ -58,6 +58,26 @@ class ImBuilderTest {
 
 
     @Test
+    fun testHandle_WithServiceType() {
+        ImBuilder(Uri.EMPTY, null, Contact().apply {
+            impps += LabeledProperty(Impp.aim("icq-id").apply { setParameter("X-SERVICE-TYPE", "ICQ") })
+            impps += LabeledProperty(Impp("x-apple", "other-id").apply { setParameter("X-SERVICE-TYPE", "Other") })
+            impps += LabeledProperty(Impp("x-apple", "sip-id").apply { setParameter("X-SERVICE-TYPE", "Sip") })
+            impps += LabeledProperty(Impp("xmpp", "blank-id").apply { setParameter("X-SERVICE-TYPE", " ") })
+            impps += LabeledProperty(Impp("x-apple", "comma-id").apply {
+                parameters.put("X-SERVICE-TYPE", "Foo")
+                parameters.put("X-SERVICE-TYPE", " Bar")
+            })
+        }, false).build().also { result ->
+            assertEquals("ICQ", result[0].values[CommonDataKinds.Im.CUSTOM_PROTOCOL])
+            assertEquals("x-apple", result[1].values[CommonDataKinds.Im.CUSTOM_PROTOCOL])
+            assertEquals("Sip", result[2].values[CommonDataKinds.Im.CUSTOM_PROTOCOL])
+            assertEquals("xmpp", result[3].values[CommonDataKinds.Im.CUSTOM_PROTOCOL])
+            assertEquals("Foo, Bar", result[4].values[CommonDataKinds.Im.CUSTOM_PROTOCOL])
+        }
+    }
+
+    @Test
     fun testIgnoreSip() {
         ImBuilder(Uri.EMPTY, null, Contact().apply {
             impps += LabeledProperty(Impp("sip:voip@example.com"))

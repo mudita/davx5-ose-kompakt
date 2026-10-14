@@ -70,11 +70,9 @@ object PhoneHandler: DataRowHandler() {
                 tel.types += CustomType.Phone.ASSISTANT
             Phone.TYPE_MMS ->
                 tel.types += CustomType.Phone.MMS
-            Phone.TYPE_CUSTOM -> {
-                values.getAsString(Phone.LABEL)?.let { label ->
-                    labeledNumber.label = label
-                }
-            }
+            // Kompakt: an empty label keeps "no type" apart from "other" (written as itemN.X-ABLabel:)
+            Phone.TYPE_CUSTOM, null ->
+                labeledNumber.label = values.getAsString(Phone.LABEL) ?: ""
         }
         if (values.getAsInteger(Phone.IS_PRIMARY) != 0)
             tel.pref = 1
