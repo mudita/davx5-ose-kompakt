@@ -102,6 +102,12 @@ class KompaktOAuthWebViewActivity : ComponentActivity() {
         }
     }
 
+    // Google's sign-in can show a reCAPTCHA image grid, which the app-wide FAST mode renders unreadable.
+    override fun onResume() {
+        super.onResume()
+        KompaktEinkDisplayMode.FAST_DITHER.apply(this)
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     private fun createWebView(context: Context, request: AuthorizationRequest, redirectUri: String): WebView {
         val view = WebView(context)
