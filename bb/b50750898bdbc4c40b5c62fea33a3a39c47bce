@@ -1,0 +1,46 @@
+synctools/src/test/kotlin/at/bitfire/synctools/mapping/contacts/handler/EmailHandlerTest.kt
+  s_7c22097c63171e::t_bcc0ebe0be3bd3 64-71
+synctools/src/test/kotlin/at/bitfire/synctools/mapping/contacts/ContactReaderTest.kt
+  s_7c22097c63171e::t_bcc0ebe0be3bd3 24,200-210,697-729,732
+  s_7c22097c63171e::t_271cfaa43d031c 730-731,735
+docs/upstream-maintenance.md
+  s_7c22097c63171e::t_f35a472e15d827 84-89,91-92
+  s_7c22097c63171e::t_d27e5989367194 90
+synctools/src/test/kotlin/at/bitfire/synctools/mapping/contacts/ContactWriterTest.kt
+  s_7c22097c63171e::t_bcc0ebe0be3bd3 538
+synctools/src/test/kotlin/at/bitfire/synctools/mapping/contacts/builder/ImBuilderTest.kt
+  s_7c22097c63171e::t_bcc0ebe0be3bd3 65
+  s_7c22097c63171e::t_271cfaa43d031c 66,75
+  s_7c22097c63171e::t_29733cf11e3def 67-70,76
+synctools/src/main/kotlin/at/bitfire/synctools/mapping/contacts/ContactReader.kt
+  s_7c22097c63171e::t_8f54ac315c03ac 49
+  s_7c22097c63171e::t_39d19d4a1506cc 73-74,204,206,209,211-217,219,222,347-348,368-371
+synctools/src/main/kotlin/at/bitfire/synctools/mapping/contacts/builder/ImBuilder.kt
+  s_7c22097c63171e::t_29733cf11e3def 48-50
+synctools/src/test/kotlin/at/bitfire/synctools/mapping/contacts/handler/ImHandlerTest.kt
+  s_7c22097c63171e::t_bcc0ebe0be3bd3 67-78
+  s_7c22097c63171e::t_271cfaa43d031c 79-110
+synctools/src/main/kotlin/at/bitfire/synctools/mapping/contacts/handler/ImHandler.kt
+  s_7c22097c63171e::t_39d19d4a1506cc 16
+  s_7c22097c63171e::t_cdf83b71f811db 17-19
+  s_7c22097c63171e::t_92fbaf361e8e41 20
+  s_7c22097c63171e::t_4c81389c224fef 21,59-60,63
+  s_7c22097c63171e::t_526635e783f71c 56
+  s_7c22097c63171e::t_63fa3c4db7114e 57-58,61-62,64-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "bbb50750898bdbc4c40b5c62fea33a3a39c47bce",
+  "prompts": {},
+  "sessions": {
+    "s_7c22097c63171e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dbb414ee-ee26-4db8-9de2-296b7f4b0c56",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
