@@ -1,0 +1,11 @@
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktGoogleVCardTest.kt
+  ai_agent 109,186
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktGoogleVCard.kt
+  ai_agent 63,65-66,71-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "7445588f0ad991158f4ac495f333bff2496826b5",
+  "prompts": {}
+}
