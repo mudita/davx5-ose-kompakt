@@ -1,0 +1,19 @@
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktGoogleVCardTest.kt
+  s_6233e5a5884454::t_ea4ab2365130f9 29,34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "110dce3b0cf7d5439d25d4680f8ef0aab9554ac7",
+  "prompts": {},
+  "sessions": {
+    "s_6233e5a5884454": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9059f46f-acb8-4636-9457-2cd133d02ca3",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
