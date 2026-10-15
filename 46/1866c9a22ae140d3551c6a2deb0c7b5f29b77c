@@ -1,0 +1,17 @@
+synctools/src/main/kotlin/at/bitfire/synctools/mapping/contacts/RawContactBuilder.kt
+  ai_agent 8-10,49-59,62-73,75,85-100
+synctools/src/main/kotlin/at/bitfire/synctools/storage/contacts/AndroidContact.kt
+  ai_agent 14,16,170-171,190-194,244-256
+synctools/src/test/kotlin/at/bitfire/synctools/mapping/contacts/RawContactBuilderTest.kt
+  ai_agent 1-54
+synctools/src/androidTest/kotlin/at/bitfire/synctools/storage/contacts/AndroidContactTest.kt
+  ai_agent 9,12-13,32,34,178-326
+docs/upstream-maintenance.md
+  ai_agent 84-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "461866c9a22ae140d3551c6a2deb0c7b5f29b77c",
+  "prompts": {}
+}
