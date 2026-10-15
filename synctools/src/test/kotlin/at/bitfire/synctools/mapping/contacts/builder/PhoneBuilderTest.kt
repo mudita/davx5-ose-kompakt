@@ -13,6 +13,7 @@ import ezvcard.parameter.TelephoneType
 import ezvcard.property.Telephone
 import ezvcard.util.TelUri
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -84,6 +85,7 @@ class PhoneBuilderTest {
             phoneNumbers += LabeledProperty(Telephone("+1 555 12345"))
         }, false).build().also { result ->
             assertEquals(0, result[0].values[CommonDataKinds.Phone.IS_PRIMARY])
+            assertFalse(result[0].values.containsKey(CommonDataKinds.Phone.IS_SUPER_PRIMARY))
         }
     }
 
@@ -95,6 +97,28 @@ class PhoneBuilderTest {
             })
         }, false).build().also { result ->
             assertEquals(1, result[0].values[CommonDataKinds.Phone.IS_PRIMARY])
+            assertFalse(result[0].values.containsKey(CommonDataKinds.Phone.IS_SUPER_PRIMARY))
+        }
+    }
+
+    @Test
+    fun testPref_Several_LowestRankIsPrimary() {
+        PhoneBuilder(Uri.EMPTY, null, Contact().apply {
+            phoneNumbers += LabeledProperty(Telephone("+1 555 12345").apply { pref = 3 })
+            phoneNumbers += LabeledProperty(Telephone("+1 555 23456").apply { pref = 2 })
+            phoneNumbers += LabeledProperty(Telephone("+1 555 34567").apply { pref = 1 })
+        }, false).build().also { result ->
+            assertEquals(listOf(0, 0, 1), result.map { it.values[CommonDataKinds.Phone.IS_PRIMARY] })
+        }
+    }
+
+    @Test
+    fun testPref_TypePref_IsPrimary() {
+        PhoneBuilder(Uri.EMPTY, null, Contact().apply {
+            phoneNumbers += LabeledProperty(Telephone("+1 555 12345"))
+            phoneNumbers += LabeledProperty(Telephone("+1 555 23456").apply { types += TelephoneType.PREF })
+        }, false).build().also { result ->
+            assertEquals(listOf(0, 1), result.map { it.values[CommonDataKinds.Phone.IS_PRIMARY] })
         }
     }
 
