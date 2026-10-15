@@ -1,0 +1,15 @@
+synctools/src/main/kotlin/at/bitfire/synctools/mapping/contacts/builder/EmailBuilder.kt
+  ai_agent 21,36,38,61-67
+synctools/src/main/kotlin/at/bitfire/synctools/mapping/contacts/builder/PhoneBuilder.kt
+  ai_agent 21,41,43,99-105
+synctools/src/test/kotlin/at/bitfire/synctools/mapping/contacts/builder/PhoneBuilderTest.kt
+  ai_agent 16,88,100-121
+synctools/src/test/kotlin/at/bitfire/synctools/mapping/contacts/builder/EmailBuilderTest.kt
+  ai_agent 15,77,89-110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "a8acba3f3934c600ae467e5a0facaf156ca22423",
+  "prompts": {}
+}
