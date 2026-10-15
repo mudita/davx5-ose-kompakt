@@ -81,6 +81,21 @@ brings it in.
   ([design](superpowers/specs/2026-10-08-shp-1194-google-contact-create-design.md)). From `v4.5.20-ose` the
   method is `uploadDirty(capabilities)` (still `open`) and the HTTP client is ktor: keep the wrapper around the
   new `super` call and port `lookUpServerName` to dav4jvm's ktor `DavResource.get`.
+- **`ContactReader`, `ContactWriter`, `ImBuilder`, `ImHandler`, `PhoneHandler`, `EmailHandler`,
+  `StructuredPostalHandler`, `WebsiteHandler`** (synctools) fix general vCard losses: an IM's
+  `X-SERVICE-TYPE` is kept as its custom protocol and written back; an empty `X-ABLabel` ("no type") on a
+  phone, email, address or website is kept as label `""` in both directions
+  (`findAndRemoveLabel(…, keepEmpty = true)`, the handlers' `TYPE_CUSTOM, null ->` branch); a labelled
+  address is written with Apple's `X-ABADR`, which the reader no longer retains; an `X-SIP` keeps its type
+  and label. Each edit carries a `Kompakt:` comment and is covered by the module's tests;
+  `EmailHandlerTest.testTypeCustom_NoLabel` was changed to expect `""`
+  ([design](superpowers/specs/2026-10-14-shp-1198-preserve-google-fields-design.md)).
+- **`ContactsSyncManager.processCard()` and `generateUpload()`** wrap `ContactReader.fromVCard` and
+  `ContactWriter` in `KompaktGoogleVCard.read` / `write`, which apply Google-only vCard forms (yearless
+  custom dates, SIP as `X-SIP`). Keep both wraps around whatever replaces those calls. `write` edits
+  `ContactWriter.vCard` after construction, so it relies on `ContactWriter` building the vCard in its
+  constructor and `writeVCard` not rebuilding it; if that changes, the Google forms silently stop being
+  applied (`KompaktGoogleVCardTest` fails). Same design.
 
 ## Rules
 

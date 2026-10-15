@@ -52,6 +52,88 @@ class ImHandlerTest {
     }
 
     @Test
+    fun testProtocol_Custom_ServiceType() {
+        val contact = Contact()
+        ImHandler.handle(ContentValues().apply {
+            put(Im.PROTOCOL, Im.PROTOCOL_CUSTOM)
+            put(Im.CUSTOM_PROTOCOL, "Google Talk")
+            put(Im.DATA, "id")
+        }, contact)
+        assertEquals("googletalk", contact.impps[0].property.protocol)
+        assertEquals("Google Talk", contact.impps[0].property.getParameter(ImHandler.SERVICE_TYPE))
+    }
+
+    @Test
+    fun testProtocol_Custom_ServiceType_NoValidScheme() {
+        val contact = Contact()
+        ImHandler.handle(ContentValues().apply {
+            put(Im.PROTOCOL, Im.PROTOCOL_CUSTOM)
+            put(Im.CUSTOM_PROTOCOL, "微信")
+            put(Im.DATA, "id")
+        }, contact)
+        assertEquals("x-apple", contact.impps[0].property.protocol)
+        assertEquals("微信", contact.impps[0].property.getParameter(ImHandler.SERVICE_TYPE))
+    }
+
+    @Test
+    fun testProtocol_Custom_ServiceType_InvalidSchemeCharacter() {
+        val contact = Contact()
+        ImHandler.handle(ContentValues().apply {
+            put(Im.PROTOCOL, Im.PROTOCOL_CUSTOM)
+            put(Im.CUSTOM_PROTOCOL, "Foo, Bar")
+            put(Im.DATA, "id")
+        }, contact)
+        assertEquals("x-apple", contact.impps[0].property.protocol)
+        assertEquals("Foo, Bar", contact.impps[0].property.getParameter(ImHandler.SERVICE_TYPE))
+    }
+
+    @Test
+    fun testProtocol_Custom_Null() {
+        val contact = Contact()
+        ImHandler.handle(ContentValues().apply {
+            put(Im.PROTOCOL, Im.PROTOCOL_CUSTOM)
+            put(Im.DATA, "id")
+        }, contact)
+        assertEquals(1, contact.impps.size)
+        assertNull(contact.impps[0].property.getParameter(ImHandler.SERVICE_TYPE))
+    }
+
+    @Test
+    fun testProtocol_Legacy_NoServiceType() {
+        val contact = Contact()
+        ImHandler.handle(ContentValues().apply {
+            put(Im.PROTOCOL, Im.PROTOCOL_JABBER)
+            put(Im.DATA, "id")
+        }, contact)
+        assertEquals("xmpp", contact.impps[0].property.protocol)
+        assertNull(contact.impps[0].property.getParameter(ImHandler.SERVICE_TYPE))
+    }
+
+    @Test
+    fun testProtocol_Custom_ServiceType_Sip() {
+        val contact = Contact()
+        ImHandler.handle(ContentValues().apply {
+            put(Im.PROTOCOL, Im.PROTOCOL_CUSTOM)
+            put(Im.CUSTOM_PROTOCOL, "Sip")
+            put(Im.DATA, "id")
+        }, contact)
+        assertEquals("x-apple", contact.impps[0].property.protocol)
+        assertEquals("Sip", contact.impps[0].property.getParameter(ImHandler.SERVICE_TYPE))
+    }
+
+    @Test
+    fun testProtocol_Custom_NoProtocol() {
+        val contact = Contact()
+        ImHandler.handle(ContentValues().apply {
+            put(Im.PROTOCOL, Im.PROTOCOL_CUSTOM)
+            put(Im.CUSTOM_PROTOCOL, "x-apple")
+            put(Im.DATA, "id")
+        }, contact)
+        assertEquals("x-apple", contact.impps[0].property.protocol)
+        assertNull(contact.impps[0].property.getParameter(ImHandler.SERVICE_TYPE))
+    }
+
+    @Test
     fun testProtocol_Empty() {
         val contact = Contact()
         ImHandler.handle(ContentValues().apply {
