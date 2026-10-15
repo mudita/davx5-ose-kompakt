@@ -1,0 +1,27 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktEinkDisplayMode.kt
+  s_b8a04c5f0461cd::t_2126a6dcd04dd6 30
+  s_b8a04c5f0461cd::t_f11b9fab58cd11 25-26
+  s_b8a04c5f0461cd::t_1e3e5006d7ef26 1-24,27-29,31-39
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktOAuthWebViewActivity.kt
+  s_b8a04c5f0461cd::t_bb32a8251103c2 105-110
+core/src/test/kotlin/at/bitfire/davdroid/ui/setup/KompaktEinkDisplayModeTest.kt
+  s_b8a04c5f0461cd::t_3342f6e38225f6 14
+  s_b8a04c5f0461cd::t_ef5d48ebd1afeb 36
+  s_b8a04c5f0461cd::t_09cef5886d60ce 1-13,15-35,37-72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "7f293f56ded797e7aabb23dd1cde427539d27640",
+  "prompts": {},
+  "sessions": {
+    "s_b8a04c5f0461cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cfe33c3a-5141-43f5-ad2b-592bd4af18c4",
+        "model": "unknown"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
