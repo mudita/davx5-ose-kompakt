@@ -1,0 +1,19 @@
+.github/workflows/kompakt-deployment-qa.yml
+  s_b8a04c5f0461cd::t_d8e8081ba758dc 7-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "ce53c41d8fa17cb53f5ef029a600384aade2f4fe",
+  "prompts": {},
+  "sessions": {
+    "s_b8a04c5f0461cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cfe33c3a-5141-43f5-ad2b-592bd4af18c4",
+        "model": "unknown"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
