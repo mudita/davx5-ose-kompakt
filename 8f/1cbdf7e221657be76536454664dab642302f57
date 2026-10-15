@@ -1,0 +1,24 @@
+docs/upstream-maintenance.md
+  s_7c22097c63171e::t_f35a472e15d827 84-89,91-92
+  s_7c22097c63171e::t_d27e5989367194 90
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktGoogleVCard.kt
+  ai_agent 63,65-66,71-80
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktGoogleVCardTest.kt
+  ai_agent 109,186
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "8f1cbdf7e221657be76536454664dab642302f57",
+  "prompts": {},
+  "sessions": {
+    "s_7c22097c63171e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dbb414ee-ee26-4db8-9de2-296b7f4b0c56",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
