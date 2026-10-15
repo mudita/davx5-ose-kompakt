@@ -5,7 +5,6 @@
 package at.bitfire.synctools.mapping.contacts.builder
 
 import android.net.Uri
-import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Email
 import at.bitfire.synctools.mapping.contacts.Contact
 import at.bitfire.synctools.storage.BatchOperation
@@ -19,6 +18,8 @@ class EmailBuilder(dataRowUri: Uri, rawContactId: Long?, contact: Contact, readO
 
     override fun build(): List<BatchOperation.CpoBuilder> {
         val result = LinkedList<BatchOperation.CpoBuilder>()
+        var primary: BatchOperation.CpoBuilder? = null
+        var primaryRank = Int.MAX_VALUE
         for (labeledEmail in contact.emails) {
             if (labeledEmail.property.value.isNullOrBlank())
                 continue
@@ -33,9 +34,9 @@ class EmailBuilder(dataRowUri: Uri, rawContactId: Long?, contact: Contact, readO
             } catch(e: IllegalStateException) {
                 logger.log(Level.FINER, "Can't understand email PREF", e)
             }
-            var isPrimary = pref != null
+            var prefRank = pref
             if (types.contains(EmailType.PREF)) {
-                isPrimary = true
+                prefRank = prefRank ?: 1
                 types -= EmailType.PREF
             }
 
@@ -53,14 +54,21 @@ class EmailBuilder(dataRowUri: Uri, rawContactId: Long?, contact: Contact, readO
                     }
             }
 
-            result += newDataRow()
+            val row = newDataRow()
                     .withValue(Email.MIMETYPE, Email.CONTENT_ITEM_TYPE)
                     .withValue(Email.ADDRESS, email.value)
                     .withValue(Email.TYPE, typeCode)
                     .withValue(Email.LABEL, typeLabel)
-                    .withValue(Email.IS_PRIMARY, if (isPrimary) 1 else 0)
-                    .withValue(ContactsContract.CommonDataKinds.Phone.IS_SUPER_PRIMARY, if (isPrimary) 1 else 0)
+                    .withValue(Email.IS_PRIMARY, 0)
+            result += row
+            if (prefRank != null && prefRank < primaryRank) {
+                primary = row
+                primaryRank = prefRank
+            }
         }
+        // Kompakt: PREF maps to IS_PRIMARY only, and only the most preferred one. IS_SUPER_PRIMARY is the
+        // user's device-wide default; writing it (even as 0) would override the choice on every download.
+        primary?.withValue(Email.IS_PRIMARY, 1)
         return result
     }
 

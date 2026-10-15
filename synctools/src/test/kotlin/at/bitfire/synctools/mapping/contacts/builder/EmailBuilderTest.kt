@@ -12,6 +12,7 @@ import at.bitfire.synctools.vcard.property.CustomType
 import ezvcard.parameter.EmailType
 import ezvcard.property.Email
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -73,6 +74,7 @@ class EmailBuilderTest {
             emails += LabeledProperty(Email("test@example.com"))
         }, false).build().also { result ->
             assertEquals(0, result[0].values[CommonDataKinds.Email.IS_PRIMARY])
+            assertFalse(result[0].values.containsKey(CommonDataKinds.Email.IS_SUPER_PRIMARY))
         }
     }
 
@@ -84,6 +86,28 @@ class EmailBuilderTest {
             })
         }, false).build().also { result ->
             assertEquals(1, result[0].values[CommonDataKinds.Email.IS_PRIMARY])
+            assertFalse(result[0].values.containsKey(CommonDataKinds.Email.IS_SUPER_PRIMARY))
+        }
+    }
+
+    @Test
+    fun testPref_Several_LowestRankIsPrimary() {
+        EmailBuilder(Uri.EMPTY, null, Contact().apply {
+            emails += LabeledProperty(Email("test@example.com").apply { pref = 3 })
+            emails += LabeledProperty(Email("test2@example.com").apply { pref = 2 })
+            emails += LabeledProperty(Email("test3@example.com").apply { pref = 1 })
+        }, false).build().also { result ->
+            assertEquals(listOf(0, 0, 1), result.map { it.values[CommonDataKinds.Email.IS_PRIMARY] })
+        }
+    }
+
+    @Test
+    fun testPref_TypePref_IsPrimary() {
+        EmailBuilder(Uri.EMPTY, null, Contact().apply {
+            emails += LabeledProperty(Email("test@example.com"))
+            emails += LabeledProperty(Email("test2@example.com").apply { types += EmailType.PREF })
+        }, false).build().also { result ->
+            assertEquals(listOf(0, 1), result.map { it.values[CommonDataKinds.Email.IS_PRIMARY] })
         }
     }
 
