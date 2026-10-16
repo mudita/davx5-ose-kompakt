@@ -1,0 +1,27 @@
+synctools/src/main/kotlin/at/bitfire/synctools/mapping/contacts/RawContactBuilder.kt
+  s_b52c1af7aaafec::t_61431068894101 64-66,87
+synctools/src/main/kotlin/at/bitfire/synctools/storage/contacts/AndroidContact.kt
+  s_b52c1af7aaafec::t_61431068894101 252
+docs/superpowers/specs/2026-10-09-shp-1194-default-number-findings.md
+  s_b52c1af7aaafec::t_88e7db658c8c8f 211-214
+synctools/src/test/kotlin/at/bitfire/synctools/mapping/contacts/RawContactBuilderTest.kt
+  s_b52c1af7aaafec::t_8b026310d00477 62-71,109-113,127-131,133
+synctools/src/androidTest/kotlin/at/bitfire/synctools/storage/contacts/AndroidContactTest.kt
+  s_b52c1af7aaafec::t_33dac0618083cf 36,207-257,348-353,369,372-395
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "7d22929fe08edda77e1fe3166b91cc4310a4d4ff",
+  "prompts": {},
+  "sessions": {
+    "s_b52c1af7aaafec": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8f33e05e-6763-4d69-95a3-3babfa76dbc4",
+        "model": "unknown"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
