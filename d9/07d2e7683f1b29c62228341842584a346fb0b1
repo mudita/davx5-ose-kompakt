@@ -1,0 +1,27 @@
+synctools/src/main/kotlin/at/bitfire/synctools/mapping/contacts/builder/PhoneBuilder.kt
+  s_b52c1af7aaafec::t_2f4c07eb111ab8 21-22,95,101-105,109
+  ai_agent 41,43,99-100
+synctools/src/test/kotlin/at/bitfire/synctools/mapping/contacts/builder/EmailBuilderTest.kt
+  ai_agent 15,77,89-110
+synctools/src/test/kotlin/at/bitfire/synctools/mapping/contacts/builder/PhoneBuilderTest.kt
+  ai_agent 16,88,100-121
+synctools/src/main/kotlin/at/bitfire/synctools/mapping/contacts/builder/EmailBuilder.kt
+  s_b52c1af7aaafec::t_2f4c07eb111ab8 21-22,57,63-67,71
+  ai_agent 36,38,61-62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "d907d2e7683f1b29c62228341842584a346fb0b1",
+  "prompts": {},
+  "sessions": {
+    "s_b52c1af7aaafec": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8f33e05e-6763-4d69-95a3-3babfa76dbc4",
+        "model": "unknown"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
