@@ -1,0 +1,22 @@
+core/src/main/kotlin/at/bitfire/davdroid/sync/ContactsSyncManager.kt
+  s_b52c1af7aaafec::t_1553ca5ba191d5 115,376-381,453-454
+  s_b52c1af7aaafec::t_53fe15c4347f51 37,372
+synctools/src/main/kotlin/at/bitfire/synctools/storage/contacts/AndroidContact.kt
+  s_b52c1af7aaafec::t_1553ca5ba191d5 43-46,197-198
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "15b515ce37eb2af1e088e3f9b13a0955d46a4f09",
+  "prompts": {},
+  "sessions": {
+    "s_b52c1af7aaafec": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8f33e05e-6763-4d69-95a3-3babfa76dbc4",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
