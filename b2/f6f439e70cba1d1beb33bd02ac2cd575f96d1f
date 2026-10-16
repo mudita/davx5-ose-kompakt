@@ -1,0 +1,34 @@
+synctools/src/main/kotlin/at/bitfire/synctools/mapping/contacts/RawContactBuilder.kt
+  s_b52c1af7aaafec::t_9103f500472ea6 49,51-59,65,83-92
+  s_b52c1af7aaafec::t_08b2918eea89ea 50
+  s_b52c1af7aaafec::t_a062462deaaf87 62-63,68-69,80-82,95-97
+  s_b52c1af7aaafec::t_f0e6a6a1af0e66 64,66-67
+synctools/src/androidTest/kotlin/at/bitfire/synctools/storage/contacts/AndroidContactTest.kt
+  s_b52c1af7aaafec::t_13d010108aab08 22,33,35,179,181-185,187,190-199,201-206,208-209,211,213-214,216-379
+  s_b52c1af7aaafec::t_fa86d72135d164 180,186,188-189,200,207,210,212,215
+synctools/src/main/kotlin/at/bitfire/synctools/storage/contacts/AndroidContact.kt
+  s_b52c1af7aaafec::t_9103f500472ea6 190,240-255
+synctools/src/test/kotlin/at/bitfire/synctools/mapping/contacts/RawContactBuilderTest.kt
+  s_b52c1af7aaafec::t_3b43299bce634c 7-15,25-28,30-31,33-42,46-127
+  s_b52c1af7aaafec::t_347f33034554e7 20-24,29,43-45
+  s_b52c1af7aaafec::t_ef4b6be7d3abd5 32
+docs/upstream-maintenance.md
+  s_b52c1af7aaafec::t_e1f2f99b32d7a4 89-97,100-105
+  s_b52c1af7aaafec::t_41bc3896f41605 98
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "b2f6f439e70cba1d1beb33bd02ac2cd575f96d1f",
+  "prompts": {},
+  "sessions": {
+    "s_b52c1af7aaafec": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8f33e05e-6763-4d69-95a3-3babfa76dbc4",
+        "model": "unknown"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
