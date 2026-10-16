@@ -1,0 +1,19 @@
+synctools/src/androidTest/kotlin/at/bitfire/synctools/storage/contacts/AndroidContactTest.kt
+  s_b52c1af7aaafec::t_13d010108aab08 22,201,220,237,261-285,335-379
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "7fcdecfd4d0bc1b8264338c9e3868dd78363b78c",
+  "prompts": {},
+  "sessions": {
+    "s_b52c1af7aaafec": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8f33e05e-6763-4d69-95a3-3babfa76dbc4",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
