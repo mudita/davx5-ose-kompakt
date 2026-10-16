@@ -1,0 +1,21 @@
+synctools/src/main/kotlin/at/bitfire/synctools/mapping/contacts/builder/PhoneBuilder.kt
+  s_b52c1af7aaafec::t_2f4c07eb111ab8 21-22,95,101-105,109
+synctools/src/main/kotlin/at/bitfire/synctools/mapping/contacts/builder/EmailBuilder.kt
+  s_b52c1af7aaafec::t_2f4c07eb111ab8 21-22,57,63-67,71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "b8dfed024959a45659a9df8880869baf3e41657e",
+  "prompts": {},
+  "sessions": {
+    "s_b52c1af7aaafec": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8f33e05e-6763-4d69-95a3-3babfa76dbc4",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
