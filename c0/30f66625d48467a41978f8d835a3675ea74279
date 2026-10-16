@@ -1,0 +1,24 @@
+synctools/src/main/kotlin/at/bitfire/synctools/mapping/contacts/RawContactBuilder.kt
+  s_b52c1af7aaafec::t_12ceb83fdf9d1b 36-37
+  s_b52c1af7aaafec::t_a062462deaaf87 11,29,33-35,38-40,74,99-101,106-109
+synctools/src/test/kotlin/at/bitfire/synctools/mapping/contacts/RawContactBuilderTest.kt
+  s_b52c1af7aaafec::t_347f33034554e7 20-21,25-27,32-33,37-57,63,69
+synctools/src/main/kotlin/at/bitfire/synctools/storage/contacts/AndroidAddressBook.kt
+  s_b52c1af7aaafec::t_b8a675fe678461 27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "c030f66625d48467a41978f8d835a3675ea74279",
+  "prompts": {},
+  "sessions": {
+    "s_b52c1af7aaafec": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8f33e05e-6763-4d69-95a3-3babfa76dbc4",
+        "model": "unknown"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
