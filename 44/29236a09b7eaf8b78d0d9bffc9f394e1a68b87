@@ -1,0 +1,46 @@
+synctools/src/androidTest/kotlin/at/bitfire/synctools/storage/contacts/AndroidContactTest.kt
+  s_b52c1af7aaafec::t_13d010108aab08 22,33,35,181-185,187,190-199,201-206,258-347,354-368,370-371
+  s_b52c1af7aaafec::t_fa86d72135d164 180,186,188-189,200
+  s_b52c1af7aaafec::t_33dac0618083cf 36,207-257,348-353,369,372-395
+synctools/src/test/kotlin/at/bitfire/synctools/mapping/contacts/RawContactBuilderTest.kt
+  s_b52c1af7aaafec::t_8b026310d00477 62-71,109-113,127-131,133
+  s_b52c1af7aaafec::t_347f33034554e7 20-24,29,43-45
+  s_b52c1af7aaafec::t_ef4b6be7d3abd5 32
+  s_b52c1af7aaafec::t_3b43299bce634c 7-15,25-28,30-31,33-42,46-61,72-108,114-126
+synctools/src/main/kotlin/at/bitfire/synctools/storage/contacts/AndroidContact.kt
+  s_b52c1af7aaafec::t_61431068894101 252
+  s_b52c1af7aaafec::t_9103f500472ea6 190,240-251,253-255
+docs/upstream-maintenance.md
+  s_b52c1af7aaafec::t_e1f2f99b32d7a4 89-97,100-105
+  s_b52c1af7aaafec::t_41bc3896f41605 98
+docs/superpowers/specs/2026-10-09-shp-1194-default-number-findings.md
+  s_d5a51b41e3862f::t_a69fde0d13415c 40-71
+  s_b52c1af7aaafec::t_88e7db658c8c8f 211-214
+  s_d5a51b41e3862f::t_f8ab51507157c8 170,172-177
+  s_d5a51b41e3862f::t_be25a8dd04ad3b 223-225
+  s_d5a51b41e3862f::t_b77654c8d167c9 226-231
+  s_d5a51b41e3862f::t_5067b979d0153d 6-7
+  s_d5a51b41e3862f::t_cefd976d4828c3 156-158
+  s_d5a51b41e3862f::t_4eee6804a8e2dd 159-169,171,180-190,196-197,232-233
+  s_b3abda0883f6a8::t_be28c6b1440a75 1-2,8-39,73-88,90-126,129-133,140-155,252-256,285,288
+  s_d5a51b41e3862f::t_851d4fa7e4761a 89
+  s_d5a51b41e3862f::t_4ecfe8bdbd8b32 134-139
+  s_d5a51b41e3862f::t_4b9d63d7175541 238-241,243-245,247-251
+  s_d5a51b41e3862f::t_241dcdeccd488c 127-128
+  s_d5a51b41e3862f::t_f1f01ed8300647 266-267
+  s_d5a51b41e3862f::t_2d4155da61131c 257-265,268-284,286-287,289-291
+  s_d5a51b41e3862f::t_060861f53f2bb8 179
+  s_b52c1af7aaafec::t_abaab26dd7e422 3-5,191-195,198-210,215-219
+synctools/src/main/kotlin/at/bitfire/synctools/mapping/contacts/RawContactBuilder.kt
+  s_b52c1af7aaafec::t_61431068894101 64-66,87
+  s_b52c1af7aaafec::t_08b2918eea89ea 50
+  s_b52c1af7aaafec::t_9103f500472ea6 49,51-59,83-86,88-92
+  s_b52c1af7aaafec::t_a062462deaaf87 62-63,68,80-82,95
+  s_b52c1af7aaafec::t_f0e6a6a1af0e66 67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "4429236a09b7eaf8b78d0d9bffc9f394e1a68b87",
+  "prompts": {}
+}
