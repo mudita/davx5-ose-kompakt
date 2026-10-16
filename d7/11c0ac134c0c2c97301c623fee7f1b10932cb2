@@ -1,0 +1,19 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/account/KompaktLinkedAccountScreen.kt
+  s_15d338acbd8afb::t_390b2b5e7638e9 361
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "d711c0ac134c0c2c97301c623fee7f1b10932cb2",
+  "prompts": {},
+  "sessions": {
+    "s_15d338acbd8afb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5d7b0927-fe0a-4dd5-992e-d1dd27c08ce0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
