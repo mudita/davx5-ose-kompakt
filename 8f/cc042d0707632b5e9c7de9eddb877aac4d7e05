@@ -1,0 +1,21 @@
+docs/kompakt-testing.md
+  s_b52c1af7aaafec::t_41bc3896f41605 209-227
+docs/upstream-maintenance.md
+  s_b52c1af7aaafec::t_41bc3896f41605 90-92,94-98
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "8fcc042d0707632b5e9c7de9eddb877aac4d7e05",
+  "prompts": {},
+  "sessions": {
+    "s_b52c1af7aaafec": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8f33e05e-6763-4d69-95a3-3babfa76dbc4",
+        "model": "unknown"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
