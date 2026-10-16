@@ -1,0 +1,20 @@
+docs/superpowers/specs/2026-10-09-shp-1194-default-number-findings.md
+  s_b52c1af7aaafec::t_abaab26dd7e422 3-5,191-195,198-219,231-233,243
+  s_b52c1af7aaafec::t_2fe97e99ccd2d8 239
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "ea14ebd4af2fe20aa880ae8cd244869c5ba7d77d",
+  "prompts": {},
+  "sessions": {
+    "s_b52c1af7aaafec": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8f33e05e-6763-4d69-95a3-3babfa76dbc4",
+        "model": "unknown"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
