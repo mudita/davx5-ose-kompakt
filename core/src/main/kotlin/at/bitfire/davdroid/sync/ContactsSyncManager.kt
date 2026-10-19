@@ -301,7 +301,9 @@ class ContactsSyncManager @AssistedInject constructor(
                 vCardVersion = VCardVersion.V3_0
             }
         }
-        ContactWriter(contact, vCardVersion, productIds.vCardProdId).writeVCard(writer)
+        KompaktGoogleVCard.write(collection.url, contact) {
+            ContactWriter(it, vCardVersion, productIds.vCardProdId)
+        }.writeVCard(writer)
 
         return GeneratedResource(
             suggestedFileName = DavUtils.fileNameFromUid(uid, "vcf"),
@@ -390,7 +392,7 @@ class ContactsSyncManager @AssistedInject constructor(
 
             // map to Contact
             runBlocking(ioDispatcher) {
-                ContactReader.fromVCard(vCard, downloader)
+                KompaktGoogleVCard.read(collection.url, vCard) { ContactReader.fromVCard(it, downloader) }
             }
         } catch (e: CannotParseException) {
             logger.log(Level.SEVERE, "Received invalid vCard, ignoring", e)

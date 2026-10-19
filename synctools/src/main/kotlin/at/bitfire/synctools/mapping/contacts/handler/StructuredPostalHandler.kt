@@ -36,11 +36,9 @@ object StructuredPostalHandler: DataRowHandler() {
                 address.types += AddressType.HOME
             StructuredPostal.TYPE_WORK ->
                 address.types += AddressType.WORK
-            StructuredPostal.TYPE_CUSTOM -> {
-                values.getAsString(StructuredPostal.LABEL)?.let {
-                    labeledAddress.label = it
-                }
-            }
+            // Kompakt: an empty label keeps "no type" apart from "other" (written as itemN.X-ABLabel:)
+            StructuredPostal.TYPE_CUSTOM, null ->
+                labeledAddress.label = values.getAsString(StructuredPostal.LABEL) ?: ""
         }
         values.getAsString(StructuredPostal.STREET)?.let { streets ->
             address.streetAddresses += streets.split('\n')

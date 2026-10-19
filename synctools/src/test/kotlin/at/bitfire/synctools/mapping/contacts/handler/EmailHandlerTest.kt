@@ -61,6 +61,15 @@ class EmailHandlerTest {
 
 
     @Test
+    fun testType_None() {
+        val contact = Contact()
+        EmailHandler.handle(ContentValues().apply {
+            put(Email.ADDRESS, "test@example.com")
+        }, contact)
+        assertEquals("", contact.emails[0].label)
+    }
+
+    @Test
     fun testTypeCustom_NoLabel() {
         val contact = Contact()
         EmailHandler.handle(ContentValues().apply {
@@ -68,7 +77,7 @@ class EmailHandlerTest {
             put(Email.TYPE, Email.TYPE_CUSTOM)
         }, contact)
         assertTrue(contact.emails[0].property.types.isEmpty())
-        assertNull(contact.emails[0].label)
+        assertEquals("", contact.emails[0].label)
     }
 
     @Test

@@ -13,6 +13,13 @@ import ezvcard.property.Impp
 
 object ImHandler: DataRowHandler() {
 
+    // Kompakt: X-SERVICE-TYPE round trip
+    const val SERVICE_TYPE = "X-SERVICE-TYPE"
+    const val SERVICE_TYPE_OTHER = "Other"
+    private const val NO_PROTOCOL_SCHEME = "x-apple"
+    private const val SIP_SCHEME = "sip"
+    private val VALID_SCHEME = Regex("[a-z][a-z0-9+.-]*")
+
     override fun forMimeType() = Im.CONTENT_ITEM_TYPE
 
     @Suppress("DEPRECATION")
@@ -47,7 +54,16 @@ object ImHandler: DataRowHandler() {
                 impp = Impp("netmeeting", handle)
             Im.PROTOCOL_CUSTOM ->
                 try {
-                    impp = Impp(protocolToUriScheme(values.getAsString(Im.CUSTOM_PROTOCOL)), handle)
+                    val customProtocol = values.getAsString(Im.CUSTOM_PROTOCOL)
+                    // Kompakt: servers following Apple's X-SERVICE-TYPE (Google too) take the protocol from it and
+                    // drop it without one. The scheme then only has to be a valid non-SIP one: "微信" has none, "Foo, Bar"
+                    // keeps an invalid comma, and "Sip" would turn the IM into a SIP address.
+                    if (customProtocol != null && customProtocol != NO_PROTOCOL_SCHEME) {
+                        val scheme = protocolToUriScheme(customProtocol)
+                            ?.takeIf { VALID_SCHEME.matches(it) && it != SIP_SCHEME } ?: NO_PROTOCOL_SCHEME
+                        impp = Impp(scheme, handle).apply { setParameter(SERVICE_TYPE, customProtocol) }
+                    } else
+                        impp = Impp(protocolToUriScheme(customProtocol), handle)
                 } catch(e: IllegalArgumentException) {
                     logger.warning("Messenger type/value can't be expressed as URI; ignoring")
                 }
