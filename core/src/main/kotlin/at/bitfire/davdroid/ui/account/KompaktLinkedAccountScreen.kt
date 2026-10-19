@@ -358,7 +358,7 @@ fun KompaktLinkedAccountContent(
                 icon = painterResource(R.drawable.ic_kompakt_success),
                 confirmLabel = stringResource(RFrontitude.string.calendar_accountsync_dialog_button_importnow),
                 onConfirm = { actions.onImportServiceNow(dialog.service) },
-                dismissLabel = stringResource(RFrontitude.string.common_button_notnow),
+                dismissLabel = stringResource(RFrontitude.string.common_dialog_button_later),
                 onDismiss = actions.onDismissDialog
             )
 
