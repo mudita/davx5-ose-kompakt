@@ -1,0 +1,42 @@
+synctools/src/test/kotlin/at/bitfire/synctools/mapping/contacts/RawContactBuilderTest.kt
+  s_8e980884e50d2f::t_2c30d57a8361db 175-176,188-189,197-212
+  s_8e980884e50d2f::t_38240d0b2eafec 46-89
+synctools/src/main/kotlin/at/bitfire/synctools/storage/contacts/AndroidContact.kt
+  s_8e980884e50d2f::t_81542360119562 192
+  s_8e980884e50d2f::t_f4ab80016de290 242-246
+  s_8e980884e50d2f::t_72faff215fedd3 172-173
+docs/superpowers/specs/2026-10-15-shp-1203-default-number-design.md
+  s_8e980884e50d2f::t_f39791393a0d4b 219-222
+  s_8e980884e50d2f::t_77e790d29a486a 161-162,164-167
+  s_8e980884e50d2f::t_33d4d666d0b99a 228-232
+  s_8e980884e50d2f::t_6afcb6997e359e 55,58-69,71-75
+  s_8e980884e50d2f::t_f655288b2c5e63 195,197-204
+  s_8e980884e50d2f::t_410ae4fcc6bae0 125,128-139
+  s_8e980884e50d2f::t_90eee8765e44f8 212-214
+  s_8e980884e50d2f::t_f64df15561143d 183-184
+synctools/src/androidTest/kotlin/at/bitfire/synctools/storage/contacts/AndroidContactTest.kt
+  s_8e980884e50d2f::t_e9ae1da267e8f6 418-428
+  s_8e980884e50d2f::t_26947ba73f43cc 259,263-286
+  s_8e980884e50d2f::t_5c512d41cc5394 345-363
+  s_8e980884e50d2f::t_778cb89d9454bd 306
+docs/upstream-maintenance.md
+  s_8e980884e50d2f::t_1602c82aff132c 93-96
+synctools/src/main/kotlin/at/bitfire/synctools/mapping/contacts/RawContactBuilder.kt
+  s_8e980884e50d2f::t_605bd761a4c791 50-54,61-62,68-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "368682b16436f422d7545129fef03e59c079b1f9",
+  "prompts": {},
+  "sessions": {
+    "s_8e980884e50d2f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7ed6b4f0-7d71-4a44-9a21-229495da0573",
+        "model": "unknown"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
