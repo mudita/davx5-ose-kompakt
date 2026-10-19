@@ -169,6 +169,9 @@ class AndroidContact(
         val provider = addressBook.provider
         // Kompakt: the rows are deleted and re-inserted, which would drop the user's default number and email
         val superPrimary = querySuperPrimary()
+        // Kompakt: a dirty raw contact holds a change the server never got, so a moved PREF is followed only
+        // when it is clean; read before the batch, which clears DIRTY
+        val followServer = !isDirty()
         val batch = ContactsBatchOperation(provider)
         val uri = rawContactSyncURI()
         val builder = BatchOperation.CpoBuilder.newUpdate(uri)
@@ -187,7 +190,7 @@ class AndroidContact(
             .newDelete(dataSyncURI())
             .withSelection(Data.RAW_CONTACT_ID + "=? AND ${Data.MIMETYPE} IN ($sqlTypesToRemove)", arrayOf(id!!.toString()))
 
-        rawContactBuilder.insertDataRows(dataSyncURI(), id, getContact(), batch, addressBook.readOnly, superPrimary)
+        rawContactBuilder.insertDataRows(dataSyncURI(), id, getContact(), batch, addressBook.readOnly, superPrimary, followServer)
         batch.commit()
 
         getContact().photo?.let { photo ->
@@ -235,6 +238,11 @@ class AndroidContact(
         val contact = getContact()
         rawContactBuilder.insertDataRows(dataSyncURI(), id, contact, batch, addressBook.readOnly)
     }
+
+
+    private fun isDirty(): Boolean =
+        addressBook.provider.query(rawContactSyncURI(), arrayOf(RawContacts.DIRTY), null, null, null)
+            ?.use { cursor -> cursor.moveToFirst() && cursor.getInt(0) != 0 } ?: false
 
 
     private fun querySuperPrimary(): Map<String, List<String>> =

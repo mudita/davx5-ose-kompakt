@@ -105,9 +105,10 @@ brings it in.
   deleting the rows, and `RawContactBuilder.insertDataRows` marks the re-inserted row that holds the same value
   (`findSameValue`: normalised number, or a national number Google now sends in international form, which
   equals the old row's E.164; case-insensitive email — never `PhoneNumberUtils.compare`, which matches on the
-  last digits and could move the default to another number). The server wins a conflict: when the card prefers
-  another value, the default was changed there, so super-primary is dropped and the picker asks; nothing is
-  uploaded back. A choice made on the device reaches the server through the normal dirty-contact upload, which
+  last digits and could move the default to another number). A later choice on the server wins: when the card prefers
+  another value while the old one is still on it and the raw contact is not dirty (`update()` reads `DIRTY`
+  before the batch clears it), super-primary moves to the card's preferred value; when the raw contact is
+  dirty or the old value is gone, it is dropped and the picker asks; nothing is uploaded back. A choice made on the device reaches the server through the normal dirty-contact upload, which
   runs before a sync's download. Each edit carries a `Kompakt:` comment; `RawContactBuilderTest`,
   `AndroidContactTest` (instrumented) and the builder tests cover it
   ([design](superpowers/specs/2026-10-15-shp-1203-default-number-design.md)). Worth proposing to

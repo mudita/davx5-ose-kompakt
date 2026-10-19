@@ -35,10 +35,55 @@ class RawContactBuilderTest {
     }
 
     @Test
-    fun testInsertDataRows_SuperPrimary_CardPrefersAnother() {
+    fun testInsertDataRows_SuperPrimary_CardPrefersAnother_Dirty() {
         assertEquals(
             listOf(null, null, null),
             superPrimaryFlags(prefNumber = 1, superPrimary = listOf("+48 601 333 333"))
+        )
+    }
+
+    @Test
+    fun testInsertDataRows_SuperPrimary_CardPrefersAnother_FollowServer() {
+        assertEquals(
+            listOf(1, null, null),
+            superPrimaryFlags(prefNumber = 1, superPrimary = listOf("+48 601 333 333"), followServer = true)
+        )
+    }
+
+    @Test
+    fun testInsertDataRows_SuperPrimary_CardPrefersNothing_FollowServer() {
+        assertEquals(
+            listOf(null, null, 1),
+            superPrimaryFlags(prefNumber = null, superPrimary = listOf("+48 601 333 333"), followServer = true)
+        )
+    }
+
+    @Test
+    fun testInsertDataRows_SuperPrimary_DeletedOnServer_FollowServer() {
+        assertEquals(
+            listOf(null, null, null),
+            superPrimaryFlags(prefNumber = 1, superPrimary = listOf("+48 601 444 444"), followServer = true)
+        )
+    }
+
+    @Test
+    fun testInsertDataRows_NoSuperPrimary_FollowServer() {
+        assertEquals(listOf(null, null, null), superPrimaryFlags(prefNumber = 1, superPrimary = null, followServer = true))
+    }
+
+    @Test
+    fun testInsertDataRows_SuperPrimaryEmail_CardPrefersAnother_FollowServer() {
+        assertEquals(
+            listOf(1, null),
+            emailSuperPrimaryFlags(prefEmail = 1, superPrimary = listOf("two@example.com"), followServer = true)
+        )
+    }
+
+    @Test
+    fun testInsertDataRows_SuperPrimaryEmail_CardPrefersAnother_Dirty() {
+        assertEquals(
+            listOf(null, null),
+            emailSuperPrimaryFlags(prefEmail = 1, superPrimary = listOf("two@example.com"), followServer = false)
         )
     }
 
@@ -127,7 +172,8 @@ class RawContactBuilderTest {
     private fun superPrimaryFlags(
         prefNumber: Int?,
         superPrimary: List<String>?,
-        numbers: List<String> = listOf("+48 601 111 111", "+48 601 222 222", "+48 601 333 333")
+        numbers: List<String> = listOf("+48 601 111 111", "+48 601 222 222", "+48 601 333 333"),
+        followServer: Boolean = false
     ): List<Any?> {
         val contact = Contact()
         numbers.forEachIndexed { i, number ->
@@ -139,12 +185,31 @@ class RawContactBuilderTest {
         val batch = ContactsBatchOperation(mockk())
         RawContactBuilder(addressBook).insertDataRows(
             Uri.EMPTY, 1, contact, batch, false,
-            superPrimary?.let { mapOf(Phone.CONTENT_ITEM_TYPE to it) }.orEmpty()
+            superPrimary?.let { mapOf(Phone.CONTENT_ITEM_TYPE to it) }.orEmpty(),
+            followServer
         )
         return batch.queue
             .map { it.values }
             .filter { it[Phone.MIMETYPE] == Phone.CONTENT_ITEM_TYPE }
             .map { it[Phone.IS_SUPER_PRIMARY] }
+    }
+
+    private fun emailSuperPrimaryFlags(prefEmail: Int?, superPrimary: List<String>, followServer: Boolean): List<Any?> {
+        val contact = Contact()
+        listOf("one@example.com", "two@example.com").forEachIndexed { i, address ->
+            contact.emails += LabeledProperty(ezvcard.property.Email(address).apply {
+                if (i + 1 == prefEmail)
+                    pref = 1
+            })
+        }
+        val batch = ContactsBatchOperation(mockk())
+        RawContactBuilder(addressBook).insertDataRows(
+            Uri.EMPTY, 1, contact, batch, false, mapOf(Email.CONTENT_ITEM_TYPE to superPrimary), followServer
+        )
+        return batch.queue
+            .map { it.values }
+            .filter { it[Email.MIMETYPE] == Email.CONTENT_ITEM_TYPE }
+            .map { it[Email.IS_SUPER_PRIMARY] }
     }
 
 }

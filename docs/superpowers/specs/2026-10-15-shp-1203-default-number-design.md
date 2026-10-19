@@ -10,7 +10,8 @@ editor, "Remember this choice" in a number picker). Google sync must neither inv
 
 - A contact the user gave no default must ask which number to call, even though Google marks one number
   preferred on every card.
-- A default the user chose on the Kompakt must survive every later download of that contact from Google.
+- A default the user chose on the Kompakt must survive every later download of that contact from Google that
+  does not change it there.
 - A default changed on Google's side (the web, another device) must not be silently overridden by the
   Kompakt.
 
@@ -52,13 +53,27 @@ Google's copy back after upload or by forcing a re-download:
 | 2–3 numbers, `PREF` on #2 | the same number kept as `PREF`, moved to first place; the other numbers keep their order |
 | 1 number, no `PREF` | `PREF` added to it |
 | 3 numbers, no `PREF` | `PREF` added to the **first** number |
-| `PREF` cleared | `PREF` comes back on the first number of the card |
+| `PREF` cleared | `PREF` stays on the number that held it, which Google lists first (re-checked below) |
 | `PREF` moved to #3 | #3 kept as `PREF`, moved to first place |
 
+Re-checked on 2026-10-16/17 with the People API alongside (its `sourcePrimary` tells a choice from Google's
+automatic pick, which CardDAV cannot):
+
+| Change | Google's preferred number |
+|---|---|
+| contact created with 3 numbers, none preferred | the first, as Google's automatic pick (`sourcePrimary=false`) |
+| the Kompakt uploads `PREF` on #3 | #3, as a choice (`sourcePrimary=true`) |
+| rename; phone list rewritten without any preference, #3 listed last | unchanged: #3 |
+| the Kompakt uploads the card without `PREF` (default cleared on the device), #3 listed last | unchanged: #3 stays the choice |
+| the People API is asked to clear every preference | refused: #3 stays |
+| a preference set on another number | that number |
+
 So Google always keeps exactly one preferred number (and email) per contact: the user's choice when there is
-one, otherwise the first value. Its automatic pick and a real choice are byte-identical on the wire. vCard
-itself has no notion of a user's default: RFC 2426 `TYPE=pref` marks a preferred value with no limit on how
-many, and RFC 6350 `PREF=1…100` is a rank chosen by the card's author.
+one, otherwise the first value. Once a value is chosen, it stays preferred until a person chooses another
+value or the value itself is deleted or edited; a card uploaded without `PREF` does not clear it. Its
+automatic pick and a real choice are byte-identical on the wire. vCard itself has no notion of a user's
+default: RFC 2426 `TYPE=pref` marks a preferred value with no limit on how many, and RFC 6350
+`PREF=1…100` is a rank chosen by the card's author.
 
 ### What DAVx5 did
 
@@ -108,12 +123,21 @@ so it changes nothing there. Upload is unchanged.
 - Only the raw contact being rewritten is read. Since a person holds at most one super-primary, that is the
   person's current default; restoring it cannot take the default from another copy of a merged contact.
 
-### 3. The server wins a conflict
+### 3. A later choice made on Google wins
 
 - If the card prefers the same value, or prefers nothing at all, the default is kept.
-- If the card prefers **another** value, the default was changed on Google's side, so super-primary is dropped:
-  the new rows carry Google's preference as primary only and the picker asks. Nothing is uploaded back —
-  re-asserting the device's choice would silently undo the change made on Google.
+- If the card prefers **another** value while the old one is still on the card, and the raw contact is not
+  dirty, the default was changed on Google (the web, another phone): super-primary moves to the card's
+  preferred value. Google never moves a chosen preference by itself while the value exists (measured above),
+  and a clean raw contact means Google already held the device's choice, so the new `PREF` is a newer choice,
+  not Google's automatic pick.
+- If the raw contact **is dirty** at the download, the device has a change Google never got: an upload ignored
+  on an edit conflict (HTTP 412 / 409 / 403) or a choice made during the sync after its upload phase. Google's
+  `PREF` may then be its own automatic pick, so super-primary is dropped and the picker asks, as every other
+  field of that contact also takes Google's version. `DIRTY` is read before the batch, which clears it.
+- If the old value is gone from the card (deleted or edited on Google), the default is dropped: Google's new
+  `PREF` may then be its automatic pick (the first value), which CardDAV cannot tell from a choice.
+- Nothing is uploaded back — re-asserting the device's choice would silently undo the change made on Google.
 - A choice made on the Kompakt reaches Google through the normal path: the app's write marks the contact
   dirty, and a sync uploads dirty contacts before it downloads, so Google already holds the choice as `PREF`
   when the card next arrives.
@@ -135,10 +159,13 @@ so it changes nothing there. Upload is unchanged.
 |---|---|
 | Google contact, no default chosen on the Kompakt | Google's pick is primary only; the picker asks |
 | Default chosen on the Kompakt | uploads as `PREF`; dials directly; survives later downloads (a rename on Google, …) |
-| Default changed on Google | dropped; the picker asks |
+| Default changed on Google (the device's default had been uploaded) | follows: the new value becomes the default and dials directly |
+| Default changed on Google while the device has a change Google never got | dropped; the picker asks |
 | Default number deleted or changed on Google | dropped; the picker asks |
-| Default chosen on another device | arrives as primary only; the picker asks — indistinguishable from Google's own pick |
-| Local contact with a default merged with a Google copy | the local copy keeps the default; the Google copy is primary only |
+| Default chosen on another device, no default on the Kompakt before | arrives as primary only; the picker asks — indistinguishable from Google's own pick |
+| Default cleared on the Kompakt | cleared on the Kompakt; Google keeps its choice, so other devices still use it |
+| Local contact with a default merged with a Google copy | the local copy keeps the default; the Google copy is primary only, and a change on Google does not move it |
+| Merged contact whose default sits on the Google copy | follows on the Google copy; the person still holds one default |
 
 ### Why upstream code
 
@@ -154,6 +181,8 @@ change is worth proposing to bitfireAT/synctools.
 | Alternative | Why not |
 |---|---|
 | Device always wins: restore whatever `PREF` says, mark the contact dirty and upload it | overrides a default changed on Google, and needs an upload trigger from inside the sync, because a sync adapter's `DIRTY=1` requests no sync |
+| Always drop the default when `PREF` moves | Google keeps a choice until a person changes it, so a moved `PREF` next to the old value is a newer choice; dropping it makes the user choose again on the Kompakt |
+| Follow a moved `PREF` even when the raw contact is dirty | the device's own choice may not have reached Google, whose `PREF` is then its automatic pick: Call would dial a number nobody chose |
 | Detect Google's automatic `PREF` | impossible: a real choice is moved to first place too, so both are byte-identical |
 | Store a "user chose" bit or the last uploaded `PREF` in the raw contact | `SYNC1`–`SYNC4` are all taken; cannot recover a choice made on Google |
 | Update data rows in place instead of delete + insert | flags would survive by themselves, but it rewrites upstream `AndroidContact.update`; too large |
@@ -164,9 +193,16 @@ change is worth proposing to bitfireAT/synctools.
 
 - A number saved internationally that Google returns in national form does not match, so the picker asks.
   Formatting the new national number would need the country, which only the old row carries.
-- A device choice is lost when its upload fails on an edit conflict (HTTP 412 / 409: the card changed on
+- A device choice is lost when its upload fails on an edit conflict (HTTP 412 / 409 / 403: the card changed on
   Google meanwhile), or when it is made during a sync after the upload phase: the download then applies
-  Google's card, and if that prefers another value the default is dropped.
+  Google's card, and if that prefers another value the default is dropped (the raw contact is dirty).
+- Clearing a default on the Kompakt does not clear it on Google: a card without `PREF` leaves Google's choice
+  in place, so other devices keep it and the next download brings it back as primary only.
+- A read-only address book clears `DIRTY` before its download, so a moved `PREF` is followed there even after
+  a device change. Google's address book is writable, so this does not arise with Google.
+- A device that synced Google contacts with a build before this change can carry super-primary on Google's
+  automatic pick. It survives (the card prefers the same value) and now also follows a moved `PREF`.
+  Re-adding the account clears it.
 - A name change in a download can re-aggregate the DAVx5 copy into a person whose other copy holds a
   super-primary; the provider then clears it and the picker asks.
 
@@ -174,19 +210,25 @@ change is worth proposing to bitfireAT/synctools.
 
 - `PhoneBuilderTest`, `EmailBuilderTest`: `IS_SUPER_PRIMARY` is absent; several `PREF` values keep only the
   most preferred primary; `TYPE=pref` counts.
-- `RawContactBuilderTest` (Robolectric): kept when the card prefers the same value or nothing, dropped when it
-  prefers another value or the value is gone, a duplicate number in the card; `findSameValue` — reformatted,
+- `RawContactBuilderTest` (Robolectric): kept when the card prefers the same value or nothing; when it prefers
+  another value, followed with `followServer` and dropped without it, for numbers and emails; dropped when the
+  value is gone; nothing set without a previous default; a duplicate number in the card; `findSameValue` — reformatted,
   national → international, international → national (no match), shared tail with another prefix, changed
   number, no digits, email case.
 - `AndroidContactTest` (instrumented, real ContactsProvider): a Contacts-style write sets `DIRTY`; the default
   survives an update when the card agrees (reformatted number and email), when it prefers nothing, with a
-  duplicate number, and for a national number Google sends internationally; it is dropped when Google's
-  `PREF` moved or the number was deleted; a merged local + Google contact keeps the local default and exactly
-  one super-primary; a new card is primary only.
+  duplicate number, and for a national number Google sends internationally; it follows Google's moved `PREF`
+  (number and email) once the choice was uploaded, and is dropped when the raw contact is still dirty or the
+  number was deleted; a merged local + Google contact keeps the local default, a default on the Google copy
+  follows there, and the person holds exactly one super-primary; a new card is primary only.
 - On a Kompakt with the Google test account, reading flags with
   `adb shell content query --uri content://com.android.contacts/data --projection _id:raw_contact_id:data1:is_primary:is_super_primary --where "contact_id=<id> AND mimetype='vnd.android.cursor.item/phone_v2'"`:
   1. A contact with 3 numbers and no default, synced: no row has `is_super_primary=1`; Call shows the picker.
   2. "Remember" #3 in Contacts, then sync: Google's card has #3 as `PREF`.
   3. Rename the contact on Google, then sync: #3 still has `is_super_primary=1`.
-  4. Move the default to #1 on Google, then sync: no super-primary; the picker asks.
-  5. Delete #3 on Google, then sync: no super-primary remains.
+  4. Move the default to #1 on Google, then sync: #1 has `is_super_primary=1`; Call dials it.
+  5. Set a default on #2 on the Kompakt without syncing, move it to #3 on Google meanwhile, then sync: the upload
+     is rejected (412) and the raw contact is still dirty at the download, so no super-primary remains; the
+     picker asks.
+  6. Delete the default number on Google, then sync: no super-primary remains.
+  7. Clear the default on the Kompakt, then sync: no super-primary; Google still prefers the old number.

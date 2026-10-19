@@ -47,23 +47,33 @@ class RawContactBuilder(addressBook: AndroidAddressBook) {
     )
 
     // Kompakt: superPrimary maps a MIME type to the forms of the value that was super-primary. It stays
-    // super-primary unless the card prefers another value: a PREF moved on the server means the default was
-    // changed there, so it is dropped and the picker asks.
+    // super-primary while the card prefers the same value or none. When the card prefers another value that
+    // is on the card next to the old one, the default was changed on the server: with followServer it moves
+    // to the card's preferred value, otherwise it is dropped and the picker asks. followServer is false when
+    // the device has a change the server never got, so the card's PREF may be the server's automatic pick
+    // rather than a newer choice. A default whose value is gone from the card is always dropped.
     fun insertDataRows(
         dataRowUri: Uri,
         rawContactId: Long?,
         contact: Contact,
         batch: ContactsBatchOperation,
         readOnly: Boolean,
-        superPrimary: Map<String, List<String>> = emptyMap()
+        superPrimary: Map<String, List<String>> = emptyMap(),
+        followServer: Boolean = false
     ) {
         for (factory in dataRowBuilderFactories) {
             val builder = factory.newInstance(dataRowUri, rawContactId, contact, readOnly)
             val rows = builder.build()
             superPrimary[factory.mimeType()]?.let { chosen ->
-                val candidates = rows.filter { it.values[Data.IS_PRIMARY] == 1 }.ifEmpty { rows }
-                findSameValue(factory.mimeType(), chosen, candidates.map { it.values[Data.DATA1] as? String })
-                    ?.let { candidates[it].withValue(Data.IS_SUPER_PRIMARY, 1) }
+                val preferred = rows.filter { it.values[Data.IS_PRIMARY] == 1 }
+                val candidates = preferred.ifEmpty { rows }
+                val same = findSameValue(factory.mimeType(), chosen, candidates.map { it.values[Data.DATA1] as? String })
+                when {
+                    same != null -> candidates[same].withValue(Data.IS_SUPER_PRIMARY, 1)
+                    followServer && preferred.size == 1 &&
+                        findSameValue(factory.mimeType(), chosen, rows.map { it.values[Data.DATA1] as? String }) != null ->
+                        preferred.single().withValue(Data.IS_SUPER_PRIMARY, 1)
+                }
             }
             batch += rows
         }

@@ -184,7 +184,8 @@ class AndroidContactTest {
             chooseDefault(contact.id!!, Phone.CONTENT_ITEM_TYPE, "+44 7700 900003")
             chooseDefault(contact.id!!, EmailRow.CONTENT_ITEM_TYPE, "three@example.com")
 
-            // the user's choice was uploaded; Google reformats the number and the email's case
+            // Google's card prefers the same values, reformatted (number spacing, email case): kept whether or
+            // not the contact is dirty
             contact.update(googleCard(
                 numbers = listOf("+44 7700 900001", "+44 7700 900002", "+447700900003"), prefNumber = 3,
                 emails = listOf("one@example.com", "Three@Example.com"), prefEmail = 2
@@ -256,9 +257,34 @@ class AndroidContactTest {
     }
 
     @Test
-    fun testUpdate_DropsSuperPrimary_PrefMovedOnServer() {
+    fun testUpdate_FollowsSuperPrimary_PrefMovedOnServer() {
         val contact = addGoogleCard(prefNumber = 1, prefEmail = 1)
         try {
+            chooseDefault(contact.id!!, Phone.CONTENT_ITEM_TYPE, "+44 7700 900003")
+            chooseDefault(contact.id!!, EmailRow.CONTENT_ITEM_TYPE, "three@example.com")
+            markUploaded(contact.id!!)
+
+            contact.update(googleCard(prefNumber = 1, prefEmail = 1))
+
+            assertEquals(
+                mapOf("+44 7700 900001" to Flags(1, 1), "+44 7700 900002" to Flags(0, 0), "+44 7700 900003" to Flags(0, 0)),
+                dataFlags(contact.id!!, Phone.CONTENT_ITEM_TYPE)
+            )
+            assertEquals(
+                mapOf("one@example.com" to Flags(1, 1), "three@example.com" to Flags(0, 0)),
+                dataFlags(contact.id!!, EmailRow.CONTENT_ITEM_TYPE)
+            )
+            assertFalse(isDirty(contact.id!!))
+        } finally {
+            contact.delete()
+        }
+    }
+
+    @Test
+    fun testUpdate_DropsSuperPrimary_PrefMovedOnServer_NotUploaded() {
+        val contact = addGoogleCard(prefNumber = 1, prefEmail = 1)
+        try {
+            // still dirty: the server never got this choice, so its PREF may be its own automatic pick
             chooseDefault(contact.id!!, Phone.CONTENT_ITEM_TYPE, "+44 7700 900003")
 
             contact.update(googleCard(prefNumber = 1, prefEmail = 1))
@@ -278,6 +304,7 @@ class AndroidContactTest {
         val contact = addGoogleCard(prefNumber = 1, prefEmail = 1)
         try {
             chooseDefault(contact.id!!, Phone.CONTENT_ITEM_TYPE, "+44 7700 900003")
+            markUploaded(contact.id!!)
 
             contact.update(googleCard(numbers = listOf("+44 7700 900001", "+44 7700 900002"), prefNumber = 1, prefEmail = 1))
 
@@ -309,6 +336,26 @@ class AndroidContactTest {
             val aggregateId = aggregateId(local)
             assertEquals(aggregateId, aggregateId(contact.id!!))
             assertEquals(1, superPrimaryCount(aggregateId, Phone.CONTENT_ITEM_TYPE))
+        } finally {
+            contact.delete()
+            provider.delete(ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, local).asSyncAdapter(), null, null)
+        }
+    }
+
+    @Test
+    fun testUpdate_MergedContact_FollowsOnGoogleCopy() {
+        val local = insertLocalRawContact("+44 7700 900011", "+44 7700 900012")
+        val contact = addGoogleCard(prefNumber = 1, prefEmail = 1)
+        try {
+            join(local, contact.id!!)
+            chooseDefault(contact.id!!, Phone.CONTENT_ITEM_TYPE, "+44 7700 900003")
+            markUploaded(contact.id!!)
+
+            contact.update(googleCard(prefNumber = 2, prefEmail = 1))
+
+            assertEquals(Flags(1, 1), dataFlags(contact.id!!, Phone.CONTENT_ITEM_TYPE)["+44 7700 900002"])
+            assertEquals(Flags(0, 0), dataFlags(local, Phone.CONTENT_ITEM_TYPE)["+44 7700 900012"])
+            assertEquals(1, superPrimaryCount(aggregateId(contact.id!!), Phone.CONTENT_ITEM_TYPE))
         } finally {
             contact.delete()
             provider.delete(ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, local).asSyncAdapter(), null, null)
@@ -367,6 +414,17 @@ class AndroidContactTest {
         )
         assertEquals(1, updated)
         assertTrue(isDirty(rawContactId))
+    }
+
+    // what a successful upload leaves behind
+    private fun markUploaded(rawContactId: Long) {
+        val values = ContentValues()
+        values.put(ContactsContract.RawContacts.DIRTY, 0)
+        provider.update(
+            ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, rawContactId).asSyncAdapter(),
+            values, null, null
+        )
+        assertFalse(isDirty(rawContactId))
     }
 
     private fun normalizedNumber(rawContactId: Long, number: String): String? =
