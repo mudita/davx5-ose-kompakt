@@ -1,0 +1,49 @@
+synctools/src/main/kotlin/at/bitfire/synctools/mapping/contacts/RawContactBuilder.kt
+  s_8e980884e50d2f::t_605bd761a4c791 50-54,61-62,68-76
+synctools/src/test/kotlin/at/bitfire/synctools/mapping/contacts/RawContactBuilderTest.kt
+  s_8e980884e50d2f::t_38240d0b2eafec 46-82,84-89
+  s_8e980884e50d2f::t_2c30d57a8361db 175-176,188-189,197-212
+  s_8e980884e50d2f::t_14b3e7ac82f6fd 38
+  s_8e980884e50d2f::t_9e231fff44d32b 83
+synctools/src/androidTest/kotlin/at/bitfire/synctools/storage/contacts/AndroidContactTest.kt
+  s_8e980884e50d2f::t_e9ae1da267e8f6 419-429
+  s_8e980884e50d2f::t_778cb89d9454bd 307
+  s_8e980884e50d2f::t_5c512d41cc5394 346-364
+  s_8e980884e50d2f::t_26947ba73f43cc 260,264-287
+  s_8e980884e50d2f::t_3e179d169e63a7 187-188
+docs/superpowers/specs/2026-10-15-shp-1203-default-number-design.md
+  s_8e980884e50d2f::t_c8d2a6e06eb7da 13-14
+  s_8e980884e50d2f::t_f39791393a0d4b 220-223
+  s_8e980884e50d2f::t_77e790d29a486a 162-163,165-168
+  s_8e980884e50d2f::t_90eee8765e44f8 213-215
+  s_8e980884e50d2f::t_33d4d666d0b99a 229,233-234
+  s_8e980884e50d2f::t_c4caea438f04e8 230-232
+  s_8e980884e50d2f::t_8e2df116571c3d 139
+  s_8e980884e50d2f::t_f64df15561143d 184-185
+  s_8e980884e50d2f::t_6afcb6997e359e 56,59-70,72-76
+  s_8e980884e50d2f::t_f655288b2c5e63 196,198-205
+  s_8e980884e50d2f::t_410ae4fcc6bae0 126,129-138,140
+docs/upstream-maintenance.md
+  s_8e980884e50d2f::t_1602c82aff132c 93-96
+synctools/src/main/kotlin/at/bitfire/synctools/storage/contacts/AndroidContact.kt
+  s_8e980884e50d2f::t_72faff215fedd3 174
+  s_8e980884e50d2f::t_f4ab80016de290 243-247
+  s_8e980884e50d2f::t_18c68bffb6208c 172-173
+  s_8e980884e50d2f::t_81542360119562 193
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "1cede4f0446f973ccb07ff36b6d36368da5123a5",
+  "prompts": {},
+  "sessions": {
+    "s_8e980884e50d2f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7ed6b4f0-7d71-4a44-9a21-229495da0573",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": null
+    }
+  }
+}
