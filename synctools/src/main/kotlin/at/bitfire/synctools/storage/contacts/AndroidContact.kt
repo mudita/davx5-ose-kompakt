@@ -11,7 +11,9 @@ import android.database.DatabaseUtils
 import android.net.Uri
 import android.os.RemoteException
 import android.provider.ContactsContract
+import android.provider.ContactsContract.CommonDataKinds.Email
 import android.provider.ContactsContract.CommonDataKinds.GroupMembership
+import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.provider.ContactsContract.RawContacts
 import android.provider.ContactsContract.RawContacts.Data
 import at.bitfire.synctools.mapping.contacts.Contact
@@ -165,6 +167,11 @@ class AndroidContact(
         setContact(data)
 
         val provider = addressBook.provider
+        // Kompakt: the rows are deleted and re-inserted, which would drop the user's default number and email
+        val superPrimary = querySuperPrimary()
+        // Kompakt: a dirty raw contact holds a change the server never got, so a moved PREF is followed only
+        // when it is clean; read before the batch, which clears DIRTY
+        val followServer = !isDirty()
         val batch = ContactsBatchOperation(provider)
         val uri = rawContactSyncURI()
         val builder = BatchOperation.CpoBuilder.newUpdate(uri)
@@ -183,7 +190,7 @@ class AndroidContact(
             .newDelete(dataSyncURI())
             .withSelection(Data.RAW_CONTACT_ID + "=? AND ${Data.MIMETYPE} IN ($sqlTypesToRemove)", arrayOf(id!!.toString()))
 
-        insertDataRows(batch)
+        rawContactBuilder.insertDataRows(dataSyncURI(), id, getContact(), batch, addressBook.readOnly, superPrimary, followServer)
         batch.commit()
 
         getContact().photo?.let { photo ->
@@ -231,6 +238,31 @@ class AndroidContact(
         val contact = getContact()
         rawContactBuilder.insertDataRows(dataSyncURI(), id, contact, batch, addressBook.readOnly)
     }
+
+
+    private fun isDirty(): Boolean =
+        addressBook.provider.query(rawContactSyncURI(), arrayOf(RawContacts.DIRTY), null, null, null)
+            ?.use { cursor -> cursor.moveToFirst() && cursor.getInt(0) != 0 } ?: false
+
+
+    private fun querySuperPrimary(): Map<String, List<String>> =
+        addressBook.provider.query(
+            dataSyncURI(),
+            arrayOf(Data.MIMETYPE, Data.DATA1, Phone.NORMALIZED_NUMBER),
+            "${Data.RAW_CONTACT_ID}=? AND ${Data.IS_SUPER_PRIMARY}!=0 AND ${Data.MIMETYPE} IN (?,?)",
+            arrayOf(id!!.toString(), Phone.CONTENT_ITEM_TYPE, Email.CONTENT_ITEM_TYPE),
+            null
+        )?.use { cursor ->
+            buildMap {
+                while (cursor.moveToNext()) {
+                    val mimeType = cursor.getString(0)
+                    val value = cursor.getString(1) ?: continue
+                    // Kompakt: the E.164 form the provider computed with the device's country
+                    val e164 = if (mimeType == Phone.CONTENT_ITEM_TYPE) cursor.getString(2) else null
+                    put(mimeType, listOfNotNull(value, e164))
+                }
+            }
+        }.orEmpty()
 
 
     // group membership management

@@ -18,6 +18,8 @@ class PhoneBuilder(dataRowUri: Uri, rawContactId: Long?, contact: Contact, readO
 
     override fun build(): List<BatchOperation.CpoBuilder> {
         val result = LinkedList<BatchOperation.CpoBuilder>()
+        var primary: BatchOperation.CpoBuilder? = null
+        var primaryRank = Int.MAX_VALUE
         for (phoneNumber in contact.phoneNumbers) {
             val tel = phoneNumber.property
 
@@ -37,9 +39,9 @@ class PhoneBuilder(dataRowUri: Uri, rawContactId: Long?, contact: Contact, readO
             } catch(e: IllegalStateException) {
                 logger.log(Level.FINER, "Can't understand phone number PREF", e)
             }
-            var isPrimary = pref != null
+            var prefRank = pref
             if (types.contains(TelephoneType.PREF)) {
-                isPrimary = true
+                prefRank = prefRank ?: 1
                 types -= TelephoneType.PREF
             }
 
@@ -90,14 +92,21 @@ class PhoneBuilder(dataRowUri: Uri, rawContactId: Long?, contact: Contact, readO
                 }
             }
 
-            result += newDataRow()
+            val row = newDataRow()
                 .withValue(Phone.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
                 .withValue(Phone.NUMBER, number)
                 .withValue(Phone.TYPE, typeCode)
                 .withValue(Phone.LABEL, typeLabel)
-                .withValue(Phone.IS_PRIMARY, if (isPrimary) 1 else 0)
-                .withValue(Phone.IS_SUPER_PRIMARY, if (isPrimary) 1 else 0)
+                .withValue(Phone.IS_PRIMARY, 0)
+            result += row
+            if (prefRank != null && prefRank < primaryRank) {
+                primary = row
+                primaryRank = prefRank
+            }
         }
+        // Kompakt: PREF maps to IS_PRIMARY only, and only the most preferred one. IS_SUPER_PRIMARY is the
+        // user's device-wide default; writing it (even as 0) would override the choice on every download.
+        primary?.withValue(Phone.IS_PRIMARY, 1)
         return result
     }
 

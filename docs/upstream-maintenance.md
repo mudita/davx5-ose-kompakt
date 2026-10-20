@@ -96,6 +96,29 @@ brings it in.
   `ContactWriter.vCard` after construction, so it relies on `ContactWriter` building the vCard in its
   constructor and `writeVCard` not rebuilding it; if that changes, the Google forms silently stop being
   applied (`KompaktGoogleVCardTest` fails). Same design.
+- **`PhoneBuilder`, `EmailBuilder`, `RawContactBuilder.insertDataRows`, `AndroidContact.update`** (synctools)
+  fix how a downloaded `PREF` meets the device's default. Upstream writes `PREF` as `IS_PRIMARY` **and**
+  `IS_SUPER_PRIMARY`; Google puts `PREF` on every card, so every download made Google's pick the person's
+  default. The builders now write `IS_PRIMARY` only, on the most preferred value (lowest `PREF`), and never
+  write the `IS_SUPER_PRIMARY` key — not even as 0, which makes ContactsProvider clear it. `update()` reads
+  the raw contact's super-primary phone and email (with the provider's `Phone.NORMALIZED_NUMBER`) before
+  deleting the rows, and `RawContactBuilder.insertDataRows` marks the re-inserted row that holds the same value
+  (`findSameValue`: normalised number, or a national number Google now sends in international form, which
+  equals the old row's E.164; case-insensitive email — never `PhoneNumberUtils.compare`, which matches on the
+  last digits and could move the default to another number). A later choice on the server wins: when the card prefers
+  another value while the old one is still on it and the raw contact is not dirty (`update()` reads `DIRTY`
+  before the batch clears it), super-primary moves to the card's preferred value; when the raw contact is
+  dirty or the old value is gone, it is dropped and the picker asks; nothing is uploaded back. A choice made on the device reaches the server through the normal dirty-contact upload, which
+  runs before a sync's download. Each edit carries a `Kompakt:` comment; `RawContactBuilderTest`,
+  `AndroidContactTest` (instrumented) and the builder tests cover it
+  ([design](superpowers/specs/2026-10-15-shp-1203-default-number-design.md)). Worth proposing to
+  bitfireAT/synctools: AOSP's own vCard importer maps `PREF` to `IS_PRIMARY` only.
+- **`AndroidContact` is `@Deprecated("Replaced by AndroidAddressBook Entity CRUD")` upstream, but the switch is
+  unfinished:** as of `v4.5.20-ose`, `AndroidAddressBook` gained raw-contact CRUD (`addRawContact(Entity)`,
+  `updateRawContactRows`) that covers only the raw contact row, and `LocalContact.update(data)` still rewrites the
+  data rows through `AndroidContact.update`. When a later release moves that rewrite, carry the super-primary
+  preservation above into the new path, or every download drops the device's default again (the instrumented
+  `AndroidContactTest` super-primary cases fail).
 
 ## Rules
 

@@ -6,8 +6,11 @@ package at.bitfire.synctools.storage.contacts
 
 import android.Manifest
 import android.content.ContentProviderClient
+import android.content.ContentUris
 import android.content.ContentValues
 import android.provider.ContactsContract
+import android.provider.ContactsContract.CommonDataKinds.Email as EmailRow
+import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.util.Base64
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
@@ -16,6 +19,7 @@ import at.bitfire.synctools.mapping.contacts.Contact
 import at.bitfire.synctools.mapping.contacts.ContactReader
 import at.bitfire.synctools.mapping.contacts.LabeledProperty
 import at.bitfire.synctools.storage.LocalStorageException
+import at.bitfire.synctools.storage.contacts.AddressContract.asSyncAdapter
 import at.bitfire.synctools.vcard.VCardParser
 import at.bitfire.synctools.vcard.property.XAbDate
 import ezvcard.property.Birthday
@@ -26,7 +30,10 @@ import kotlinx.coroutines.test.runTest
 import org.junit.AfterClass
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.BeforeClass
 import org.junit.ClassRule
 import org.junit.Test
@@ -169,6 +176,349 @@ class AndroidContactTest {
         AndroidContact(addressBook, values).getContact()
     }
 
+
+    @Test
+    fun testUpdate_KeepsSuperPrimary_PreferredByCard() {
+        val contact = addGoogleCard(prefNumber = 1, prefEmail = 1)
+        try {
+            chooseDefault(contact.id!!, Phone.CONTENT_ITEM_TYPE, "+44 7700 900003")
+            chooseDefault(contact.id!!, EmailRow.CONTENT_ITEM_TYPE, "three@example.com")
+
+            // Google's card prefers the same values, reformatted (number spacing, email case): kept whether or
+            // not the contact is dirty
+            contact.update(googleCard(
+                numbers = listOf("+44 7700 900001", "+44 7700 900002", "+447700900003"), prefNumber = 3,
+                emails = listOf("one@example.com", "Three@Example.com"), prefEmail = 2
+            ))
+
+            assertEquals(
+                mapOf("+44 7700 900001" to Flags(0, 0), "+44 7700 900002" to Flags(0, 0), "+447700900003" to Flags(1, 1)),
+                dataFlags(contact.id!!, Phone.CONTENT_ITEM_TYPE)
+            )
+            assertEquals(
+                mapOf("one@example.com" to Flags(0, 0), "Three@Example.com" to Flags(1, 1)),
+                dataFlags(contact.id!!, EmailRow.CONTENT_ITEM_TYPE)
+            )
+            assertFalse(isDirty(contact.id!!))
+        } finally {
+            contact.delete()
+        }
+    }
+
+    @Test
+    fun testUpdate_KeepsSuperPrimary_CardPrefersNothing() {
+        val contact = addGoogleCard(prefNumber = 1, prefEmail = 1)
+        try {
+            chooseDefault(contact.id!!, Phone.CONTENT_ITEM_TYPE, "+44 7700 900003")
+            chooseDefault(contact.id!!, EmailRow.CONTENT_ITEM_TYPE, "three@example.com")
+
+            contact.update(googleCard(prefNumber = 0, prefEmail = 0))
+
+            assertEquals(Flags(1, 1), dataFlags(contact.id!!, Phone.CONTENT_ITEM_TYPE)["+44 7700 900003"])
+            assertEquals(Flags(1, 1), dataFlags(contact.id!!, EmailRow.CONTENT_ITEM_TYPE)["three@example.com"])
+            assertFalse(isDirty(contact.id!!))
+        } finally {
+            contact.delete()
+        }
+    }
+
+    @Test
+    fun testUpdate_KeepsSuperPrimary_DuplicateNumber() {
+        val contact = addGoogleCard(prefNumber = 1, prefEmail = 1)
+        try {
+            chooseDefault(contact.id!!, Phone.CONTENT_ITEM_TYPE, "+44 7700 900003")
+
+            contact.update(googleCard(numbers = listOf("+44 7700 900003", "+44 7700 900002", "+44 7700 900003"), prefNumber = 3, prefEmail = 1))
+
+            assertEquals(
+                listOf("+44 7700 900003" to Flags(0, 0), "+44 7700 900002" to Flags(0, 0), "+44 7700 900003" to Flags(1, 1)),
+                dataFlagsInOrder(contact.id!!, Phone.CONTENT_ITEM_TYPE)
+            )
+        } finally {
+            contact.delete()
+        }
+    }
+
+    @Test
+    fun testUpdate_KeepsSuperPrimary_NationalNowInternational() {
+        val national = listOf("601 111 111", "601 222 222", "601 333 333")
+        val contact = addGoogleCard(prefNumber = 1, prefEmail = 1, numbers = national)
+        try {
+            chooseDefault(contact.id!!, Phone.CONTENT_ITEM_TYPE, "601 333 333")
+            val e164 = normalizedNumber(contact.id!!, "601 333 333")
+            assumeTrue("the device's country doesn't make 601 333 333 a valid number", e164 != null)
+
+            contact.update(googleCard(numbers = national.dropLast(1) + e164!!, prefNumber = 3, prefEmail = 1))
+
+            assertEquals(Flags(1, 1), dataFlags(contact.id!!, Phone.CONTENT_ITEM_TYPE)[e164])
+        } finally {
+            contact.delete()
+        }
+    }
+
+    @Test
+    fun testUpdate_FollowsSuperPrimary_PrefMovedOnServer() {
+        val contact = addGoogleCard(prefNumber = 1, prefEmail = 1)
+        try {
+            chooseDefault(contact.id!!, Phone.CONTENT_ITEM_TYPE, "+44 7700 900003")
+            chooseDefault(contact.id!!, EmailRow.CONTENT_ITEM_TYPE, "three@example.com")
+            markUploaded(contact.id!!)
+
+            contact.update(googleCard(prefNumber = 1, prefEmail = 1))
+
+            assertEquals(
+                mapOf("+44 7700 900001" to Flags(1, 1), "+44 7700 900002" to Flags(0, 0), "+44 7700 900003" to Flags(0, 0)),
+                dataFlags(contact.id!!, Phone.CONTENT_ITEM_TYPE)
+            )
+            assertEquals(
+                mapOf("one@example.com" to Flags(1, 1), "three@example.com" to Flags(0, 0)),
+                dataFlags(contact.id!!, EmailRow.CONTENT_ITEM_TYPE)
+            )
+            assertFalse(isDirty(contact.id!!))
+        } finally {
+            contact.delete()
+        }
+    }
+
+    @Test
+    fun testUpdate_DropsSuperPrimary_PrefMovedOnServer_NotUploaded() {
+        val contact = addGoogleCard(prefNumber = 1, prefEmail = 1)
+        try {
+            // still dirty: the server never got this choice, so its PREF may be its own automatic pick
+            chooseDefault(contact.id!!, Phone.CONTENT_ITEM_TYPE, "+44 7700 900003")
+
+            contact.update(googleCard(prefNumber = 1, prefEmail = 1))
+
+            assertEquals(
+                mapOf("+44 7700 900001" to Flags(1, 0), "+44 7700 900002" to Flags(0, 0), "+44 7700 900003" to Flags(0, 0)),
+                dataFlags(contact.id!!, Phone.CONTENT_ITEM_TYPE)
+            )
+            assertFalse(isDirty(contact.id!!))
+        } finally {
+            contact.delete()
+        }
+    }
+
+    @Test
+    fun testUpdate_DropsSuperPrimary_DeletedOnServer() {
+        val contact = addGoogleCard(prefNumber = 1, prefEmail = 1)
+        try {
+            chooseDefault(contact.id!!, Phone.CONTENT_ITEM_TYPE, "+44 7700 900003")
+            markUploaded(contact.id!!)
+
+            contact.update(googleCard(numbers = listOf("+44 7700 900001", "+44 7700 900002"), prefNumber = 1, prefEmail = 1))
+
+            assertEquals(
+                mapOf("+44 7700 900001" to Flags(1, 0), "+44 7700 900002" to Flags(0, 0)),
+                dataFlags(contact.id!!, Phone.CONTENT_ITEM_TYPE)
+            )
+            assertFalse(isDirty(contact.id!!))
+        } finally {
+            contact.delete()
+        }
+    }
+
+    @Test
+    fun testUpdate_MergedContact_KeepsLocalSuperPrimary() {
+        val local = insertLocalRawContact("+44 7700 900011", "+44 7700 900012")
+        val contact = addGoogleCard(prefNumber = 1, prefEmail = 1)
+        try {
+            chooseDefault(local, Phone.CONTENT_ITEM_TYPE, "+44 7700 900012")
+            join(local, contact.id!!)
+
+            contact.update(googleCard(prefNumber = 2, prefEmail = 1))
+
+            assertEquals(Flags(1, 1), dataFlags(local, Phone.CONTENT_ITEM_TYPE)["+44 7700 900012"])
+            assertEquals(
+                mapOf("+44 7700 900001" to Flags(0, 0), "+44 7700 900002" to Flags(1, 0), "+44 7700 900003" to Flags(0, 0)),
+                dataFlags(contact.id!!, Phone.CONTENT_ITEM_TYPE)
+            )
+            val aggregateId = aggregateId(local)
+            assertEquals(aggregateId, aggregateId(contact.id!!))
+            assertEquals(1, superPrimaryCount(aggregateId, Phone.CONTENT_ITEM_TYPE))
+        } finally {
+            contact.delete()
+            provider.delete(ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, local).asSyncAdapter(), null, null)
+        }
+    }
+
+    @Test
+    fun testUpdate_MergedContact_FollowsOnGoogleCopy() {
+        val local = insertLocalRawContact("+44 7700 900011", "+44 7700 900012")
+        val contact = addGoogleCard(prefNumber = 1, prefEmail = 1)
+        try {
+            join(local, contact.id!!)
+            chooseDefault(contact.id!!, Phone.CONTENT_ITEM_TYPE, "+44 7700 900003")
+            markUploaded(contact.id!!)
+
+            contact.update(googleCard(prefNumber = 2, prefEmail = 1))
+
+            assertEquals(Flags(1, 1), dataFlags(contact.id!!, Phone.CONTENT_ITEM_TYPE)["+44 7700 900002"])
+            assertEquals(Flags(0, 0), dataFlags(local, Phone.CONTENT_ITEM_TYPE)["+44 7700 900012"])
+            assertEquals(1, superPrimaryCount(aggregateId(contact.id!!), Phone.CONTENT_ITEM_TYPE))
+        } finally {
+            contact.delete()
+            provider.delete(ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, local).asSyncAdapter(), null, null)
+        }
+    }
+
+    @Test
+    fun testAdd_PrefIsPrimaryOnly() {
+        val contact = addGoogleCard(prefNumber = 1, prefEmail = 1)
+        try {
+            assertEquals(Flags(1, 0), dataFlags(contact.id!!, Phone.CONTENT_ITEM_TYPE)["+44 7700 900001"])
+            assertEquals(Flags(1, 0), dataFlags(contact.id!!, EmailRow.CONTENT_ITEM_TYPE)["one@example.com"])
+        } finally {
+            contact.delete()
+        }
+    }
+
+
+    private data class Flags(val isPrimary: Int, val isSuperPrimary: Int)
+
+    private fun googleCard(
+        numbers: List<String> = listOf("+44 7700 900001", "+44 7700 900002", "+44 7700 900003"),
+        prefNumber: Int,
+        emails: List<String> = listOf("one@example.com", "three@example.com"),
+        prefEmail: Int
+    ): Contact = parseVCards(
+        "BEGIN:VCARD\r\nVERSION:3.0\r\nFN:Default Number\r\n" +
+                numbers.mapIndexed { i, number ->
+                    "TEL;TYPE=CELL${if (i + 1 == prefNumber) ",pref" else ""}:$number\r\n"
+                }.joinToString("") +
+                emails.mapIndexed { i, email ->
+                    "EMAIL;TYPE=INTERNET${if (i + 1 == prefEmail) ",pref" else ""}:$email\r\n"
+                }.joinToString("") +
+                "END:VCARD\r\n"
+    ).first()
+
+    private fun addGoogleCard(
+        prefNumber: Int,
+        prefEmail: Int,
+        numbers: List<String> = listOf("+44 7700 900001", "+44 7700 900002", "+44 7700 900003")
+    ): AndroidContact {
+        val contact = AndroidContact(addressBook, googleCard(numbers, prefNumber, prefEmail = prefEmail), null, null)
+        contact.add()
+        return addressBook.findContactById(contact.id!!)
+    }
+
+    // like the Contacts app: not as sync adapter, so the provider also sets IS_PRIMARY and DIRTY
+    private fun chooseDefault(rawContactId: Long, mimeType: String, value: String) {
+        val values = ContentValues()
+        values.put(ContactsContract.Data.IS_SUPER_PRIMARY, 1)
+        val updated = provider.update(
+            ContactsContract.Data.CONTENT_URI,
+            values,
+            "${ContactsContract.Data.RAW_CONTACT_ID}=? AND ${ContactsContract.Data.MIMETYPE}=? AND ${ContactsContract.Data.DATA1}=?",
+            arrayOf(rawContactId.toString(), mimeType, value)
+        )
+        assertEquals(1, updated)
+        assertTrue(isDirty(rawContactId))
+    }
+
+    // what a successful upload leaves behind
+    private fun markUploaded(rawContactId: Long) {
+        val values = ContentValues()
+        values.put(ContactsContract.RawContacts.DIRTY, 0)
+        provider.update(
+            ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, rawContactId).asSyncAdapter(),
+            values, null, null
+        )
+        assertFalse(isDirty(rawContactId))
+    }
+
+    private fun normalizedNumber(rawContactId: Long, number: String): String? =
+        provider.query(
+            ContactsContract.Data.CONTENT_URI,
+            arrayOf(Phone.NORMALIZED_NUMBER),
+            "${ContactsContract.Data.RAW_CONTACT_ID}=? AND ${ContactsContract.Data.MIMETYPE}=? AND ${Phone.NUMBER}=?",
+            arrayOf(rawContactId.toString(), Phone.CONTENT_ITEM_TYPE, number),
+            null
+        )!!.use { cursor ->
+            if (cursor.moveToFirst()) cursor.getString(0) else null
+        }
+
+    private fun dataFlagsInOrder(rawContactId: Long, mimeType: String): List<Pair<String, Flags>> =
+        provider.query(
+            ContactsContract.Data.CONTENT_URI,
+            arrayOf(ContactsContract.Data.DATA1, ContactsContract.Data.IS_PRIMARY, ContactsContract.Data.IS_SUPER_PRIMARY),
+            "${ContactsContract.Data.RAW_CONTACT_ID}=? AND ${ContactsContract.Data.MIMETYPE}=?",
+            arrayOf(rawContactId.toString(), mimeType),
+            ContactsContract.Data._ID
+        )!!.use { cursor ->
+            buildList {
+                while (cursor.moveToNext())
+                    add(cursor.getString(0) to Flags(cursor.getInt(1), cursor.getInt(2)))
+            }
+        }
+
+    private fun insertLocalRawContact(vararg numbers: String): Long {
+        val rawContactId = ContentUris.parseId(provider.insert(ContactsContract.RawContacts.CONTENT_URI, ContentValues().apply {
+            putNull(ContactsContract.RawContacts.ACCOUNT_NAME)
+            putNull(ContactsContract.RawContacts.ACCOUNT_TYPE)
+        })!!)
+        provider.insert(ContactsContract.Data.CONTENT_URI, ContentValues().apply {
+            put(ContactsContract.Data.RAW_CONTACT_ID, rawContactId)
+            put(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+            put(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, "Default Number")
+        })
+        for (number in numbers)
+            provider.insert(ContactsContract.Data.CONTENT_URI, ContentValues().apply {
+                put(ContactsContract.Data.RAW_CONTACT_ID, rawContactId)
+                put(ContactsContract.Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
+                put(Phone.NUMBER, number)
+                put(Phone.TYPE, Phone.TYPE_MOBILE)
+            })
+        return rawContactId
+    }
+
+    private fun join(rawContactId1: Long, rawContactId2: Long) {
+        provider.update(ContactsContract.AggregationExceptions.CONTENT_URI, ContentValues().apply {
+            put(ContactsContract.AggregationExceptions.TYPE, ContactsContract.AggregationExceptions.TYPE_KEEP_TOGETHER)
+            put(ContactsContract.AggregationExceptions.RAW_CONTACT_ID1, rawContactId1)
+            put(ContactsContract.AggregationExceptions.RAW_CONTACT_ID2, rawContactId2)
+        }, null, null)
+    }
+
+    private fun aggregateId(rawContactId: Long): Long =
+        provider.query(
+            ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, rawContactId),
+            arrayOf(ContactsContract.RawContacts.CONTACT_ID), null, null, null
+        )!!.use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            cursor.getLong(0)
+        }
+
+    private fun superPrimaryCount(contactId: Long, mimeType: String): Int =
+        provider.query(
+            ContactsContract.Data.CONTENT_URI,
+            arrayOf(ContactsContract.Data._ID),
+            "${ContactsContract.Data.CONTACT_ID}=? AND ${ContactsContract.Data.MIMETYPE}=? AND ${ContactsContract.Data.IS_SUPER_PRIMARY}!=0",
+            arrayOf(contactId.toString(), mimeType),
+            null
+        )!!.use { it.count }
+
+    private fun dataFlags(rawContactId: Long, mimeType: String): Map<String, Flags> =
+        provider.query(
+            ContactsContract.Data.CONTENT_URI,
+            arrayOf(ContactsContract.Data.DATA1, ContactsContract.Data.IS_PRIMARY, ContactsContract.Data.IS_SUPER_PRIMARY),
+            "${ContactsContract.Data.RAW_CONTACT_ID}=? AND ${ContactsContract.Data.MIMETYPE}=?",
+            arrayOf(rawContactId.toString(), mimeType),
+            null
+        )!!.use { cursor ->
+            buildMap {
+                while (cursor.moveToNext())
+                    put(cursor.getString(0), Flags(cursor.getInt(1), cursor.getInt(2)))
+            }
+        }
+
+    private fun isDirty(rawContactId: Long): Boolean =
+        provider.query(
+            ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, rawContactId),
+            arrayOf(ContactsContract.RawContacts.DIRTY), null, null, null
+        )!!.use { cursor ->
+            cursor.moveToFirst() && cursor.getInt(0) != 0
+        }
 
     private fun parseVCards(vCardStr: String): List<Contact> =
         VCardParser().parse(StringReader(vCardStr)).map { vCard ->
