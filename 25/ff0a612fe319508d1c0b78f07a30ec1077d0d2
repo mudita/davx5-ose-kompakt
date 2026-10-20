@@ -1,0 +1,14 @@
+build-logic/src/main/kotlin/davx5/buildlogic/KompaktAppVersion.kt
+  h_4bf04fc882c8b8 17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "25ff0a612fe319508d1c0b78f07a30ec1077d0d2",
+  "prompts": {},
+  "humans": {
+    "h_4bf04fc882c8b8": {
+      "author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
