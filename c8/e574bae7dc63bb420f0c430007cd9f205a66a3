@@ -1,0 +1,25 @@
+app-ose/build.gradle.kts
+  s_437ce0f314fc79::t_5d83ac905efafb 167-168
+  h_4bf04fc882c8b8 166
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "c8e574bae7dc63bb420f0c430007cd9f205a66a3",
+  "prompts": {},
+  "humans": {
+    "h_4bf04fc882c8b8": {
+      "author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  },
+  "sessions": {
+    "s_437ce0f314fc79": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b5b8d5f9-8941-41e5-8198-603561d0243c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
