@@ -1,0 +1,42 @@
+core/src/test/kotlin/at/bitfire/davdroid/ui/setup/KompaktAddConsentModelTest.kt
+  s_8d5ad7c2ece056::t_838bd6e867d750 76
+core/src/main/kotlin/at/bitfire/davdroid/startup/KompaktCollectionsRepair.kt
+  s_8d5ad7c2ece056::t_d361bbaa47cda2 12,28,53-54
+  s_8d5ad7c2ece056::t_4a527b0646553d 21-22
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktStartSyncUseCase.kt
+  s_8d5ad7c2ece056::t_b8aedf9660fb29 110
+  s_8d5ad7c2ece056::t_9f7474b8584ebc 109,112
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktServiceProvisioningTest.kt
+  s_8d5ad7c2ece056::t_18a310ece4c0cd 26
+  s_8d5ad7c2ece056::t_ccf9f4ac749cfb 113-119,129,133,138-139,144,151-199
+  s_8d5ad7c2ece056::t_211ee020156947 54,60
+  s_8d5ad7c2ece056::t_db9543ac474853 7,13
+core/src/test/kotlin/at/bitfire/davdroid/startup/KompaktCollectionsRepairTest.kt
+  s_8d5ad7c2ece056::t_65e09d74ec85e9 12,30,36,47,50-51,55-56,60,64,67,77,86,91-93,97
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktStartSyncUseCaseTest.kt
+  s_8d5ad7c2ece056::t_ffce966ec55606 137
+  s_8d5ad7c2ece056::t_a35d8745b57d2a 63-66
+  s_8d5ad7c2ece056::t_0d4c9266f9c307 315-330
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktServiceProvisioning.kt
+  s_8d5ad7c2ece056::t_bfe8dee3554041 10,19,23
+  s_8d5ad7c2ece056::t_1de0f0b986ae01 35
+  s_8d5ad7c2ece056::t_b8aedf9660fb29 49,107-108
+  s_8d5ad7c2ece056::t_70292eccbd8daf 56-57
+  s_8d5ad7c2ece056::t_14be005f0bc123 94-106,109-119
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "61a5de12775a6d7b78974d92ebe807592c466341",
+  "prompts": {},
+  "sessions": {
+    "s_8d5ad7c2ece056": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "86c4d09f-1340-41e1-b976-a63cd04b844c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
