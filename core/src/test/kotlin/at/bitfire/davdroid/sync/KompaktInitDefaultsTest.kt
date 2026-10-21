@@ -4,7 +4,6 @@
 
 package at.bitfire.davdroid.sync
 
-import android.content.Context
 import at.bitfire.davdroid.TEST_ACCOUNT_NAME
 import at.bitfire.davdroid.db.Collection
 import at.bitfire.davdroid.db.Service
@@ -58,7 +57,6 @@ class KompaktInitDefaultsTest {
         coEvery { serviceRepository.getByAccountAndType(any(), any()) } returns null
 
         initDefaults = KompaktInitDefaults(
-            context = mockk<Context>(relaxed = true),
             kompaktAccountSettings = accountSettings,
             collectionRepository = collectionRepository,
             serviceRepository = serviceRepository,
@@ -337,7 +335,7 @@ class KompaktInitDefaultsTest {
 
     @Test
     fun ensureAppliedLooksTheServiceUpByItsOwnType() = runTest {
-        initDefaults.ensureApplied(account, KompaktSyncService.CONTACTS, awaitDiscovery = false)
+        initDefaults.ensureApplied(account, KompaktSyncService.CONTACTS)
 
         coVerify { serviceRepository.getByAccountAndType(EMAIL, Service.TYPE_CARDDAV) }
     }
@@ -355,14 +353,12 @@ class KompaktInitDefaultsTest {
         coVerify { collectionRepository.setSync(1, true) }
     }
 
+    // Fetching is KompaktCollectionDiscovery's: by the time this runs, there is nothing left to wait for.
     @Test
-    fun ensureAppliedGivesUpRatherThanBlockingACallerThatCannotWait() = runTest {
-        // A BroadcastReceiver has no lifecycle to block on, so it attempts once and reports that
-        // discovery has not produced a selectable calendar yet.
+    fun ensureAppliedAnswersAtOnceForAServiceWithNothingToSelect() = runTest {
         coEvery { serviceRepository.getByAccountAndType(EMAIL, Service.TYPE_CALDAV) } returns caldavService
 
-        val outcome =
-            initDefaults.ensureApplied(account, KompaktSyncService.CALENDAR, awaitDiscovery = false)
+        val outcome = initDefaults.ensureApplied(account, KompaktSyncService.CALENDAR)
 
         assertEquals(KompaktInitDefaults.Outcome.NOT_READY, outcome)
     }

@@ -10,6 +10,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -35,6 +36,7 @@ class KompaktStartSyncUseCaseTest {
     private lateinit var initDefaults: KompaktInitDefaults
     private lateinit var eligibility: KompaktSyncEligibility
     private lateinit var provisioning: KompaktServiceProvisioning
+    private lateinit var collectionDiscovery: KompaktCollectionDiscovery
     private lateinit var storage: KompaktStorageAvailability
     private lateinit var network: KompaktNetworkAvailability
     private lateinit var offlinePlus: KompaktOfflinePlus
@@ -46,7 +48,7 @@ class KompaktStartSyncUseCaseTest {
     fun setUp() {
         initDefaults = mockk()
         every { initDefaults.isApplied(any(), any()) } returns true
-        coEvery { initDefaults.ensureApplied(any(), any(), any()) } answers {
+        coEvery { initDefaults.ensureApplied(any(), any()) } answers {
             calls += "defaults:${secondArg<KompaktSyncService>()}"
             KompaktInitDefaults.Outcome.APPLIED
         }
@@ -59,6 +61,11 @@ class KompaktStartSyncUseCaseTest {
         coEvery { provisioning.ensureRow(any(), any()) } answers {
             calls += "row:${secondArg<KompaktSyncService>()}"
             true
+        }
+        collectionDiscovery = mockk()
+        coEvery { collectionDiscovery.ensure(any(), any(), any()) } answers {
+            calls += "collections:${secondArg<KompaktSyncService>()}"
+            false
         }
 
         storage = mockk()
@@ -84,7 +91,7 @@ class KompaktStartSyncUseCaseTest {
         syncing()
 
         startSync = KompaktStartSyncUseCase(
-            initDefaults, eligibility, provisioning, storage, offlinePlus, network, syncWork,
+            initDefaults, eligibility, provisioning, collectionDiscovery, storage, offlinePlus, network, syncWork,
             accountProgress,
             Logger.getAnonymousLogger()
         )
@@ -130,7 +137,7 @@ class KompaktStartSyncUseCaseTest {
         startSync(account, services = listOf(KompaktSyncService.CALENDAR))
 
         assertEquals(
-            listOf("switch", "row:CALENDAR", "defaults:CALENDAR", "switch", "enqueue:CALENDAR"),
+            listOf("switch", "row:CALENDAR", "collections:CALENDAR", "defaults:CALENDAR", "switch", "enqueue:CALENDAR"),
             calls
         )
     }
@@ -259,7 +266,7 @@ class KompaktStartSyncUseCaseTest {
         val start = startSync(account)
 
         assertEquals(KompaktSyncStartResult.Started(mapOf(KompaktSyncService.CALENDAR to calendarRun)), start)
-        coVerify(exactly = 0) { initDefaults.ensureApplied(any(), KompaktSyncService.CONTACTS, any()) }
+        coVerify(exactly = 0) { initDefaults.ensureApplied(any(), KompaktSyncService.CONTACTS) }
         coVerify(exactly = 0) { syncWork.enqueue(any(), KompaktSyncService.CONTACTS, any()) }
     }
 
@@ -271,6 +278,16 @@ class KompaktStartSyncUseCaseTest {
             KompaktSyncStartResult.Started(mapOf(KompaktSyncService.CALENDAR to calendarRun)),
             startSync(account)
         )
+    }
+
+    // Logged as a failure, a cancellation would let the cancelled caller go on to configure the next
+    // service and answer as if nothing had happened.
+    @Test(expected = CancellationException::class)
+    fun aCancelledConfigurationIsNotTakenForAFailedOne() = runTest {
+        coEvery { collectionDiscovery.ensure(account, KompaktSyncService.CALENDAR, any()) } throws
+            CancellationException()
+
+        startSync(account)
     }
 
     @Test
@@ -302,10 +319,19 @@ class KompaktStartSyncUseCaseTest {
     }
 
     @Test
-    fun passesTheDiscoveryWaitOnToTheDefaults() = runTest {
+    fun passesTheDiscoveryWaitOnToTheCollections() = runTest {
         startSync(account, services = listOf(KompaktSyncService.CALENDAR), awaitDiscovery = false)
 
-        coVerify { initDefaults.ensureApplied(account, KompaktSyncService.CALENDAR, false) }
+        coVerify { collectionDiscovery.ensure(account, KompaktSyncService.CALENDAR, false) }
+    }
+
+    @Test
+    fun aServiceWithNoRowHasNoCollectionsFetched() = runTest {
+        coEvery { provisioning.ensureRow(account, KompaktSyncService.CONTACTS) } returns false
+
+        startSync(account)
+
+        coVerify(exactly = 0) { collectionDiscovery.ensure(any(), KompaktSyncService.CONTACTS, any()) }
     }
 
 }
