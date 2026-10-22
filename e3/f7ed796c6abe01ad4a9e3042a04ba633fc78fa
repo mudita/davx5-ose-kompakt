@@ -1,0 +1,31 @@
+core/src/main/kotlin/at/bitfire/davdroid/sync/adapter/SyncAdapterImpl.kt
+  s_101d62cb7f7cde::t_76d8e73e62151e 83-93
+core/src/androidTest/kotlin/at/bitfire/davdroid/sync/SyncAdapterImplTest.kt
+  s_101d62cb7f7cde::t_a5c807329210d6 33
+  s_101d62cb7f7cde::t_965d09a107b83d 73-74
+  s_101d62cb7f7cde::t_12a1aaa87e2f81 134
+  s_101d62cb7f7cde::t_1ed74ca0c167bb 157,161-167
+  s_101d62cb7f7cde::t_6135f65ae81021 107
+core/src/test/kotlin/at/bitfire/davdroid/sync/adapter/KompaktSyncAdapterRequestFilterTest.kt
+  s_101d62cb7f7cde::t_d5e1730eee0892 1-8,10-12,14-20,22-33,39-55,57-88
+  s_101d62cb7f7cde::t_1a781ed5799079 21
+  s_101d62cb7f7cde::t_113a294164016d 34-38
+  s_101d62cb7f7cde::t_209b25d4fb09e8 56
+  s_101d62cb7f7cde::t_80b38f554350cc 9,13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "e3f7ed796c6abe01ad4a9e3042a04ba633fc78fa",
+  "prompts": {},
+  "sessions": {
+    "s_101d62cb7f7cde": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "98008156-64eb-4f4b-b0af-dd2f72949a65",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
