@@ -6,10 +6,13 @@ package at.bitfire.davdroid.settings
 
 import android.accounts.Account
 import android.accounts.AccountManager
+import android.accounts.OnAccountsUpdateListener
 import android.content.Context
 import at.bitfire.davdroid.sync.KompaktSyncService
 import at.bitfire.davdroid.sync.SyncDataType
 import io.mockk.every
+import io.mockk.just
+import io.mockk.runs
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
@@ -40,6 +43,7 @@ class KompaktAccountSettingsTest {
     private val otherAccount = mockk<Account>()
 
     private val userData = mutableMapOf<Pair<Account, String>, String?>()
+    private val accountsListeners = mutableListOf<OnAccountsUpdateListener>()
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -56,6 +60,7 @@ class KompaktAccountSettingsTest {
             userData[firstArg<Account>() to secondArg()] = thirdArg()
             Unit
         }
+        every { accountManager.addOnAccountsUpdatedListener(capture(accountsListeners), any(), any()) } just runs
 
         mockkStatic(AccountManager::class)
         every { AccountManager.get(any()) } returns accountManager
@@ -140,6 +145,40 @@ class KompaktAccountSettingsTest {
         settings.setDefaultsApplied(account, KompaktSyncService.CALENDAR, 3)
 
         assertEquals(emptyList<Boolean>(), seen)
+    }
+
+    /** What linking or unlinking does: changes the account's data without a write through this class. */
+    private fun accountsUpdated() =
+        accountsListeners.toList().forEach { it.onAccountsUpdated(emptyArray()) }
+
+    @Test
+    fun observe_rereadsWhenTheAccountIsRemoved() = runTest(testDispatcher) {
+        settings.setReauthNeeded(account, true)
+        val seen = collect(settings.observeReauthNeeded(account))
+
+        userData.remove(account to AccountSettings.KEY_NEEDS_REAUTH)
+        accountsUpdated()
+
+        assertEquals(listOf(true, false), seen)
+    }
+
+    @Test
+    fun observe_rereadsWhenTheAccountIsAddedWithItsData() = runTest(testDispatcher) {
+        val seen = collect(settings.observeReauthNeeded(account))
+
+        userData[account to AccountSettings.KEY_NEEDS_REAUTH] = "1"
+        accountsUpdated()
+
+        assertEquals(listOf(false, true), seen)
+    }
+
+    @Test
+    fun observe_doesNotAnnounceAnAccountChangeThatLeavesTheValueAlone() = runTest(testDispatcher) {
+        val seen = collect(settings.observeReauthNeeded(account))
+
+        accountsUpdated()
+
+        assertEquals(listOf(false), seen)
     }
 
     @Test

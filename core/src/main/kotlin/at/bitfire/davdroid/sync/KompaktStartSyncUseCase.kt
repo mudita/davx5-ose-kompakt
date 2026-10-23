@@ -11,6 +11,7 @@ import java.util.UUID
 import java.util.logging.Level
 import java.util.logging.Logger
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 /** Why a sync request started nothing, or what it started. */
 sealed interface KompaktSyncStartResult {
@@ -42,6 +43,7 @@ class KompaktStartSyncUseCase @Inject constructor(
     private val initDefaults: KompaktInitDefaults,
     private val eligibility: KompaktSyncEligibility,
     private val provisioning: KompaktServiceProvisioning,
+    private val collectionDiscovery: KompaktCollectionDiscovery,
     private val storage: KompaktStorageAvailability,
     private val offlinePlus: KompaktOfflinePlus,
     private val network: KompaktNetworkAvailability,
@@ -106,11 +108,14 @@ class KompaktStartSyncUseCase @Inject constructor(
     ): Boolean =
         try {
             provisioning.ensureRow(account, service).also { ready ->
-                if (ready)
-                    initDefaults.ensureApplied(account, service, awaitDiscovery)
-                else
+                if (ready) {
+                    collectionDiscovery.ensure(account, service, awaitDiscovery)
+                    initDefaults.ensureApplied(account, service)
+                } else
                     logger.warning("No $service for $account and none discoverable; not syncing it")
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logger.log(Level.WARNING, "Couldn't configure $service for $account", e)
             false

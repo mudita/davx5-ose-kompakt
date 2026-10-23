@@ -80,6 +80,17 @@ class SyncAdapterImpl @Inject constructor(
         val upload = extras.containsKey(ContentResolver.SYNC_EXTRAS_UPLOAD)
         logger.info("Sync request via sync framework for $accountOrAddressBookAccount $authority (upload=$upload)")
 
+        // Local changes always arrive with SYNC_EXTRAS_UPLOAD and user requests with SYNC_EXTRAS_MANUAL.
+        // The rest is the platform reacting to sync being switched on, provider bookkeeping or its own
+        // periodic job; periodic and in-app syncs run through WorkManager, so such a request would only
+        // sync what the user hasn't asked for yet, like a service they chose to import later.
+        if (!upload && !extras.getBoolean(ContentResolver.SYNC_EXTRAS_MANUAL)) {
+            logger.info("Ignoring sync framework request that carries neither local changes nor a user request")
+            if (Build.VERSION.SDK_INT >= 34)
+                syncFrameworkIntegration.get().cancelSync(accountOrAddressBookAccount, authority, extras)
+            return
+        }
+
         // If we should sync an address book account - find the account storing the settings
         val account = if (accountOrAddressBookAccount.type == context.getString(R.string.account_type_address_book))
             AccountManager.get(context)

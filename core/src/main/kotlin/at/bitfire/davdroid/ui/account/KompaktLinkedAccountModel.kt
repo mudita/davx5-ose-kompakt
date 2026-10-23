@@ -5,20 +5,16 @@
 package at.bitfire.davdroid.ui.account
 
 import android.accounts.Account
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.work.WorkInfo
 import at.bitfire.davdroid.db.KompaktSyncOutcome
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
 import at.bitfire.davdroid.repository.AccountRepository
-import at.bitfire.davdroid.repository.DavServiceRepository
-import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
 import at.bitfire.davdroid.settings.KompaktAccountSettings
 import at.bitfire.davdroid.sync.KompaktAttemptResult
-import at.bitfire.davdroid.sync.KompaktInitDefaults
 import at.bitfire.davdroid.sync.KompaktOfflineCause
 import at.bitfire.davdroid.sync.KompaktServiceProvisioning
+import at.bitfire.davdroid.sync.KompaktServiceSetup
 import at.bitfire.davdroid.sync.KompaktServiceSyncOutcome
 import at.bitfire.davdroid.sync.KompaktSyncAttempt
 import at.bitfire.davdroid.sync.KompaktSyncService
@@ -30,17 +26,13 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -54,11 +46,9 @@ import java.util.logging.Logger
 class KompaktLinkedAccountModel @AssistedInject constructor(
     @Assisted val account: Account,
     @Assisted entry: EntryFlow?,
-    @ApplicationContext private val context: Context,
     private val kompaktAccountSettings: KompaktAccountSettings,
     private val accountRepository: AccountRepository,
-    private val initDefaults: KompaktInitDefaults,
-    private val serviceRepository: DavServiceRepository,
+    private val serviceSetup: KompaktServiceSetup,
     private val provisioning: KompaktServiceProvisioning,
     private val lastSyncFormat: KompaktLastSyncFormatSource,
     private val switches: KompaktServiceSwitch,
@@ -133,24 +123,12 @@ class KompaktLinkedAccountModel @AssistedInject constructor(
         if (entry == EntryFlow.ADD_CONTACTS_CONSENT)
             newContactsConsentShown()
 
-        // Apply each service's defaults (once, after discovery) so automatic sync triggers — e.g. the
+        // Set up each service (its collections, then its defaults) so automatic sync triggers — e.g. the
         // calendar's REQUEST_SYNC on re-entry — actually sync instead of no-op'ing over an empty
         // selection. The first sync right after linking is intentionally left to the "Sync now / Later"
         // modal, so we do NOT enqueue a sync here.
         for (service in KompaktSyncService.entries)
-            viewModelScope.launch(ioDispatcher) {
-                serviceRepository.getServiceFlow(account.name, service.serviceType)
-                    .filterNotNull()
-                    .collectLatest { serviceRow ->
-                        val outcome = initDefaults.maybeApply(account, service, serviceRow.id)
-                        if (outcome == KompaktInitDefaults.Outcome.NOT_READY) {
-                            RefreshCollectionsWorker
-                                .existsFlow(context, RefreshCollectionsWorker.workerName(serviceRow.id), WorkInfo.State.SUCCEEDED)
-                                .first { succeeded -> succeeded }
-                            initDefaults.maybeApply(account, service, serviceRow.id)
-                        }
-                    }
-            }
+            viewModelScope.launch(ioDispatcher) { serviceSetup.keepSetUp(account, service) }
 
         // These two are the slot's conditions: outranked on arrival, they keep their place.
         viewModelScope.launch {

@@ -20,7 +20,7 @@ import javax.inject.Inject
 
 /**
  * Gives a consented service the [at.bitfire.davdroid.db.Service] row it needs before anything can be
- * synced or scheduled for it.
+ * synced or scheduled for it. The row comes without collections; [KompaktCollectionDiscovery] fetches them.
  *
  * Discovery is a network round-trip, so callers must have established connectivity first.
  */
@@ -102,8 +102,9 @@ class KompaktServiceProvisioning @Inject constructor(
      * was before this service was ever consented: no row, no collections, no stored interval, no
      * applied-defaults marker, and no synced copies on the device.
      *
-     * A later [ensureRow] therefore takes the first-grant path — discovery, then [KompaktInitDefaults]
-     * writing the selection and the interval — rather than needing anything remembered.
+     * A later grant therefore takes the first-grant path — a new row, its collections fetched, then
+     * [KompaktInitDefaults] writing the selection and the interval — rather than needing anything
+     * remembered.
      *
      * Leaves everything in place, and answers `false`, when the synced copies could not be removed, so
      * the service is either fully cleared or untouched.

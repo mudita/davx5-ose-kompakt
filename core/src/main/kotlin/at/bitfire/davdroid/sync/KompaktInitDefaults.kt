@@ -5,35 +5,28 @@
 package at.bitfire.davdroid.sync
 
 import android.accounts.Account
-import android.content.Context
-import androidx.work.WorkInfo
 import at.bitfire.davdroid.BuildConfig
 import at.bitfire.davdroid.db.Collection
 import at.bitfire.davdroid.db.Service
 import at.bitfire.davdroid.repository.DavCollectionRepository
 import at.bitfire.davdroid.repository.DavServiceRepository
-import at.bitfire.davdroid.servicedetection.RefreshCollectionsWorker
 import at.bitfire.davdroid.settings.KompaktAccountSettings
-import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withTimeoutOrNull
 import java.util.logging.Level
 import java.util.logging.Logger
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Selects a service's collections for sync, and enables auto-sync for it unless the user already has a
- * stored preference, at most once per service per [DEFAULTS_VERSION]. Every Kompakt auto-sync entry
- * point runs this first: a DAVx5 sync only processes collections with `sync=true`, so an auto-sync
- * fired before selection would sync nothing. [Singleton] so the [mutex] serializes concurrent callers.
+ * stored preference, at most once per service per [DEFAULTS_VERSION]. Every Kompakt sync start and
+ * the linked account screen run this, after fetching the collections it selects from: a DAVx5 sync
+ * only processes collections with `sync=true`, so a sync fired before selection would sync nothing.
+ * [Singleton] so the [mutex] serializes concurrent callers.
  */
 @Singleton
 class KompaktInitDefaults @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val kompaktAccountSettings: KompaktAccountSettings,
     private val collectionRepository: DavCollectionRepository,
     private val serviceRepository: DavServiceRepository,
@@ -46,9 +39,6 @@ class KompaktInitDefaults @Inject constructor(
 
         /** Bump to re-run collection selection once on existing accounts. */
         const val DEFAULTS_VERSION = 2
-
-        /** Max time to wait for collection discovery before giving up. */
-        const val DISCOVERY_WAIT_MS = 30_000L
     }
 
     enum class Outcome {
@@ -56,7 +46,7 @@ class KompaktInitDefaults @Inject constructor(
         APPLIED,
         /** Already applied for the current version. */
         ALREADY_APPLIED,
-        /** The selection cannot be made yet; the caller may retry after discovery. */
+        /** Nothing to select yet: the service has no collections, or no identifiable primary calendar. */
         NOT_READY
     }
 
@@ -90,28 +80,14 @@ class KompaktInitDefaults @Inject constructor(
     }
 
     /**
-     * Ensures the service's collections are selected. When [awaitDiscovery] is true, waits up to
-     * [DISCOVERY_WAIT_MS] for collection discovery if they aren't available yet; callers on a tight
-     * time budget (a BroadcastReceiver) pass false to attempt once without blocking. A fast no-op
-     * once applied.
+     * Ensures the service's collections are selected, from whatever collections it has now: fetching
+     * them is [KompaktCollectionDiscovery.ensure]'s, which callers run first. A fast no-op once applied.
      */
-    suspend fun ensureApplied(
-        account: Account,
-        service: KompaktSyncService,
-        awaitDiscovery: Boolean = true
-    ): Outcome {
+    suspend fun ensureApplied(account: Account, service: KompaktSyncService): Outcome {
         if (appliedVersion(account, service) >= DEFAULTS_VERSION)
             return Outcome.ALREADY_APPLIED
         val serviceRow = serviceRepository.getByAccountAndType(account.name, service.serviceType)
             ?: return Outcome.NOT_READY
-        maybeApply(account, service, serviceRow.id).let { if (it != Outcome.NOT_READY) return it }
-        if (!awaitDiscovery)
-            return Outcome.NOT_READY
-        withTimeoutOrNull(DISCOVERY_WAIT_MS.milliseconds) {
-            RefreshCollectionsWorker
-                .existsFlow(context, RefreshCollectionsWorker.workerName(serviceRow.id), WorkInfo.State.SUCCEEDED)
-                .first { succeeded -> succeeded }
-        }
         return maybeApply(account, service, serviceRow.id)
     }
 
@@ -119,7 +95,7 @@ class KompaktInitDefaults @Inject constructor(
      * Selects the service's collections and writes the Kompakt sync interval, the latter only when no
      * interval is stored — so a user who switched the service off before discovery finished keeps that
      * choice, and a [DEFAULTS_VERSION] bump re-selects without re-enabling. Returns [Outcome.NOT_READY]
-     * if the selection cannot be made yet, so the caller can retry after discovery.
+     * when there is nothing to select yet.
      */
     suspend fun maybeApply(
         account: Account,

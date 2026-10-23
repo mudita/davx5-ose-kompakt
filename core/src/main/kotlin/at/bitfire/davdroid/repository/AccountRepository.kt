@@ -133,6 +133,9 @@ class AccountRepository @Inject constructor(
      * first (e.g. via [DavServiceRepository.getByAccountAndType]) — like the `insertOrReplace` it's built
      * on, a second call for a type that already has a row replaces it, which is never the intended use
      * here.
+     *
+     * Unlike [createBlocking], it doesn't start collection discovery: the account may not hold the
+     * token that grants this service yet, and a refresh run on the old one finds nothing.
      */
     @WorkerThread
     fun addServiceBlocking(accountName: String, service: KompaktSyncService, info: DavResourceFinder.Configuration.ServiceInfo): Long {
@@ -140,8 +143,6 @@ class AccountRepository @Inject constructor(
 
         if (service == KompaktSyncService.CONTACTS)
             accountSettingsFactory.create(fromName(accountName)).setGroupMethod(GroupMethod.GROUP_VCARDS)
-
-        RefreshCollectionsWorker.enqueue(context, id)
 
         return id
     }

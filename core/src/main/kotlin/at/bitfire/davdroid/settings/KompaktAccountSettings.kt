@@ -6,6 +6,7 @@ package at.bitfire.davdroid.settings
 
 import android.accounts.Account
 import android.accounts.AccountManager
+import android.accounts.OnAccountsUpdateListener
 import android.content.Context
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
 import at.bitfire.davdroid.sync.KompaktSyncService
@@ -18,11 +19,14 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -222,12 +226,23 @@ class KompaktAccountSettingsImpl @Inject constructor(
     }
 
     private fun observe(account: Account, key: String, emitInitial: Boolean): Flow<String?> {
-        val announced = changed
-            .filter { it.account == account && it.key == key }
-            .map { }
+        val announced = merge(
+            changed
+                .filter { it.account == account && it.key == key }
+                .map { },
+            accountsChanged()
+        )
         return (if (emitInitial) announced.onStart { emit(Unit) } else announced)
             .map { get(account, key) }
             .distinctUntilChanged()
+    }
+
+    // Linking writes the new account's data, and unlinking removes it, around this class: neither
+    // announces on [changed], so a collector would keep the removed account's value across a relink.
+    private fun accountsChanged(): Flow<Unit> = callbackFlow {
+        val listener = OnAccountsUpdateListener { trySend(Unit) }
+        accountManager.addOnAccountsUpdatedListener(listener, null, false)
+        awaitClose { accountManager.removeOnAccountsUpdatedListener(listener) }
     }
 
     // Duplicates the mapping inside AccountSettings.setSyncInterval, because write() has to know which

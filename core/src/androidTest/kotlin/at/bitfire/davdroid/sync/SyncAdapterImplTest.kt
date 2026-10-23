@@ -30,6 +30,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
+import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
@@ -69,6 +70,8 @@ class SyncAdapterImplTest {
 
     private var masterSyncStateBeforeTest = ContentResolver.getMasterSyncAutomatically()
 
+    private val uploadExtras = Bundle().apply { putBoolean(ContentResolver.SYNC_EXTRAS_UPLOAD, true) }
+
     @Before
     fun setUp() {
         hiltRule.inject()
@@ -95,13 +98,13 @@ class SyncAdapterImplTest {
 
         mockkObject(workManager) {
             // don't actually create a worker
-            every { syncWorkerManager.enqueueOneTime(any(), any()) } returns "TheSyncWorker"
+            every { syncWorkerManager.enqueueOneTime(any(), any(), any(), any(), any(), any()) } returns "TheSyncWorker"
 
             // assume worker takes a long time
             every { workManager.getWorkInfosForUniqueWorkFlow("TheSyncWorker") } just Awaits
 
             val sync = launch {
-                syncAdapter.onPerformSync(account, Bundle(), CalendarContract.AUTHORITY, mockk(), SyncResult())
+                syncAdapter.onPerformSync(account, uploadExtras, CalendarContract.AUTHORITY, mockk(), SyncResult())
             }
 
             // simulate incoming cancellation from sync framework
@@ -119,7 +122,7 @@ class SyncAdapterImplTest {
 
         mockkObject(workManager) {
             // don't actually create a worker
-            every { syncWorkerManager.enqueueOneTime(any(), any()) } returns "TheSyncWorker"
+            every { syncWorkerManager.enqueueOneTime(any(), any(), any(), any(), any(), any()) } returns "TheSyncWorker"
 
             // assume worker takes a long time
             every { workManager.getWorkInfosForUniqueWorkFlow("TheSyncWorker") } just Awaits
@@ -128,7 +131,7 @@ class SyncAdapterImplTest {
                 // immediate timeout (instead of really waiting)
                 coEvery { withTimeout(any<Long>(), any<suspend CoroutineScope.() -> Unit>()) } throws CancellationException("Simulated timeout")
 
-                syncAdapter.onPerformSync(account, Bundle(), CalendarContract.AUTHORITY, mockk(), SyncResult())
+                syncAdapter.onPerformSync(account, uploadExtras, CalendarContract.AUTHORITY, mockk(), SyncResult())
             }
         }
     }
@@ -140,7 +143,7 @@ class SyncAdapterImplTest {
 
         mockkObject(workManager) {
             // don't actually create a worker
-            every { syncWorkerManager.enqueueOneTime(any(), any()) } returns "TheSyncWorker"
+            every { syncWorkerManager.enqueueOneTime(any(), any(), any(), any(), any(), any()) } returns "TheSyncWorker"
 
             // assume worker immediately returns with success
             val success = mockk<WorkInfo>()
@@ -151,8 +154,17 @@ class SyncAdapterImplTest {
             }
 
             // should just run
-            syncAdapter.onPerformSync(account, Bundle(), CalendarContract.AUTHORITY, mockk(), SyncResult())
+            syncAdapter.onPerformSync(account, uploadExtras, CalendarContract.AUTHORITY, mockk(), SyncResult())
         }
+    }
+
+    @Test
+    fun testSyncAdapter_onPerformSync_ignoresRequestWithoutUploadOrManual() {
+        val syncAdapter = syncAdapterImplProvider.get()
+
+        syncAdapter.onPerformSync(account, Bundle(), CalendarContract.AUTHORITY, mockk(), SyncResult())
+
+        verify(exactly = 0) { syncWorkerManager.enqueueOneTime(any(), any(), any(), any(), any(), any()) }
     }
 
 }
