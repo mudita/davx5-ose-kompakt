@@ -145,7 +145,8 @@ fun KompaktModalSheet(
                     ) {
                         TextMMD(
                             text = confirmLabel,
-                            style = KompaktTypography900.labelLarge
+                            style = KompaktTypography900.labelLarge,
+                            textAlign = TextAlign.Center
                         )
                     }
 
@@ -160,7 +161,8 @@ fun KompaktModalSheet(
                         ) {
                             TextMMD(
                                 text = dismissLabel,
-                                style = KompaktTypography900.labelLarge
+                                style = KompaktTypography900.labelLarge,
+                                textAlign = TextAlign.Center
                             )
                         }
                 }
