@@ -150,13 +150,11 @@ abstract class SyncManager<LocalType : LocalResource, out CollectionType : Local
     }
 
     suspend fun performSync() = withContext(syncDispatcher) {
-        // dismiss previous error notifications
-        syncNotificationManager.dismissCollectionError(localCollectionTag = localCollection.tag)
-
         try {
             logger.info("Preparing synchronization")
             if (!prepare()) {
                 logger.info("No reason to synchronize, aborting")
+                syncNotificationManager.dismissCollectionError(localCollectionTag = localCollection.tag)
                 return@withContext
             }
 
@@ -262,6 +260,10 @@ abstract class SyncManager<LocalType : LocalResource, out CollectionType : Local
                 }
             else
                 logger.info("Remote collection didn't change, no reason to sync")
+
+            // Kompakt: dismiss a previous error only after a clean run. A repeated failure then updates the
+            // still-shown notification in place (setOnlyAlertOnce) instead of re-posting it with sound.
+            syncNotificationManager.dismissCollectionError(localCollectionTag = localCollection.tag)
 
             // record the last sync time at completion, and only for a successful run
             if (!syncResult.hasError())
