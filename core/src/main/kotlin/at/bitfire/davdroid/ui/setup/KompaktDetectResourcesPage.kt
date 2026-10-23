@@ -44,7 +44,8 @@ fun KompaktDetectResourcesPage(
 ) {
     val uiState = model.detectResourcesUiState
     KompaktDetectResourcesPageContent(
-        failed = uiState.foundNothing || uiState.loginValidationFailed,
+        // a retry starts with the previous attempt's failure flags still set
+        failed = !uiState.loading && (uiState.foundNothing || uiState.loginValidationFailed),
         onRetry = model::navBack
     )
 }
