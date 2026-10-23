@@ -1,0 +1,19 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/setup/KompaktDetectResourcesPage.kt
+  s_22faf930995e74::t_f4e9d3a60ed599 47-48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "3b18df6f89880d26bd8e1b7501b69c29fb6c2612",
+  "prompts": {},
+  "sessions": {
+    "s_22faf930995e74": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c063eaa8-529e-49aa-bbf0-090a380cded1",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
