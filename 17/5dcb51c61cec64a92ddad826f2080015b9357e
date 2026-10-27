@@ -1,0 +1,22 @@
+core/src/main/kotlin/at/bitfire/davdroid/sync/KompaktGoogleVCard.kt
+  s_072ad400c152ba::t_70c65036a4ab9f 38,45-50
+core/src/test/kotlin/at/bitfire/davdroid/sync/KompaktGoogleVCardTest.kt
+  s_072ad400c152ba::t_91081a89ea8e62 68-105
+  s_072ad400c152ba::t_6c0f6deedea3ff 18,20-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "175dcb51c61cec64a92ddad826f2080015b9357e",
+  "prompts": {},
+  "sessions": {
+    "s_072ad400c152ba": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7884b5dc-288e-4397-a839-135cd6e2759e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": null
+    }
+  }
+}
