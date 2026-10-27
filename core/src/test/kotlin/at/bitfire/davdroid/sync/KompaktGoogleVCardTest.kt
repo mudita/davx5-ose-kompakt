@@ -15,7 +15,11 @@ import at.bitfire.synctools.vcard.VCardParser
 import at.bitfire.synctools.vcard.property.XAbDate
 import ezvcard.VCardVersion
 import ezvcard.parameter.ImppType
+import ezvcard.property.Email
 import ezvcard.property.Impp
+import ezvcard.property.Nickname
+import ezvcard.property.Organization
+import ezvcard.property.Telephone
 import ezvcard.util.PartialDate
 import kotlinx.coroutines.test.runTest
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -59,6 +63,44 @@ class KompaktGoogleVCardTest {
     }
 
     private fun contact() = Contact().apply { uid = "test"; displayName = "Test" }
+
+
+    // FN
+
+    private fun nameless() = Contact().apply {
+        uid = "12e0d0e2-ad0c-45a6-adfb-1b6f0ea033f5"
+        nickName = LabeledProperty(Nickname().apply { values.add("Nick Only") })
+        emails += LabeledProperty(Email("only@example.com"))
+        phoneNumbers += LabeledProperty(Telephone("+48 600 111 222"))
+        jobTitle = "Job title"
+    }
+
+    @Test
+    fun `a contact without a name goes up with an empty FN`() {
+        val lines = upload(nameless())
+
+        assertTrue(lines.contains("FN:"))
+        assertTrue(lines.contains("N:;;;;"))
+    }
+
+    @Test
+    fun `a company-only contact goes up with an empty FN`() {
+        val contact = Contact().apply { organization = Organization().apply { values.add("Company Only") } }
+
+        assertTrue(upload(contact).contains("FN:"))
+    }
+
+    @Test
+    fun `a contact with a name keeps it as FN`() {
+        val contact = nameless().apply { displayName = "Ewa Test"; givenName = "Ewa"; familyName = "Test" }
+
+        assertTrue(upload(contact).contains("FN:Ewa Test"))
+    }
+
+    @Test
+    fun `another server keeps upstream's fallback FN`() {
+        assertTrue(upload(nameless(), other).contains("FN:Nick Only"))
+    }
 
 
     // SIP
