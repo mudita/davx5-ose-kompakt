@@ -1,0 +1,21 @@
+synctools/src/main/kotlin/at/bitfire/synctools/mapping/contacts/ContactWriter.kt
+  s_072ad400c152ba::t_1e9bd31442ce25 160-161
+synctools/src/test/kotlin/at/bitfire/synctools/mapping/contacts/ContactWriterTest.kt
+  s_072ad400c152ba::t_a22819152526fc 200,203,205
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "942aaa84de2fff24a5515b20f310961f5f7adda0",
+  "prompts": {},
+  "sessions": {
+    "s_072ad400c152ba": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7884b5dc-288e-4397-a839-135cd6e2759e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Roman Savka <roman.savka@miquido.com>"
+    }
+  }
+}
