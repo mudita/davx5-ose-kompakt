@@ -35,9 +35,19 @@ object KompaktGoogleVCard {
             return writer
 
         val vCard = writer.vCard
+        formattedNameOnlyFromName(contact, vCard)
         xSipFromSipAddresses(vCard)
         datesToGoogle(vCard)
         return writer
+    }
+
+
+    // FN: without a name, Google splits FN into first, middle and last name, so upstream's fallback FN (nickname,
+    // email, phone, UID) would become one. Google serves a contact without a name with an empty FN.
+
+    private fun formattedNameOnlyFromName(contact: Contact, vCard: VCard) {
+        if (contact.displayName.isNullOrBlank())
+            vCard.setFormattedName("")
     }
 
 
