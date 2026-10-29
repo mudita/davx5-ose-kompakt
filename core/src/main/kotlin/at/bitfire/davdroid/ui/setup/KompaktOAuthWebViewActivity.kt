@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
+import android.webkit.WebStorage
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
@@ -38,6 +39,10 @@ import net.openid.appauth.AuthorizationResponse
  * Google blocks embedded WebViews for OAuth (`disallowed_useragent`). The workaround is to take the
  * device's real WebView User-Agent and strip its web-view markers so it looks like plain Chrome —
  * see [chromeUserAgent].
+ *
+ * All WebView cookies and web storage are wiped before each new sign-in (see [clearWebViewData]),
+ * so Google always asks for the password — otherwise the Google session of a previously linked (and
+ * since unlinked) account would be reused silently (MOK-8205).
  */
 class KompaktOAuthWebViewActivity : ComponentActivity() {
 
@@ -94,7 +99,11 @@ class KompaktOAuthWebViewActivity : ComponentActivity() {
                     factory = { context ->
                         createWebView(context, request, redirectUri).also { view ->
                             webView = view
-                            view.loadUrl(localizedAuthUrl)
+                            // recreation (e.g. language change mid-flow) keeps the session being built
+                            if (savedInstanceState == null)
+                                clearWebViewData { view.loadUrl(localizedAuthUrl) }
+                            else
+                                view.loadUrl(localizedAuthUrl)
                         }
                     }
                 )
@@ -131,6 +140,18 @@ class KompaktOAuthWebViewActivity : ComponentActivity() {
             }
         }
         return view
+    }
+
+    /**
+     * Removes all WebView cookies and web storage (the WebView is used only for OAuth sign-in), then
+     * calls [onDone] on the main thread.
+     */
+    private fun clearWebViewData(onDone: () -> Unit) {
+        WebStorage.getInstance().deleteAllData()
+        CookieManager.getInstance().removeAllCookies {
+            CookieManager.getInstance().flush()
+            onDone()
+        }
     }
 
     /**
