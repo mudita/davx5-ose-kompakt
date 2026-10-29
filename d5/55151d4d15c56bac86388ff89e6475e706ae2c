@@ -1,0 +1,21 @@
+core/src/main/kotlin/at/bitfire/davdroid/ui/composable/KompaktModalSheet.kt
+  s_15f08d5bbe5ec9::t_c5d9c4ce4c7348 150-152
+  s_15f08d5bbe5ec9::t_4ffb10f83a12ed 168-170
+  s_15f08d5bbe5ec9::t_1c1f9e2ff5eed1 25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "d555151d4d15c56bac86388ff89e6475e706ae2c",
+  "prompts": {},
+  "sessions": {
+    "s_15f08d5bbe5ec9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "357b2323-40ab-4c7e-a0bd-b5d1d42a2079",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Agnieszka Adamczyk <agnieszka.adamczyk@miquido.com>"
+    }
+  }
+}
