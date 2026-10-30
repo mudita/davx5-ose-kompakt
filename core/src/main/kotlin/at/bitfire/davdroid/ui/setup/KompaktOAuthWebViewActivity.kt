@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
@@ -40,13 +41,16 @@ import net.openid.appauth.AuthorizationResponse
  * device's real WebView User-Agent and strip its web-view markers so it looks like plain Chrome —
  * see [chromeUserAgent].
  *
- * All WebView cookies and web storage are wiped before each new sign-in (see [clearWebViewData]),
- * so Google always asks for the password — otherwise the Google session of a previously linked (and
- * since unlinked) account would be reused silently (MOK-8205).
+ * All WebView cookies and web storage are wiped when the sign-in flow ends and, as a fallback (e.g.
+ * after the process was killed), before each new sign-in (see [clearWebViewData]). So Google always
+ * asks for the password, and no Google web session stays on the device — otherwise the session of a
+ * previously linked (and since unlinked) account would be reused silently (MOK-8205). The app only
+ * needs the OAuth tokens, which are exchanged outside the WebView.
  */
 class KompaktOAuthWebViewActivity : ComponentActivity() {
 
     private var webView: WebView? = null
+    private var webViewCreated = false
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -99,16 +103,34 @@ class KompaktOAuthWebViewActivity : ComponentActivity() {
                     factory = { context ->
                         createWebView(context, request, redirectUri).also { view ->
                             webView = view
+                            webViewCreated = true
                             // recreation (e.g. language change mid-flow) keeps the session being built
                             if (savedInstanceState == null)
-                                clearWebViewData { view.loadUrl(localizedAuthUrl) }
+                                clearWebViewData {
+                                    // skip if the view was released before the callback fired
+                                    if (webView === view)
+                                        view.loadUrl(localizedAuthUrl)
+                                }
                             else
                                 view.loadUrl(localizedAuthUrl)
                         }
+                    },
+                    onRelease = { view ->
+                        if (webView === view)
+                            webView = null
+                        // still attached to the window at this point; detach first as destroy() expects
+                        (view.parent as? ViewGroup)?.removeView(view)
+                        view.destroy()
                     }
                 )
             }
         }
+    }
+
+    override fun onDestroy() {
+        if (isFinishing && webViewCreated)
+            clearWebViewData()
+        super.onDestroy()
     }
 
     // Google's sign-in can show a reCAPTCHA image grid, which the app-wide FAST mode renders unreadable.
@@ -144,14 +166,12 @@ class KompaktOAuthWebViewActivity : ComponentActivity() {
 
     /**
      * Removes all WebView cookies and web storage (the WebView is used only for OAuth sign-in), then
-     * calls [onDone] on the main thread.
+     * calls [onDone] (if given) on the main thread.
      */
-    private fun clearWebViewData(onDone: () -> Unit) {
+    private fun clearWebViewData(onDone: (() -> Unit)? = null) {
+        // async without completion callback, so not awaited — fine, the Google session lives in cookies
         WebStorage.getInstance().deleteAllData()
-        CookieManager.getInstance().removeAllCookies {
-            CookieManager.getInstance().flush()
-            onDone()
-        }
+        CookieManager.getInstance().removeAllCookies { onDone?.invoke() }
     }
 
     /**
