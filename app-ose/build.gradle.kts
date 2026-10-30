@@ -163,9 +163,9 @@ tasks.register("checkVersion") {
     doFirst {
         val current = android.defaultConfig.versionName
         val ref = System.getenv("GITHUB_REF") ?: throw GradleException("GITHUB_REF not set")
-        val match = Regex("(release|development|qa)\\.(\\d+\\.\\d+\\.\\d+(-\\w*)?)")
-            .find(ref.removePrefix("refs/tags/"))
-            ?: throw GradleException("The git tag does not follow the required 'type.x.y.z' pattern.")
+        val match = Regex("(release|development|qa)\\.(\\d+(?:\\.\\d+){2,}(-[a-z]+\\d+)?)")
+            .matchEntire(ref.removePrefix("refs/tags/"))
+            ?: throw GradleException("The git tag does not follow the required 'type.x.y.z[.w][-suffixN]' pattern.")
         val tagVersion = match.groupValues[2]
         if (current != tagVersion) {
             throw GradleException("Build version ($current) does not match tag version ($tagVersion).")
