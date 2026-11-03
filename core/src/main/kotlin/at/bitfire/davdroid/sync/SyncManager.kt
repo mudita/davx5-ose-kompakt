@@ -393,9 +393,11 @@ abstract class SyncManager<LocalType : LocalResource, out CollectionType : Local
         coroutineScope {    // structured concurrency
             for (local in localCollection.findDirty())
                 launch {
-                    SyncException.wrapWithLocalResourceSuspending(local) {
-                        uploadDirty(local)
-                        numUploaded++
+                    KompaktUploadFailure.runConfined(local, syncResult, logger) {
+                        SyncException.wrapWithLocalResourceSuspending(local) {
+                            uploadDirty(local)
+                            numUploaded++
+                        }
                     }
                 }
         }

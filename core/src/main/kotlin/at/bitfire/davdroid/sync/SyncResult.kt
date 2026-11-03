@@ -26,7 +26,8 @@ data class SyncResult(
     var numServiceUnavailableExceptions: Long = 0,
 
     // Other values
-    var delayUntil: Long = 0
+    var delayUntil: Long = 0,
+    var numRejectedUploads: Long = 0
 ) {
 
     /**
