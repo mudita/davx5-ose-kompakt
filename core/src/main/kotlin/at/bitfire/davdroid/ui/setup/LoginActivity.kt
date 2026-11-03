@@ -113,7 +113,8 @@ class LoginActivity @Inject constructor(): AppCompatActivity() {
                         givenUri = try {
                             URI(realScheme, null, uri.host, uri.port, uri.path, uri.query, null).toString()
                         } catch (_: URISyntaxException) {
-                            logger.warning("Couldn't construct URI from login Intent data: $uri")
+                            // Kompakt: don't log the URI or its host — a malformed user:password can end up in either
+                            logger.warning("Couldn't construct URI from login Intent data (scheme=${uri.scheme})")
                             null
                         }
                     }

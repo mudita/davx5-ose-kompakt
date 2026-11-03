@@ -85,7 +85,8 @@ class AccountRepository @Inject constructor(
 
         // create Android account
         val userData = AccountSettings.initialUserData(credentials, preconfigurationUrl)
-        logger.log(Level.INFO, "Creating Android account with initial config", arrayOf(account, userData))
+        // Kompakt: never log the OAuth AuthState (contains refresh/access/ID tokens) — this record is INFO, so it reaches logcat in release builds
+        logger.log(Level.INFO, "Creating Android account with initial config", arrayOf(account, userData - AccountSettings.KEY_AUTH_STATE))
 
         if (!AndroidAccountUtils.createAccount(context, account, userData, credentials?.password))
             return null

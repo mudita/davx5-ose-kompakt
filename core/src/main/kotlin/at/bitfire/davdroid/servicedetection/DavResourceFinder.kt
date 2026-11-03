@@ -23,6 +23,7 @@ import at.bitfire.dav4jvm.property.webdav.CurrentUserPrincipal
 import at.bitfire.dav4jvm.property.webdav.ResourceType
 import at.bitfire.dav4jvm.property.webdav.WebDAV
 import at.bitfire.davdroid.db.Collection
+import at.bitfire.davdroid.log.KompaktSanitizingLogFilter
 import at.bitfire.davdroid.log.StringHandler
 import at.bitfire.davdroid.network.DnsRecordResolver
 import at.bitfire.davdroid.network.HttpClientBuilder
@@ -98,6 +99,12 @@ class DavResourceFinder @AssistedInject constructor(
         // add StringHandler to logger
         log.level = Level.ALL
         log.addHandler(handler)
+        // Kompakt: Level.ALL is meant for the StringHandler (detection logs for debug info) only. Records
+        // would otherwise propagate to the root handlers (logcat, log file) regardless of the root level,
+        // dumping full HTTP traffic in release builds — so forward only when verbose logging is active anyway.
+        log.useParentHandlers = Logger.getLogger("").isLoggable(Level.FINEST)
+        // Kompakt: strip user info, query and fragment from every URL (incl. exception messages) before any handler
+        log.filter = KompaktSanitizingLogFilter
 
         return handler
     }

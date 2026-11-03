@@ -44,7 +44,8 @@ class UnifiedPushService : PushService() {
 
     override fun onNewEndpoint(endpoint: PushEndpoint, instance: String) {
         val serviceId = instance.toLongOrNull() ?: return
-        logger.warning("Got UnifiedPush endpoint for service $serviceId: ${endpoint.url}")
+        // Kompakt: don't log the endpoint URL — it's a capability URL (anyone knowing it can push)
+        logger.warning("Got UnifiedPush endpoint for service $serviceId")
 
         // register new endpoint at CalDAV/CardDAV servers
         applicationScope.launch {

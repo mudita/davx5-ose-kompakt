@@ -41,7 +41,8 @@ class StandardLoginTypesProvider @Inject constructor(
                 listOf("caldavs", "carddavs", "davx5", "http", "https").any { uri?.scheme == it } ->
                     LoginAction(UrlLogin, true)
                 else -> {
-                    logger.warning("Did not understand login intent: $intent")
+                    // Kompakt: don't log the Intent — its data URI may contain user:password
+                    logger.warning("Did not understand login intent (action=${intent.action}, scheme=${uri?.scheme})")
                     LoginAction(defaultLoginType, false) // Don't skip login type page if intent is unclear
                 }
             }

@@ -8,7 +8,9 @@ import android.accounts.Account
 import androidx.annotation.WorkerThread
 import at.bitfire.dav4jvm.okhttp.BasicDigestAuthHandler
 import at.bitfire.dav4jvm.okhttp.UrlUtils
+import at.bitfire.davdroid.BuildConfig
 import at.bitfire.davdroid.di.qualifier.IoDispatcher
+import at.bitfire.davdroid.log.kompaktSanitizeHttpLogLine
 import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.settings.Credentials
 import at.bitfire.davdroid.settings.Settings
@@ -253,12 +255,19 @@ class HttpClientBuilder @Inject constructor(
 
         // add network logging, if requested
         if (logger.isLoggable(Level.FINEST)) {
-            val loggingInterceptor = HttpLoggingInterceptor { message -> logger.finest(message) }
+            // Kompakt: strip user info and query strings from logged URLs
+            val loggingInterceptor = HttpLoggingInterceptor { message -> logger.finest(kompaktSanitizeHttpLogLine(message)) }
             loggingInterceptor.redactHeader(HttpHeaders.AUTHORIZATION)
+            loggingInterceptor.redactHeader(HttpHeaders.PROXY_AUTHORIZATION)
             loggingInterceptor.redactHeader(HttpHeaders.COOKIE)
             loggingInterceptor.redactHeader(HttpHeaders.SET_COOKIE)
             loggingInterceptor.redactHeader(HttpHeaders.SET_COOKIE2)
-            loggingInterceptor.level = loggerInterceptorLevel
+            // Kompakt: no bodies in release builds — they can carry credentials (e.g. login flow tokens/app passwords)
+            loggingInterceptor.level =
+                if (!BuildConfig.DEBUG && loggerInterceptorLevel == HttpLoggingInterceptor.Level.BODY)
+                    HttpLoggingInterceptor.Level.HEADERS
+                else
+                    loggerInterceptorLevel
             builder.addNetworkInterceptor(loggingInterceptor)
         }
     }

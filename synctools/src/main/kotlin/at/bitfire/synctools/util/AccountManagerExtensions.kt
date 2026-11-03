@@ -27,5 +27,6 @@ fun AccountManager.setAndVerifyUserData(account: Account, key: String, value: St
     }
 
     val logger = Logger.getLogger(javaClass.name)
-    logger.warning("AccountManager failed to set $account user data $key := $value")
+    // Kompakt: don't log the value — user data can hold secrets (e.g. the OAuth AuthState with refresh/access tokens)
+    logger.warning("AccountManager failed to set $account user data $key")
 }

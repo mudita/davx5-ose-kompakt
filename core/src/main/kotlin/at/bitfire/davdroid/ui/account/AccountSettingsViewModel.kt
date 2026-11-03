@@ -12,6 +12,7 @@ import at.bitfire.davdroid.R
 import at.bitfire.davdroid.db.AppDatabase
 import at.bitfire.davdroid.db.Service
 import at.bitfire.davdroid.di.qualifier.DefaultDispatcher
+import at.bitfire.davdroid.log.kompaktSafeDescription
 import at.bitfire.davdroid.network.OAuthIntegration
 import at.bitfire.davdroid.settings.AccountSettings
 import at.bitfire.davdroid.settings.Credentials
@@ -38,7 +39,6 @@ import kotlinx.coroutines.withContext
 import net.openid.appauth.AuthorizationRequest
 import net.openid.appauth.AuthorizationResponse
 import net.openid.appauth.AuthorizationService
-import java.util.logging.Level
 import java.util.logging.Logger
 
 @HiltViewModel(assistedFactory = AccountSettingsViewModel.Factory::class)
@@ -204,7 +204,8 @@ class AccountSettingsViewModel @AssistedInject constructor(
                     it.copy(status = context.getString(R.string.settings_reauthorize_oauth_success))
                 }
             } catch (e: Exception) {
-                logger.log(Level.WARNING, "Authentication failed", e)
+                // Kompakt: don't log the exception itself — its cause can carry the raw token response
+                logger.warning("Authentication failed: ${e.kompaktSafeDescription()}")
                 _uiState.update {
                     it.copy(status = e.localizedMessage)
                 }

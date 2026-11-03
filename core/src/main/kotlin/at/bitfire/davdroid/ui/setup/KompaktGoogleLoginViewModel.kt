@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import at.bitfire.davdroid.R
+import at.bitfire.davdroid.log.kompaktSafeDescription
 import at.bitfire.davdroid.network.KompaktOAuthGoogle
 import at.bitfire.davdroid.network.OAuthIntegration
 import at.bitfire.davdroid.settings.Credentials
@@ -26,7 +27,6 @@ import kotlinx.coroutines.launch
 import net.openid.appauth.AuthorizationResponse
 import net.openid.appauth.AuthorizationService
 import org.json.JSONObject
-import java.util.logging.Level
 import java.util.logging.Logger
 
 @HiltViewModel(assistedFactory = KompaktGoogleLoginViewModel.Factory::class)
@@ -105,7 +105,8 @@ class KompaktGoogleLoginViewModel @AssistedInject constructor(
                     )
                 )
             } catch (e: Exception) {
-                logger.log(Level.WARNING, "Google authentication failed", e)
+                // don't log the exception itself — its cause can carry the raw token response
+                logger.warning("Google authentication failed: ${e.kompaktSafeDescription()}")
                 uiState = uiState.copy(error = e.message)
             }
         }
