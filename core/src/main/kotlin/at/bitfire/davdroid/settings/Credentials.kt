@@ -37,8 +37,8 @@ data class Credentials(
         if (certificateAlias != null)
             s += "certificateAlias=$certificateAlias"
 
-        if (authState != null)      // contains sensitive information (refresh token, access token)
-            s += "authState=${authState.jsonSerializeString()}"
+        if (authState != null)      // Kompakt: never print the AuthState JSON — it contains refresh/access/ID tokens
+            s += "authState=*****"
 
         return "Credentials(" + s.joinToString(", ") + ")"
     }
