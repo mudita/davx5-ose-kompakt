@@ -89,6 +89,11 @@ android {
     }
 
     buildTypes {
+        // Kompakt (MOK-8236): every build type sets kompakt_logging_enabled explicitly — core defaults to
+        // false (no logging), see core's KompaktLogging. Production release must not log at all.
+        getByName("debug") {
+            resValue("bool", "kompakt_logging_enabled", "true")
+        }
         getByName("release") {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules-release.pro")
@@ -96,10 +101,15 @@ android {
             isShrinkResources = true
 
             signingConfig = signingConfigs.getByName("debug")
+
+            resValue("bool", "kompakt_logging_enabled", "false")
         }
         create("qa") {
             initWith(getByName("release"))
             matchingFallbacks += listOf("release")
+
+            // overrides the value copied from release by initWith
+            resValue("bool", "kompakt_logging_enabled", "true")
         }
     }
 }

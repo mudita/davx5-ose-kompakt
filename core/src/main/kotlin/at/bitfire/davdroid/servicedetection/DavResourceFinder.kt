@@ -23,6 +23,7 @@ import at.bitfire.dav4jvm.property.webdav.CurrentUserPrincipal
 import at.bitfire.dav4jvm.property.webdav.ResourceType
 import at.bitfire.dav4jvm.property.webdav.WebDAV
 import at.bitfire.davdroid.db.Collection
+import at.bitfire.davdroid.log.KompaktLogging
 import at.bitfire.davdroid.log.StringHandler
 import at.bitfire.davdroid.network.DnsRecordResolver
 import at.bitfire.davdroid.network.HttpClientBuilder
@@ -96,8 +97,12 @@ class DavResourceFinder @AssistedInject constructor(
         val handler = StringHandler(maxLogSize)
 
         // add StringHandler to logger
-        log.level = Level.ALL
-        log.addHandler(handler)
+        // Kompakt (MOK-8236): when app logging is disabled, don't collect detection logs at all — the logger then
+        // inherits the root level (OFF), so the HTTP logging interceptor isn't installed either
+        if (KompaktLogging.isEnabled(context)) {
+            log.level = Level.ALL
+            log.addHandler(handler)
+        }
 
         return handler
     }

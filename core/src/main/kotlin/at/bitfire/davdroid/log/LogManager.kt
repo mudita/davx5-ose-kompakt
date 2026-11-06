@@ -71,6 +71,12 @@ class LogManager @Inject constructor(
 
     @Synchronized
     fun reloadConfig() {
+        // Kompakt: no logging at all in the production release build (MOK-8236), see KompaktLogging
+        if (!KompaktLogging.isEnabled(context)) {
+            disableLogging()
+            return
+        }
+
         val logToFile = prefs.logToFile()
         val logVerbose = logToFile || BuildConfig.DEBUG || Log.isLoggable(logger.name, Log.DEBUG)
         logger.info("Verbose logging = $logVerbose; log to file = $logToFile")
@@ -92,6 +98,16 @@ class LogManager @Inject constructor(
         // log to file, if requested
         if (logToFile)
             rootLogger.addHandler(logFileHandler.get())
+    }
+
+    /**
+     * Kompakt: removes all handlers (including Android's default logcat handler and the file handler)
+     * and turns the root logger off, so that no [java.util.logging] record is written anywhere,
+     * regardless of the "log to file" preference or `adb shell setprop log.tag.*`.
+     */
+    private fun disableLogging() {
+        java.util.logging.LogManager.getLogManager().reset()
+        Logger.getLogger("").level = Level.OFF
     }
 
 }
