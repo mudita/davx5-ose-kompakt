@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+    Kompakt: whether the app logs at all (java.util.logging → logcat/log file, WorkManager).
+    Disabled by default (fail-safe: a build type that doesn't set it logs nothing), because log
+    records may contain OAuth tokens, account e-mail addresses, event details and contact data.
+    Every build type sets it explicitly via resValue in app-ose/build.gradle.kts. See KompaktLogging.
+    -->
+    <bool name="kompakt_logging_enabled">false</bool>
+</resources>

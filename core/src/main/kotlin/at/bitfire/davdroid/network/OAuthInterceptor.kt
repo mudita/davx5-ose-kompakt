@@ -4,7 +4,6 @@
 
 package at.bitfire.davdroid.network
 
-import at.bitfire.davdroid.BuildConfig
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -84,11 +83,9 @@ class OAuthInterceptor @AssistedInject constructor(
         // if possible, use cached access token
         val authState = readAuthState() ?: return null
 
-        if (authState.isAuthorized && authState.accessToken != null && !authState.needsTokenRefresh) {
-            if (BuildConfig.DEBUG)      // log sensitive information (refresh/access token) only in debug builds
-                logger.log(Level.FINEST, "Using cached AuthState", authState.jsonSerializeString())
+        // Kompakt: no AuthState dumps, not even in debug builds — they contain refresh/access/ID tokens
+        if (authState.isAuthorized && authState.accessToken != null && !authState.needsTokenRefresh)
             return authState.accessToken
-        }
 
         // request fresh access token
         logger.fine("Requesting fresh access token")
@@ -97,8 +94,6 @@ class OAuthInterceptor @AssistedInject constructor(
         try {
             authState.performActionWithFreshTokens(authService) { accessToken: String?, _: String?, ex: AuthorizationException? ->
                 // appauth internally fetches the new token over HttpURLConnection in an AsyncTask
-                if (BuildConfig.DEBUG)
-                    logger.log(Level.FINEST, "Got new AuthState", authState.jsonSerializeString())
 
                 // persist updated AuthState
                 writeAuthState(authState)
